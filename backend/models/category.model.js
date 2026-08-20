@@ -13,6 +13,14 @@ const catgorySchema = new Schema({
         ref: "Category",
         default: null
     },
+    image: {
+        type: String,
+        default: ""
+    },
+    imagekitFileId: {
+        type: String,
+        default: ""
+    },
     isActive: {
         type: Boolean,
         default: true

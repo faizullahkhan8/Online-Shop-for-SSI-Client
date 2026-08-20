@@ -1,6 +1,13 @@
 import { Star, StarHalf } from "lucide-react";
 
-const StarRating = ({ rating, setRating, readonly = false, size = 18 }) => {
+const StarRating = ({
+    rating = 0,
+    setRating,
+    readonly = false,
+    size = 18,
+    activeColor = "text-yellow-400",
+    inactiveColor = "text-slate-300",
+}) => {
     const handleRating = (index) => {
         if (!readonly && setRating) {
             setRating(index);
@@ -17,22 +24,22 @@ const StarRating = ({ rating, setRating, readonly = false, size = 18 }) => {
                     <div
                         key={index}
                         onClick={() => handleRating(index)}
-                        className={`${!readonly ? "cursor-pointer" : ""}`}
+                        className={`${!readonly ? "cursor-pointer transition-transform hover:scale-110" : ""}`}
                     >
                         {isFull ? (
                             <Star
                                 size={size}
                                 fill="currentColor"
-                                className="text-yellow-400"
+                                className={activeColor}
                             />
                         ) : isHalf ? (
                             <StarHalf
                                 size={size}
                                 fill="currentColor"
-                                className="text-yellow-400"
+                                className={activeColor}
                             />
                         ) : (
-                            <Star size={size} className="text-slate-300" />
+                            <Star size={size} className={inactiveColor} />
                         )}
                     </div>
                 );

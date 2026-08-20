@@ -12,6 +12,7 @@ const cartSlice = createSlice({
     reducers: {
         addToCart: (state, action) => {
             const newItem = action.payload;
+            const qty = Number(newItem.quantity) > 0 ? Number(newItem.quantity) : 1;
             const priceToUse =
                 newItem.effectivePrice !== undefined
                     ? newItem.effectivePrice
@@ -27,12 +28,12 @@ const cartSlice = createSlice({
                     originalPrice: newItem.price,
                     stock: newItem.stock,
                     image: newItem.image,
-                    quantity: 1,
-                    totalPrice: priceToUse,
+                    quantity: qty,
+                    totalPrice: priceToUse * qty,
                     selected: true, // New items are selected by default
                 });
             } else {
-                existingItem.quantity++;
+                existingItem.quantity += qty;
                 existingItem.totalPrice =
                     existingItem.price * existingItem.quantity;
             }

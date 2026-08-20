@@ -27,11 +27,6 @@ const HeroManager = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSlide, setEditingSlide] = useState(null);
     const [formData, setFormData] = useState({
-        title: "",
-        headline: "",
-        subtitle: "",
-        bg: "bg-[#e3f0ff]",
-        accent: "text-blue-600",
         order: 0,
         isActive: true,
         isRemoveBg: false,
@@ -46,11 +41,6 @@ const HeroManager = () => {
     const handleEdit = (slide) => {
         setEditingSlide(slide);
         setFormData({
-            title: slide.title,
-            headline: slide.headline,
-            subtitle: slide.subtitle || "",
-            bg: slide.bg,
-            accent: slide.accent,
             order: slide.order,
             isActive: slide.isActive,
             isRemoveBg: false,
@@ -63,11 +53,6 @@ const HeroManager = () => {
         setIsModalOpen(false);
         setEditingSlide(null);
         setFormData({
-            title: "",
-            headline: "",
-            subtitle: "",
-            bg: "bg-[#e3f0ff]",
-            accent: "text-blue-600",
             order: 0,
             isActive: true,
             isRemoveBg: false,
@@ -114,13 +99,7 @@ const HeroManager = () => {
         }
     };
 
-    const bgPresets = [
-        { name: "Blue Sky", class: "bg-[#e3f0ff]", accent: "text-blue-600" },
-        { name: "Peach", class: "bg-[#fff1e6]", accent: "text-orange-600" },
-        { name: "Mint", class: "bg-[#e8f5e9]", accent: "text-emerald-600" },
-        { name: "Slate", class: "bg-slate-100", accent: "text-slate-900" },
-        { name: "Purple", class: "bg-purple-50", accent: "text-purple-600" },
-    ];
+
 
     return (
         <div className="space-y-6">
@@ -154,10 +133,10 @@ const HeroManager = () => {
                             key={slide._id}
                             className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-blue-500 hover:shadow-md transition-all"
                         >
-                            <div className={`h-40 relative overflow-hidden ${slide.bg}`}>
+                            <div className={`h-40 relative overflow-hidden bg-gray-100`}>
                                 <img
                                     src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${slide.image}`}
-                                    alt={slide.title}
+                                    alt="Hero Slide"
                                     className="w-full h-full object-contain"
                                 />
                                 <div className="absolute top-3 right-3 flex gap-2">
@@ -171,18 +150,6 @@ const HeroManager = () => {
                             </div>
 
                             <div className="p-4 space-y-3">
-                                <div>
-                                    <h3 className={`text-xs font-medium mb-1 ${slide.accent}`}>
-                                        {slide.title}
-                                    </h3>
-                                    <h4 className="text-base font-semibold text-gray-900 leading-tight">
-                                        {slide.headline}
-                                    </h4>
-                                    <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                                        {slide.subtitle}
-                                    </p>
-                                </div>
-
                                 <div className="flex items-center gap-2 pt-2">
                                     <button
                                         onClick={() => handleEdit(slide)}
@@ -285,41 +252,6 @@ const HeroManager = () => {
                                     <div className="space-y-4">
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-medium text-gray-700">
-                                                Title
-                                            </label>
-                                            <Input
-                                                value={formData.title}
-                                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                                placeholder="Latest Trending"
-                                                className="w-full"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-gray-700">
-                                                Headline
-                                            </label>
-                                            <Input
-                                                value={formData.headline}
-                                                onChange={(e) => setFormData({ ...formData, headline: e.target.value })}
-                                                className="w-full"
-                                                placeholder="Electronic Items"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-gray-700">
-                                                Subtitle
-                                            </label>
-                                            <Input
-                                                value={formData.subtitle}
-                                                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                                                className="w-full"
-                                                placeholder="Premium Tech Selection"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-gray-700">
                                                 Order
                                             </label>
                                             <Input
@@ -330,30 +262,6 @@ const HeroManager = () => {
                                                 placeholder="0"
                                             />
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">
-                                        Background Style
-                                    </label>
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {bgPresets.map((preset) => (
-                                            <button
-                                                key={preset.name}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, bg: preset.class, accent: preset.accent })}
-                                                className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${formData.bg === preset.class
-                                                    ? "border-blue-600 bg-blue-50"
-                                                    : "border-gray-200 hover:border-gray-300"
-                                                    }`}
-                                            >
-                                                <div className={`w-8 h-8 rounded ${preset.class}`} />
-                                                <span className="text-xs text-gray-600">
-                                                    {preset.name}
-                                                </span>
-                                            </button>
-                                        ))}
                                     </div>
                                 </div>
 

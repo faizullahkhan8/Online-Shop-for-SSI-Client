@@ -16,6 +16,8 @@ import {
     Loader2,
     Percent,
     MonitorPlay,
+    FileText,
+    ListTree,
 } from "lucide-react";
 
 import { useState } from "react";
@@ -218,6 +220,13 @@ const AdminSidebar = () => {
                         </MenuItem>
                     </SubMenu>
 
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/prescriptions" />}
+                        icon={<FileText size={18} />}
+                    >
+                        Prescriptions
+                    </MenuItem>
+
                     <SubMenu
                         label="Users"
                         icon={<Users size={18} />}
@@ -259,6 +268,13 @@ const AdminSidebar = () => {
                         icon={<MonitorPlay size={18} />}
                     >
                         Hero Content
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/menu-builder" />}
+                        icon={<ListTree size={18} />}
+                    >
+                        Menu Builder
                     </MenuItem>
 
                     {/* Bottom Actions */}

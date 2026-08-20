@@ -8,6 +8,8 @@ import settingsSchema from "../models/settings.model.js";
 import promotionSchema from "../models/promotion.model.js";
 import heroSchema from "../models/hero.model.js";
 import reviewSchema from "../models/review.model.js";
+import prescriptionSchema from "../models/prescription.model.js";
+import menuSchema from "../models/menu.model.js";
 
 let connectionPromise = null;
 let localDbConnection = null;
@@ -20,6 +22,8 @@ let localSettingsModel;
 let localPromotionModel;
 let localHeroModel;
 let localReviewModel;
+let localPrescriptionModel;
+let localMenuModel;
 
 export const connectToDB = async () => {
     if (connectionPromise) return connectionPromise;
@@ -31,7 +35,7 @@ export const connectToDB = async () => {
 
             localDbConnection = await mongoose
                 .createConnection(process.env.MONGO_URI_ONLINE, {
-                    dbName: "online_shop_for_ssi_client",
+                    dbName: "zada_pharmacy",
                 })
                 .asPromise();
 
@@ -63,6 +67,8 @@ export const connectToDB = async () => {
             );
             localHeroModel = localDbConnection.model("Hero", heroSchema);
             localReviewModel = localDbConnection.model("Review", reviewSchema);
+            localPrescriptionModel = localDbConnection.model("Prescription", prescriptionSchema);
+            localMenuModel = localDbConnection.model("Menu", menuSchema);
 
             return localDbConnection;
         } catch (error) {
@@ -84,3 +90,5 @@ export const getLocalSettingsModel = () => localSettingsModel || null;
 export const getLocalPromotionModel = () => localPromotionModel || null;
 export const getLocalHeroModel = () => localHeroModel || null;
 export const getLocalReviewModel = () => localReviewModel || null;
+export const getLocalPrescriptionModel = () => localPrescriptionModel || null;
+export const getLocalMenuModel = () => localMenuModel || null;

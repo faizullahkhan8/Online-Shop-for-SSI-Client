@@ -65,6 +65,50 @@ export const isAuth = expressAsyncHandler(async (req, res, next) => {
     next();
 });
 
+export const optionalAuth = expressAsyncHandler(async (req, res, next) => {
+    const UserModel = getLocalUserModel();
+
+    if (!UserModel) {
+        return next();
+    }
+
+    const accessToken = req.cookies?.accessToken;
+    const refreshToken = req.cookies?.refreshToken;
+
+    let accessDecode;
+    let refreshDecode;
+
+    if (accessToken) {
+        try {
+            accessDecode = verifyToken(accessToken, process.env.JWT_ACCESS_SECRET);
+        } catch (error) {
+            accessDecode = null;
+        }
+    }
+
+    if (refreshToken) {
+        try {
+            refreshDecode = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+        } catch (error) {
+            refreshDecode = null;
+        }
+    }
+
+    const decode = accessDecode || refreshDecode;
+
+    if (!decode) {
+        return next();
+    }
+
+    const user = await UserModel.findById(decode.id);
+
+    if (user) {
+        req.user = user;
+    }
+
+    next();
+});
+
 export const authorize = (role = []) =>
     expressAsyncHandler(async (req, res, next) => {
         const roles = Array.isArray(role) ? role : [role];

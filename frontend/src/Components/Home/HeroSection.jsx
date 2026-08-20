@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useGetHeroSlides } from "../../api/hooks/hero.api.js";
 
 const HeroSection = () => {
@@ -21,68 +21,66 @@ const HeroSection = () => {
 
     if (loading && slides.length === 0) {
         return (
-            <div className="container mx-auto px-4 lg:px-8 py-6">
-                <div className="h-[300px] md:h-[400px] bg-white border border-gray-200 rounded-lg flex items-center justify-center">
-                    <Loader2 className="animate-spin text-blue-600" size={28} />
-                </div>
+            <div className="w-full h-[250px] sm:h-[350px] md:h-[450px] bg-gray-50 flex items-center justify-center">
+                <Loader2 className="animate-spin text-[#74AA34]" size={32} />
             </div>
         );
     }
 
     if (slides.length === 0) return null;
 
-    const activeSlide = slides[currentSlide];
+    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+    const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
 
     return (
-        <div className="container mx-auto px-4 lg:px-8 py-6">
-            <div className={`relative overflow-hidden rounded-lg border border-gray-200 ${activeSlide.bg}`}>
-                {/* Soft overlay for depth */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-
-                {/* Single combined container - FIXED HEIGHT */}
-                <div className="relative grid md:grid-cols-2 gap-6 items-center h-[400px] px-6 md:px-12 py-8">
-
-                    {/* Text side - LEFT */}
-                    <div className="relative h-full flex flex-col justify-center">
-                        <div className="space-y-4 pb-12">
-                            <p className={`font-medium text-sm ${activeSlide.accent}`}>
-                                {activeSlide.title}
-                            </p>
-                            <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">
-                                {activeSlide.headline}
-                            </h2>
-                            {activeSlide.subtitle && (
-                                <p className="text-sm md:text-base text-gray-700 leading-relaxed max-w-md">
-                                    {activeSlide.subtitle}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Indicators - FIXED POSITION */}
-                        <div className="absolute bottom-0 flex gap-2">
-                            {slides.map((_, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setCurrentSlide(idx)}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx
-                                        ? "w-8 bg-blue-600"
-                                        : "w-1.5 bg-gray-300 hover:bg-gray-400"
-                                        }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Image side - RIGHT - FIXED DIMENSIONS */}
-                    <div className="flex items-center justify-center h-full overflow-hidden">
+        <div className="relative w-full h-[250px] sm:h-[350px] md:h-[450px] xl:h-[500px] overflow-hidden group bg-gray-100">
+            {slides.map((slide, idx) => {
+                const isActive = idx === currentSlide;
+                return (
+                    <div
+                        key={idx}
+                        className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
+                            isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                        }`}
+                    >
                         <img
-                            src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${activeSlide.image}`}
-                            alt="Hero"
-                            className="w-full h-full object-contain drop-shadow-lg transition-all duration-700 hover:scale-105"
+                            src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${slide.image}`}
+                            alt={slide.headline || `Banner ${idx + 1}`}
+                            className="w-full h-full object-cover object-center"
                         />
                     </div>
+                );
+            })}
 
-                </div>
+            {/* Navigation Arrows */}
+            <button 
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-4 group-hover:translate-x-0"
+            >
+                <ChevronLeft size={24} />
+            </button>
+            
+            <button 
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0"
+            >
+                <ChevronRight size={24} />
+            </button>
+
+            {/* Navigation Dots */}
+            <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
+                {slides.map((_, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${
+                            currentSlide === idx
+                                ? "w-8 bg-[#74AA34]"
+                                : "w-2 bg-white/60 hover:bg-white"
+                        }`}
+                    />
+                ))}
             </div>
         </div>
     );

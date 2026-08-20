@@ -1,22 +1,139 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   MEDICARE — Design System & Font Configuration
+   ─────────────────────────────────────────────────────────────
+
+   Font Roles:
+   • "Plus Jakarta Sans"  → Body, UI labels, nav, buttons, product names
+   • "Fraunces"           → Display headings, hero titles, section accents
+   • "JetBrains Mono"     → Prices, discount %, SKUs, numeric badges
+   ───────────────────────────────────────────────────────────── */
+
 @theme {
-    --color-primary: #0d6efd;
-    --color-primary-dark: #0b5ed7;
-    --color-secondary: #eff2f4;
-    --color-ui-dark: #1c1c1c;
-    --color-ui-gray: #8b96a5;
-    --color-ui-light: #dee2e7;
-    --font-sans: "Inter", system-ui, sans-serif;
+    /* ── Brand Colors ──────────────────────────────────────── */
+    --color-primary:        #74AA34;
+    --color-primary-dark:   #3E6913;
+    --color-primary-deep:   #1E5128;
+    --color-primary-light:  #EDF6E5;
+    --color-primary-pale:   #F4F8EE;
+    --color-accent:         #A6D76E;
+
+    /* ── Neutrals ──────────────────────────────────────────── */
+    --color-ui-dark:   #111827;
+    --color-ui-gray:   #6B7280;
+    --color-ui-light:  #E5E7EB;
+    --color-surface:   #F9FAFB;
+
+    /* ── Font Families ─────────────────────────────────────── */
+    --font-sans:    "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ─── Global Base ──────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-    background-color: #f7fafc;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+    background-color: var(--color-surface);
     color: var(--color-ui-dark);
+
+    /* Font rendering — makes Plus Jakarta Sans look crisp */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
 
+/* ─── Typography Scale ─────────────────────────────────────── */
+
+/* Display headings (Hero h1, section hero titles) use Fraunces */
+h1, .font-display {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+}
+
+/* Section headings use Plus Jakarta Sans — bold, geometric */
+h2, h3 {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+p {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.65;
+}
+
+/* ─── Price & Numeric Data ─────────────────────────────────── */
+/* Apply .price or .font-mono for crisp, precise monetary display */
+.price,
+.font-mono,
+[data-price],
+.badge-discount {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* ─── Utility Classes ──────────────────────────────────────── */
+.font-sans    { font-family: var(--font-sans); }
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }
+
+/* ─── Smooth Selection ─────────────────────────────────────── */
+::selection {
+    background-color: #74AA3430;
+    color: var(--color-primary-dark);
+}
+
+/* ─── Scrollbar (Webkit) ───────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #74AA3450;
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #74AA3490;
+}
+
+/* ─── Container ────────────────────────────────────────────── */
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 0 1rem;
+}
+
+/* ─── Focus Ring ───────────────────────────────────────────── */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
 }

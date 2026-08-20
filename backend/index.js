@@ -10,6 +10,8 @@ import settingsRouter from "./routers/settings.router.js";
 import promotionRouter from "./routers/promotion.router.js";
 import heroRouter from "./routers/hero.router.js";
 import reviewRouter from "./routers/review.router.js";
+import prescriptionRouter from "./routers/prescription.router.js";
+import menuRouter from "./routers/menu.router.js";
 
 import { errorHandler } from "./middlewares/ErrorHandler.js";
 import cookieParser from "cookie-parser";
@@ -50,6 +52,8 @@ app.use("/api/settings", settingsRouter);
 app.use("/api/promotions", promotionRouter);
 app.use("/api/hero", heroRouter);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/prescriptions", prescriptionRouter);
+app.use("/api/menus", menuRouter);
 
 app.use(errorHandler);
 

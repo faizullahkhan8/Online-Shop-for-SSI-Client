@@ -22,6 +22,7 @@ const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
 const ProtectedRoute = lazy(() => import("./Components/Auth/ProtectedRoute"));
 const ContactUsPage = lazy(() => import("./Pages/ContactUsPage"));
 const PromotionsPage = lazy(() => import("./Pages/PromotionsPage.jsx"));
+const UploadPrescription = lazy(() => import("./Pages/UploadPrescription"));
 
 // Admin Pages
 const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
@@ -37,6 +38,8 @@ const AddUserPage = lazy(() => import("./Pages/Admin/AddUserPage"));
 const AdminPromotionsPage = lazy(() => import("./Pages/Admin/PromotionsPage"));
 const PromotionBuilderPage = lazy(() => import("./Pages/Admin/PromotionBuilderPage"));
 const HeroManagerPage = lazy(() => import("./Pages/Admin/HeroManagerPage"));
+const PrescriptionsListPage = lazy(() => import("./Pages/Admin/PrescriptionsList"));
+const MenuBuilderPage = lazy(() => import("./Pages/Admin/MenuBuilderPage"));
 
 
 const App = () => {
@@ -56,6 +59,7 @@ const App = () => {
                         <Route path="contact-us" element={<ContactUsPage />} />
                         <Route path="about-us" element={<AboutPage />} />
                         <Route path="promotions" element={<PromotionsPage />} />
+                        <Route path="upload-prescription" element={<UploadPrescription />} />
                         <Route
                             path="product/:id"
                             element={<ProductDetailPage />}
@@ -138,6 +142,10 @@ const App = () => {
                         <Route path="promotions" element={<AdminPromotionsPage />} />
                         <Route path="promotions/create" element={<PromotionBuilderPage />} />
                         <Route path="hero" element={<HeroManagerPage />} />
+                        <Route path="menu-builder" element={<MenuBuilderPage />} />
+                        
+                        {/* Prescriptions Management */}
+                        <Route path="prescriptions" element={<PrescriptionsListPage />} />
                     </Route>
                 </Routes>
             </Suspense>

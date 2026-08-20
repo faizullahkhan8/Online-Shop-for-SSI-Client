@@ -16,18 +16,13 @@ export const createHeroSlide = expressAsyncHandler(async (req, res, next) => {
     if (!HeroModel) return next(new ErrorResponse("Hero model not found", 500));
 
     const data = JSON.parse(req.body.data);
-    const { title, headline, subtitle, bg, accent, order } = data;
+    const { order } = data;
 
     if (!req.image) return next(new ErrorResponse("Image is required", 400));
 
     const slide = await HeroModel.create({
-        title,
-        headline,
-        subtitle,
         image: req.image.filePath || "",
         imagekitFileId: req.image.fileId || "",
-        bg,
-        accent,
         order,
     });
 
@@ -40,7 +35,7 @@ export const updateHeroSlide = expressAsyncHandler(async (req, res, next) => {
 
     const { id } = req.params;
     const data = JSON.parse(req.body.data);
-    const { title, headline, subtitle, bg, accent, order, isActive } = data;
+    const { order, isActive } = data;
 
     const slide = await HeroModel.findById(id);
     if (!slide) return next(new ErrorResponse("Slide not found", 404));
@@ -51,11 +46,6 @@ export const updateHeroSlide = expressAsyncHandler(async (req, res, next) => {
         slide.imagekitFileId = req.image.fileId || "";
     }
 
-    slide.title = title || slide.title;
-    slide.headline = headline || slide.headline;
-    slide.subtitle = subtitle || slide.subtitle;
-    slide.bg = bg || slide.bg;
-    slide.accent = accent || slide.accent;
     slide.order = order !== undefined ? order : slide.order;
     slide.isActive = isActive !== undefined ? isActive : slide.isActive;
 

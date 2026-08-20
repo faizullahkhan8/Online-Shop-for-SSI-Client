@@ -9,7 +9,11 @@ export const useCreateCategory = () => {
     const createCategory = async (categoryData) => {
         try {
             setLoading(true)
-            const response = await apiClient.post(CATEGORY_ROUTES.CREATE, categoryData)
+            const response = await apiClient.post(CATEGORY_ROUTES.CREATE, categoryData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            })
 
             if (response.data.success) {
                 toast.success("Category created successfully")
@@ -84,7 +88,15 @@ export const useUpdateCategory = () => {
     const updateCategory = async ({ id, categoryData }) => {
         try {
             setLoading(true)
-            const response = await apiClient.patch(CATEGORY_ROUTES.UPDATE_CATEGORY + "/" + id, categoryData)
+            const response = await apiClient.patch(
+                CATEGORY_ROUTES.UPDATE_CATEGORY + "/" + id,
+                categoryData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            )
 
             if (response.data.success) {
                 toast.success("Category updated successfully")
