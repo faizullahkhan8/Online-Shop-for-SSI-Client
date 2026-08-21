@@ -12,32 +12,45 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
     if (!ProductModel)
         return next(new ErrorResponse("Product model not found", 500));
 
-    const { name, price, description, category, stock, lowStock } = JSON.parse(
+    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock } = JSON.parse(
         req.body?.data,
     );
 
-    if (!name || !price || !description || !category || !stock || !lowStock)
-        return next(new ErrorResponse("All fields are required", 400));
+    if (!name || !price || !category || !stock || !lowStock)
+        return next(new ErrorResponse("All fields are required except description", 400));
+
+    let finalSlug = slug;
+    if (!finalSlug) {
+        finalSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    }
 
     const isProductExist = await ProductModel.findOne({ name });
     if (isProductExist)
         return next(new ErrorResponse("Product already exists", 400));
 
-    if (!req.image) {
+    if (!req.uploadedImages || req.uploadedImages.length === 0) {
         return res.status(400).json({
-            message: "Image upload failed. Product image is required.",
+            message: "Image upload failed. At least one product image is required.",
         });
     }
 
     const product = await ProductModel.create({
         name,
+        slug: finalSlug,
+        productType,
+        vendor,
         price,
+        minPrice,
+        maxPrice,
         description,
+        details: details || [],
+        badges: badges || [],
         category,
         stock,
         lowStock,
-        image: req.image?.filePath || "",
-        imagekitFileId: req.image?.fileId || "",
+        image: req.uploadedImages[0]?.filePath || "",
+        imagekitFileId: req.uploadedImages[0]?.fileId || "",
+        images: req.uploadedImages,
     });
 
     return res.status(201).json({
@@ -57,6 +70,8 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
         minPrice,
         maxPrice,
         search,
+        productType,
+        vendor,
         page = 1,
         limit = 9,
         excludeActivePromotions,
@@ -67,6 +82,14 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
 
     if (category) {
         query.category = category;
+    }
+
+    if (productType) {
+        query.productType = productType;
+    }
+
+    if (vendor) {
+        query.vendor = vendor;
     }
 
     if (search) {
@@ -193,19 +216,14 @@ export const updateProduct = expressAsyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("Invalid product data format", 400));
     }
 
-    if (req.image?.fileId) {
-        try {
-            await deleteImageKitFile(product.imagekitFileId);
-            updateData.imagekitFileId = req.image.fileId;
-            updateData.image = req.image.filePath;
-        } catch (err) {
-            return next(
-                new ErrorResponse(
-                    "Failed to delete old image from ImageKit",
-                    500,
-                ),
-            );
-        }
+    if (req.uploadedImages && req.uploadedImages.length > 0) {
+        if (!updateData.images) updateData.images = [];
+        // Optional: you could delete removed images from ImageKit here by comparing product.images and updateData.images
+        updateData.images.push(...req.uploadedImages);
+        
+        // Backward compatibility
+        updateData.imagekitFileId = updateData.images[0]?.fileId || "";
+        updateData.image = updateData.images[0]?.filePath || "";
     }
 
     const updatedProduct = await ProductModel.findByIdAndUpdate(

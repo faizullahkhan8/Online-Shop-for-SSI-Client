@@ -12,6 +12,7 @@ import {
     LayoutDashboard,
     ChevronRight,
     LogOut,
+    FileText
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -26,162 +27,174 @@ const MobileSideBar = ({
 
     return (
         <>
+            {/* Overlay */}
             {isMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 z-[60] md:hidden transition-opacity"
+                    className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}
 
+            {/* Sidebar Panel */}
             <div
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-white z-[70] md:hidden transform transition-transform duration-300 shadow-xl flex flex-col ${isMenuOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#f8f9fa] z-[70] md:hidden transform transition-transform duration-400 ease-in-out shadow-2xl flex flex-col ${
+                    isMenuOpen ? "translate-x-0" : "translate-x-full"
+                }`}
             >
-                <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <img src="./logo.png" alt="Logo" className="h-6 w-6" />
-                        <span className="font-semibold text-gray-900 text-base">
-                            Menu
-                        </span>
+                {/* Modern Gradient Header */}
+                <div className="bg-gradient-to-br from-[#1A3A1E] to-[#1E5128] pt-10 pb-6 px-6 relative overflow-hidden rounded-bl-3xl">
+                    <div className="absolute top-0 right-0 p-4">
+                        <button
+                            onClick={() => setIsMenuOpen(false)}
+                            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setIsMenuOpen(false)}
-                        className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
+
+                    {isAuthenticated ? (
+                        <div className="flex items-center gap-4 mt-4">
+                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
+                                <User size={28} className="text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[#A6D76E] text-xs font-semibold uppercase tracking-wider mb-1">
+                                    Welcome back
+                                </p>
+                                <p className="font-bold text-white text-lg truncate">
+                                    {user?.name}
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-4">
+                            <h3 className="font-extrabold text-2xl text-white mb-2 leading-tight">
+                                Your <span className="text-[#A6D76E]">Wellness</span><br/>Journey Starts Here
+                            </h3>
+                            <p className="text-white/80 text-sm mb-5 leading-relaxed max-w-[240px]">
+                                Login to track orders, manage prescriptions, and access exclusive deals.
+                            </p>
+                            <Link
+                                to="/login"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="inline-flex w-full items-center justify-center bg-white text-[#1E5128] hover:bg-[#F4F8EE] py-3 rounded-xl text-sm font-bold shadow-md transition-all"
+                            >
+                                Login or Register
+                            </Link>
+                        </div>
+                    )}
+                    
+                    {/* Decorative Background Elements */}
+                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                    <div className="absolute top-10 -left-10 w-24 h-24 bg-[#74AA34]/20 rounded-full blur-xl"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                    <div className="p-4">
-                        {isAuthenticated ? (
-                            <div className="bg-gray-900 rounded-lg p-4 text-white">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                                        <User
-                                            size={20}
-                                            className="text-white"
-                                        />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-white/60">
-                                            Welcome back
-                                        </p>
-                                        <p className="font-semibold text-sm truncate">
-                                            {user?.name}
-                                        </p>
-                                    </div>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-6">
+                    {/* Quick Action Buttons (If Authenticated) */}
+                    {isAuthenticated && (
+                        <div className="grid grid-cols-2 gap-3">
+                            <Link
+                                to="/profile"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-[#A6D76E] transition-all"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-[#F4F8EE] text-[#74AA34] flex items-center justify-center">
+                                    <User size={20} />
                                 </div>
-                                <div className="flex gap-2">
-                                    <Link
-                                        to="/profile"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex-1 bg-white/10 hover:bg-white/20 text-center py-2 rounded-lg text-xs font-medium transition-colors"
-                                    >
-                                        Profile
-                                    </Link>
-                                    <button className="px-3 bg-red-500/20 hover:bg-red-500/30 text-red-200 py-2 rounded-lg transition-colors">
-                                        <LogOut size={16} />
-                                    </button>
+                                <span className="text-xs font-semibold text-gray-700">Profile</span>
+                            </Link>
+                            <Link
+                                to="/upload-prescription"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-[#A6D76E] transition-all"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-[#EDF6E5] text-[#3E6913] flex items-center justify-center">
+                                    <FileText size={20} />
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="bg-blue-600 rounded-lg p-4 text-white">
-                                <h3 className="font-semibold text-lg mb-1">
-                                    Start Shopping
-                                </h3>
-                                <p className="text-white/80 text-xs mb-3 leading-relaxed">
-                                    Login to track orders and manage your
-                                    favorites.
-                                </p>
-                                <Link
-                                    to="/login"
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className="block w-full bg-white text-blue-600 text-center py-2 rounded-lg text-sm font-medium"
-                                >
-                                    Login / Register
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                                <span className="text-xs font-semibold text-gray-700">Upload Rx</span>
+                            </Link>
+                        </div>
+                    )}
 
-                    <div className="mt-2">
-                        <p className="px-4 text-xs font-medium text-gray-500 mb-2">
-                            Menu
+                    {/* Navigation Menu */}
+                    <div>
+                        <p className="px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
+                            Explore
                         </p>
-
-                        {user?.role === "admin" && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            {user?.role === "admin" && (
+                                <NavItem
+                                    setIsMenuOpen={setIsMenuOpen}
+                                    to="/admin-dashboard"
+                                    icon={<LayoutDashboard size={18} />}
+                                    label="Admin Panel"
+                                    color="text-indigo-600 bg-indigo-50"
+                                />
+                            )}
                             <NavItem
                                 setIsMenuOpen={setIsMenuOpen}
-                                to="/admin-dashboard"
-                                icon={<LayoutDashboard size={20} />}
-                                label="Admin Panel"
-                                color="text-indigo-600"
+                                to="/"
+                                icon={<Home size={18} />}
+                                label="Home"
                             />
-                        )}
-
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/"
-                            icon={<Home size={20} />}
-                            label="Home"
-                        />
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/products"
-                            icon={<List size={20} />}
-                            label="Categories"
-                        />
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/wishlist"
-                            icon={<Heart size={20} />}
-                            label="Favorites"
-                        />
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/orders"
-                            icon={<Package size={20} />}
-                            label="My Orders"
-                        />
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/cart"
-                            icon={<ShoppingCart size={20} />}
-                            label="My Cart"
-                            badge={cartCount}
-                        />
+                            <NavItem
+                                setIsMenuOpen={setIsMenuOpen}
+                                to="/products"
+                                icon={<List size={18} />}
+                                label="All Categories"
+                            />
+                        </div>
                     </div>
 
-                    <div className="mt-4 border-t border-gray-100 pt-4 pb-8">
-                        <p className="px-4 text-xs font-medium text-gray-500 mb-2">
-                            Support
+                    <div>
+                        <p className="px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
+                            My Account
                         </p>
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/contact"
-                            icon={<Headphones size={20} />}
-                            label="Help Center"
-                        />
-                        <NavItem
-                            setIsMenuOpen={setIsMenuOpen}
-                            to="/about"
-                            icon={<Building size={20} />}
-                            label="About Us"
-                        />
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <NavItem
+                                setIsMenuOpen={setIsMenuOpen}
+                                to="/orders"
+                                icon={<Package size={18} />}
+                                label="My Orders"
+                            />
+                            <NavItem
+                                setIsMenuOpen={setIsMenuOpen}
+                                to="/wishlist"
+                                icon={<Heart size={18} />}
+                                label="Favorites"
+                            />
+                            <NavItem
+                                setIsMenuOpen={setIsMenuOpen}
+                                to="/cart"
+                                icon={<ShoppingCart size={18} />}
+                                label="My Cart"
+                                badge={cartCount}
+                            />
+                            {isAuthenticated && (
+                                <button onClick={() => { /* Implement if needed or use Header logic */ }} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors border-t border-gray-50 group">
+                                    <div className="w-8 h-8 rounded-lg bg-red-100 text-red-500 flex items-center justify-center">
+                                        <LogOut size={16} />
+                                    </div>
+                                    <span className="font-semibold text-red-600 text-[13px] flex-1 text-left">
+                                        Sign Out
+                                    </span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-4 bg-gray-50 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-gray-500">
-                        <span className="text-xs">
-                            © 2026 E-Store
-                        </span>
-                        <div className="flex gap-2 items-center">
-                            <Globe size={14} />
-                            <span className="text-xs">
-                                EN
-                            </span>
+                <div className="p-5 bg-white border-t border-gray-100 rounded-tl-3xl mt-auto">
+                    <div className="flex items-center justify-between text-gray-400">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-[#74AA34] rounded flex items-center justify-center text-white font-black text-[10px]">
+                                M+
+                            </div>
+                            <span className="text-[11px] font-semibold">MediCare</span>
+                        </div>
+                        <div className="flex gap-2 items-center bg-gray-50 px-2 py-1 rounded-md">
+                            <Globe size={12} />
+                            <span className="text-[10px] font-bold">EN</span>
                         </div>
                     </div>
                 </div>
@@ -197,30 +210,30 @@ const NavItem = ({
     icon,
     label,
     badge,
-    color = "text-gray-600",
+    color = "text-gray-500 bg-gray-50",
     setIsMenuOpen,
 }) => (
     <Link
         to={to}
         onClick={() => setIsMenuOpen(false)}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+        className="flex items-center gap-3 px-4 py-3.5 hover:bg-[#F4F8EE] transition-colors border-b border-gray-50 last:border-b-0 group"
     >
         <div
-            className={`p-1.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors ${color}`}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-[#74AA34] group-hover:text-white transition-all ${color}`}
         >
             {icon}
         </div>
-        <span className="font-medium text-gray-700 text-sm flex-1">
+        <span className="font-semibold text-gray-700 group-hover:text-[#1E5128] text-[13px] flex-1 transition-colors">
             {label}
         </span>
         {badge > 0 ? (
-            <span className="bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded">
+            <span className="bg-[#74AA34] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
                 {badge}
             </span>
         ) : (
             <ChevronRight
                 size={16}
-                className="text-gray-300 group-hover:translate-x-0.5 transition-transform"
+                className="text-gray-300 group-hover:text-[#74AA34] group-hover:translate-x-1 transition-all"
             />
         )}
     </Link>

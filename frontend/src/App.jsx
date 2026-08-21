@@ -40,6 +40,7 @@ const PromotionBuilderPage = lazy(() => import("./Pages/Admin/PromotionBuilderPa
 const HeroManagerPage = lazy(() => import("./Pages/Admin/HeroManagerPage"));
 const PrescriptionsListPage = lazy(() => import("./Pages/Admin/PrescriptionsList"));
 const MenuBuilderPage = lazy(() => import("./Pages/Admin/MenuBuilderPage"));
+const HomePageBuilderPage = lazy(() => import("./Pages/Admin/HomePageBuilderPage"));
 
 
 const App = () => {
@@ -143,6 +144,7 @@ const App = () => {
                         <Route path="promotions/create" element={<PromotionBuilderPage />} />
                         <Route path="hero" element={<HeroManagerPage />} />
                         <Route path="menu-builder" element={<MenuBuilderPage />} />
+                        <Route path="homepage-builder" element={<HomePageBuilderPage />} />
                         
                         {/* Prescriptions Management */}
                         <Route path="prescriptions" element={<PrescriptionsListPage />} />

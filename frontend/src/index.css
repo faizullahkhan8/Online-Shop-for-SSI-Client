@@ -12,27 +12,29 @@
 
 @theme {
     /* ── Brand Colors ──────────────────────────────────────── */
-    --color-primary:        #74AA34;
-    --color-primary-dark:   #3E6913;
-    --color-primary-deep:   #1E5128;
-    --color-primary-light:  #EDF6E5;
-    --color-primary-pale:   #F4F8EE;
-    --color-accent:         #A6D76E;
+    --color-primary: #74AA34;
+    --color-primary-dark: #3E6913;
+    --color-primary-deep: #1E5128;
+    --color-primary-light: #EDF6E5;
+    --color-primary-pale: #F4F8EE;
+    --color-accent: #A6D76E;
 
     /* ── Neutrals ──────────────────────────────────────────── */
-    --color-ui-dark:   #111827;
-    --color-ui-gray:   #6B7280;
-    --color-ui-light:  #E5E7EB;
-    --color-surface:   #F9FAFB;
+    --color-ui-dark: #111827;
+    --color-ui-gray: #6B7280;
+    --color-ui-light: #E5E7EB;
+    --color-surface: #F9FAFB;
 
     /* ── Font Families ─────────────────────────────────────── */
-    --font-sans:    "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
     --font-display: "Fraunces", Georgia, serif;
-    --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+    --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 /* ─── Global Base ──────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -59,7 +61,8 @@ body {
 /* ─── Typography Scale ─────────────────────────────────────── */
 
 /* Display headings (Hero h1, section hero titles) use Fraunces */
-h1, .font-display {
+h1,
+.font-display {
     font-family: var(--font-display);
     font-weight: 900;
     letter-spacing: -0.03em;
@@ -67,14 +70,17 @@ h1, .font-display {
 }
 
 /* Section headings use Plus Jakarta Sans — bold, geometric */
-h2, h3 {
+h2,
+h3 {
     font-family: var(--font-sans);
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.2;
 }
 
-h4, h5, h6 {
+h4,
+h5,
+h6 {
     font-family: var(--font-sans);
     font-weight: 700;
     line-height: 1.3;
@@ -98,9 +104,17 @@ p {
 }
 
 /* ─── Utility Classes ──────────────────────────────────────── */
-.font-sans    { font-family: var(--font-sans); }
-.font-display { font-family: var(--font-display); }
-.font-mono    { font-family: var(--font-mono); }
+.font-sans {
+    font-family: var(--font-sans);
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+.font-mono {
+    font-family: var(--font-mono);
+}
 
 /* ─── Smooth Selection ─────────────────────────────────────── */
 ::selection {
@@ -113,13 +127,16 @@ p {
     width: 5px;
     height: 5px;
 }
+
 ::-webkit-scrollbar-track {
     background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
     background: #74AA3450;
     border-radius: 999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: #74AA3490;
 }
@@ -136,4 +153,31 @@ p {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
     border-radius: 4px;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+    0% {
+        transform: translateX(100vw);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.animate-marquee {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 35s linear infinite;
+}
+
+.marquee-container {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.marquee-container:hover .animate-marquee {
+    animation-play-state: paused;
 }

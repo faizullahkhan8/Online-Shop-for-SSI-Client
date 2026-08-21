@@ -10,6 +10,7 @@ import heroSchema from "../models/hero.model.js";
 import reviewSchema from "../models/review.model.js";
 import prescriptionSchema from "../models/prescription.model.js";
 import menuSchema from "../models/menu.model.js";
+import homePageSchema from "../models/homePage.model.js";
 
 let connectionPromise = null;
 let localDbConnection = null;
@@ -24,6 +25,7 @@ let localHeroModel;
 let localReviewModel;
 let localPrescriptionModel;
 let localMenuModel;
+let localHomePageModel;
 
 export const connectToDB = async () => {
     if (connectionPromise) return connectionPromise;
@@ -69,6 +71,7 @@ export const connectToDB = async () => {
             localReviewModel = localDbConnection.model("Review", reviewSchema);
             localPrescriptionModel = localDbConnection.model("Prescription", prescriptionSchema);
             localMenuModel = localDbConnection.model("Menu", menuSchema);
+            localHomePageModel = localDbConnection.model("HomePage", homePageSchema);
 
             return localDbConnection;
         } catch (error) {
@@ -92,3 +95,4 @@ export const getLocalHeroModel = () => localHeroModel || null;
 export const getLocalReviewModel = () => localReviewModel || null;
 export const getLocalPrescriptionModel = () => localPrescriptionModel || null;
 export const getLocalMenuModel = () => localMenuModel || null;
+export const getLocalHomePageModel = () => localHomePageModel || null;

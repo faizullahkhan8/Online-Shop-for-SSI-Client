@@ -33,43 +33,43 @@ export const handleOptionalBackgroundRemoval = async (req, res, next) => {
         isRemoveBg = false;
     }
 
-    if (!req.file || !isRemoveBg) return next();
+    const files = req.files || (req.file ? [req.file] : []);
+    if (files.length === 0 || !isRemoveBg) return next();
 
     try {
-        const formData = new FormData();
+        await Promise.all(
+            files.map(async (file) => {
+                const formData = new FormData();
+                formData.append("image_file", file.buffer, {
+                    filename: file.originalname,
+                    contentType: file.mimetype,
+                });
+                formData.append("size", "auto");
 
-        // MUST pass buffer as-is
-        formData.append("image_file", req.file.buffer, {
-            filename: req.file.originalname,
-            contentType: req.file.mimetype,
-        });
+                const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+                    method: "POST",
+                    headers: {
+                        "X-Api-Key": process.env.REMOVE_BG_API_KEY,
+                        ...formData.getHeaders(),
+                    },
+                    body: formData,
+                });
 
-        formData.append("size", "auto");
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("remove.bg error:", errorText);
+                    throw new Error(`remove.bg failed (${response.status})`);
+                }
 
-        const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-            method: "POST",
-            headers: {
-                "X-Api-Key": process.env.REMOVE_BG_API_KEY,
-                ...formData.getHeaders(),
-            },
-            body: formData,
-        });
+                const buffer = Buffer.from(await response.arrayBuffer());
 
-        // 🚨 If error, LOG EVERYTHING
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("remove.bg error:", errorText);
-            throw new Error(`remove.bg failed (${response.status})`);
-        }
-
-        const buffer = Buffer.from(await response.arrayBuffer());
-
-        // 2️⃣ Overwrite original image
-        req.file.buffer = buffer;
-        req.file.size = buffer.length;
-        req.file.mimetype = "image/png"; // remove.bg always returns PNG
-
-        console.log("✅ Background removed successfully");
+                // Overwrite original image
+                file.buffer = buffer;
+                file.size = buffer.length;
+                file.mimetype = "image/png"; // remove.bg always returns PNG
+            })
+        );
+        console.log("✅ Background removed successfully for all images");
         next();
     } catch (err) {
         console.error("❌ Background removal failed:", err);
@@ -78,24 +78,34 @@ export const handleOptionalBackgroundRemoval = async (req, res, next) => {
 };
 
 export const imagekitUpload = async (req, res, next) => {
-    if (!req.file) {
+    const files = req.files || (req.file ? [req.file] : []);
+    if (files.length === 0) {
         return next();
     }
 
     try {
-        const result = await imagekit.files.upload({
-            file: req.file.buffer.toString("base64"),
-            fileName: req.file.originalname,
-            folder: "/products",
-            useUniqueFileName: true,
-        });
+        const uploadPromises = files.map((file) =>
+            imagekit.files.upload({
+                file: file.buffer.toString("base64"),
+                fileName: file.originalname,
+                folder: "/products",
+                useUniqueFileName: true,
+            })
+        );
 
-        req.image = {
+        const results = await Promise.all(uploadPromises);
+
+        req.uploadedImages = results.map((result) => ({
             fileId: result.fileId,
             url: result.url,
             name: result.name,
             filePath: result.filePath,
-        };
+        }));
+
+        // Backward compatibility for routes that use single image
+        if (req.file) {
+            req.image = req.uploadedImages[0];
+        }
 
         next();
     } catch (err) {

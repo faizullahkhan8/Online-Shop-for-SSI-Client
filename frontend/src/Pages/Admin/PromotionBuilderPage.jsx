@@ -2,18 +2,17 @@ import { useState, useEffect, useCallback } from "react";
 import {
     Zap,
     Settings,
-    Package,
-    Search,
     Plus,
     Trash2,
     Save,
     Loader2,
     Percent,
     Calendar,
+    Package,
 } from "lucide-react";
-import { useGetAllProducts } from "../../api/hooks/product.api";
 import { useAddPromotion, useUpdatePromotion, useGetPromotionById } from "../../api/hooks/promotion.api";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ProductSelector from "../../Components/Admin/ProductSelector";
 
 import Input from "../../UI/Input";
 import Select from "../../UI/Select";
@@ -23,7 +22,6 @@ const PromotionBuilder = () => {
     const [searchParams] = useSearchParams();
     const editId = searchParams.get("id");
 
-    const { getAllProducts } = useGetAllProducts();
     const { addPromotion, loading: addLoading } = useAddPromotion();
     const { updatePromotion, loading: updateLoading } = useUpdatePromotion();
     const { getPromotionById, loading: fetchLoading } = useGetPromotionById();
@@ -39,13 +37,7 @@ const PromotionBuilder = () => {
         endTime: "",
     });
 
-    const [productSearch, setProductSearch] = useState("");
-    const [availableProducts, setAvailableProducts] = useState([]);
     const [selectedProducts, setSelectedProducts] = useState([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [noProductFound, setNoProductFound] = useState(false);
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const [errors, setErrors] = useState({});
 
     // Fetch existing promotion if editing
@@ -70,43 +62,7 @@ const PromotionBuilder = () => {
         }
     }, [editId, getPromotionById]);
 
-    // Fetch products based on search or page changes
-    const fetchProducts = useCallback(async () => {
-        setIsSearching(true);
-        setNoProductFound(false);
-        try {
-            const response = await getAllProducts({
-                search: productSearch,
-                page: page,
-                limit: 12,
-                excludeActivePromotions: true,
-                currentPromotionId: editId,
-            });
-            if (response?.success) {
-                setAvailableProducts(response.products);
-                setTotalPages(response.totalPages);
-                if (response.products.length === 0) {
-                    setNoProductFound(true);
-                }
-            } else {
-                setAvailableProducts([]);
-                setNoProductFound(true);
-            }
-        } catch (error) {
-            console.error("Failed to fetch products:", error);
-        } finally {
-            setIsSearching(false);
-        }
-    }, [productSearch, page, getAllProducts]);
 
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
-    // Reset page when search changes
-    useEffect(() => {
-        setPage(1);
-    }, [productSearch]);
 
     const handleDataChange = (name, value) => {
         setPromotionData((prev) => ({ ...prev, [name]: value }));
@@ -345,113 +301,13 @@ const PromotionBuilder = () => {
 
                 {/* Product Selection */}
                 <div className="lg:col-span-7 space-y-4">
-                    <section className="bg-white border border-gray-200 rounded-lg flex flex-col min-h-[400px]">
-                        <div className="p-5 border-b border-gray-200">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                <Package size={16} className="text-blue-600" />
-                                Product Selection
-                            </h3>
-
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Search products..."
-                                    value={productSearch}
-                                    onChange={(e) =>
-                                        setProductSearch(e.target.value)
-                                    }
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                    {isSearching ? (
-                                        <Loader2 className="animate-spin" size={18} />
-                                    ) : (
-                                        <Search size={18} />
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 p-5 overflow-y-auto">
-                            {isSearching && availableProducts.length === 0 ? (
-                                <div className="h-full flex items-center justify-center">
-                                    <Loader2 className="animate-spin text-blue-600" size={32} />
-                                </div>
-                            ) : noProductFound ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                                    <Search size={32} className="text-gray-300 mb-2" />
-                                    <p className="text-sm text-gray-500">
-                                        No products found or all products are already in active promotions
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-                                    {availableProducts.map((p) => {
-                                        const isSelected = selectedProducts.some(
-                                            (sp) => sp._id === p._id,
-                                        );
-                                        return (
-                                            <button
-                                                key={p._id}
-                                                type="button"
-                                                onClick={() => toggleProduct(p)}
-                                                className={`relative p-3 rounded-lg border transition-all flex flex-col items-center text-center gap-2 ${isSelected
-                                                    ? "bg-blue-50 border-blue-500"
-                                                    : "bg-white border-gray-200 hover:border-gray-300"
-                                                    }`}
-                                            >
-                                                <div className="w-full aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-100 p-2">
-                                                    <img
-                                                        src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${p.image}`}
-                                                        className="w-full h-full object-contain"
-                                                        alt={p.name}
-                                                    />
-                                                </div>
-                                                <div className="w-full">
-                                                    <p className="text-xs font-medium text-gray-900 truncate">
-                                                        {p.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">
-                                                        PKR {p.price.toLocaleString()}
-                                                    </p>
-                                                </div>
-                                                {isSelected && (
-                                                    <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center">
-                                                        <Plus size={12} className="rotate-45" />
-                                                    </div>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
-                                <button
-                                    type="button"
-                                    disabled={page === 1}
-                                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors border border-gray-200 hover:bg-gray-50 disabled:opacity-30"
-                                >
-                                    Previous
-                                </button>
-                                <span className="text-sm text-gray-600">
-                                    Page {page} of {totalPages}
-                                </span>
-                                <button
-                                    type="button"
-                                    disabled={page === totalPages}
-                                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors border border-gray-200 hover:bg-gray-50 disabled:opacity-30"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        )}
-                    </section>
+                    <ProductSelector
+                        selectedProducts={selectedProducts}
+                        onChange={setSelectedProducts}
+                        excludeActivePromotions={true}
+                        currentPromotionId={editId}
+                        multiple={true}
+                    />
                 </div>
 
                 {/* Selected Products */}

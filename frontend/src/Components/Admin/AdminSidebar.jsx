@@ -18,6 +18,7 @@ import {
     MonitorPlay,
     FileText,
     ListTree,
+    LayoutTemplate,
 } from "lucide-react";
 
 import { useState } from "react";
@@ -275,6 +276,13 @@ const AdminSidebar = () => {
                         icon={<ListTree size={18} />}
                     >
                         Menu Builder
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/homepage-builder" />}
+                        icon={<LayoutTemplate size={18} />}
+                    >
+                        Page Builder
                     </MenuItem>
 
                     {/* Bottom Actions */}

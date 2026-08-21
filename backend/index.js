@@ -12,6 +12,7 @@ import heroRouter from "./routers/hero.router.js";
 import reviewRouter from "./routers/review.router.js";
 import prescriptionRouter from "./routers/prescription.router.js";
 import menuRouter from "./routers/menu.router.js";
+import homePageRouter from "./routers/homePage.router.js";
 
 import { errorHandler } from "./middlewares/ErrorHandler.js";
 import cookieParser from "cookie-parser";
@@ -54,6 +55,7 @@ app.use("/api/hero", heroRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/menus", menuRouter);
+app.use("/api/homepage", homePageRouter);
 
 app.use(errorHandler);
 

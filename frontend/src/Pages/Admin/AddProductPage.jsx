@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Input from "../../UI/Input.jsx";
 import Button from "../../UI/Button.jsx";
 import Select from "../../UI/Select.jsx";
+import ProductDetailsBuilder from "../../Components/ProductDetailsBuilder.jsx";
 import {
     ImageIcon,
     Loader,
@@ -26,12 +27,20 @@ import { useGetAllCategories } from "../../api/hooks/category.api.js";
 const INITAIL_STATE = {
     _id: "",
     name: "",
+    slug: "",
+    productType: "",
+    vendor: "",
     price: "",
+    minPrice: "",
+    maxPrice: "",
     description: "",
+    details: [],
     category: "",
     stock: "",
     lowStock: "",
+    badges: [],
     image: null,
+    images: [],
     isRemoveBg: false,
 };
 
@@ -90,34 +99,63 @@ const AddProduct = () => {
     const handleChange = (e) => {
         const { id, value, files, type } = e.target;
         if (type === "file") {
-            setProductData((prev) => ({ ...prev, image: files[0] }));
+            const newFiles = Array.from(files);
+            setProductData((prev) => ({ 
+                ...prev, 
+                images: [...(prev.images || []), ...newFiles] 
+            }));
         } else {
             setProductData((prev) => ({ ...prev, [id]: value }));
         }
+    };
+
+    const removeImage = (index) => {
+        setProductData((prev) => {
+            const newImages = [...(prev.images || [])];
+            newImages.splice(index, 1);
+            return { ...prev, images: newImages };
+        });
+    };
+
+    const handleBadgeToggle = (badgeName) => {
+        setProductData((prev) => {
+            const currentBadges = prev.badges || [];
+            if (currentBadges.includes(badgeName)) {
+                return { ...prev, badges: currentBadges.filter((b) => b !== badgeName) };
+            }
+            return { ...prev, badges: [...currentBadges, badgeName] };
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
 
+        const { image, images, ...textData } = productData;
+        const newImages = images?.filter((img) => img instanceof File) || [];
+        const existingImages = images?.filter((img) => !(img instanceof File)) || [];
+
+        textData.images = existingImages;
+
+        if (!isEditing && newImages.length === 0 && !image) {
+            return toast.error("Please select at least one image");
+        }
+
+        newImages.forEach((file) => {
+            formData.append("images", file);
+        });
+
+        // Legacy compatibility
+        if (image instanceof File && newImages.length === 0) {
+            formData.append("images", image);
+        }
+
+        formData.append("data", JSON.stringify(textData));
+
         if (!isEditing) {
-            if (!productData.image)
-                return toast.error("Please select an image");
-
-            formData.append("image", productData.image);
-            const { image, ...textData } = productData;
-            formData.append("data", JSON.stringify(textData));
-
             const response = await createProduct(formData);
             if (response.success) navigate("/admin-dashboard/products");
         } else {
-            if (productData.image instanceof File) {
-                formData.append("image", productData.image);
-            }
-
-            const { image, ...textData } = productData;
-            formData.append("data", JSON.stringify(textData));
-
             const response = await updateProduct({
                 product: formData,
                 id: productData._id,
@@ -173,8 +211,60 @@ const AddProduct = () => {
                                 required
                             />
                         </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Slug */}
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Hash size={14} className="text-blue-600" />
+                                    Slug (URL)
+                                </label>
+                                <Input
+                                    type="text"
+                                    id="slug"
+                                    value={productData?.slug}
+                                    placeholder="Leave empty to auto-generate"
+                                    className="w-full"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            
+                            {/* Vendor */}
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Box size={14} className="text-blue-600" />
+                                    Vendor
+                                </label>
+                                <Input
+                                    type="text"
+                                    id="vendor"
+                                    value={productData?.vendor}
+                                    placeholder="e.g. GSK"
+                                    className="w-full"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
 
-                        {/* Price and Stock */}
+                        {/* Product Type & Category */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Layers size={14} className="text-blue-600" />
+                                    Product Type
+                                </label>
+                                <Input
+                                    type="text"
+                                    id="productType"
+                                    value={productData?.productType}
+                                    placeholder="e.g. Tablets"
+                                    className="w-full"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Pricing */}
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
@@ -195,6 +285,38 @@ const AddProduct = () => {
                                     required
                                 />
                             </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <DollarSign size={14} className="text-blue-600" />
+                                    Min Price
+                                </label>
+                                <Input
+                                    type="number"
+                                    id="minPrice"
+                                    value={productData?.minPrice}
+                                    placeholder="Optional"
+                                    className="w-full"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <DollarSign size={14} className="text-blue-600" />
+                                    Max Price
+                                </label>
+                                <Input
+                                    type="number"
+                                    id="maxPrice"
+                                    value={productData?.maxPrice}
+                                    placeholder="Optional"
+                                    className="w-full"
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Stock Quantity */}
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Boxes
@@ -231,42 +353,62 @@ const AddProduct = () => {
                         </div>
 
                         {/* Category */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                <Layers size={14} className="text-blue-600" />
-                                Category
-                            </label>
-                            <Select
-                                placeholder="Select category"
-                                id="category"
-                                value={productData?.category}
-                                onChange={(value) =>
-                                    handleChange({
-                                        target: { id: "category", value },
-                                    })
-                                }
-                                options={categories.map((cat) => ({
-                                    label: cat.name,
-                                    value: cat._id,
-                                }))}
-                                className="w-full"
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-[-10px]">
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                                    <Layers size={14} className="text-blue-600" />
+                                    Category
+                                </label>
+                                <Select
+                                    placeholder="Select category"
+                                    id="category"
+                                    value={productData?.category}
+                                    onChange={(value) =>
+                                        handleChange({
+                                            target: { id: "category", value },
+                                        })
+                                    }
+                                    options={categories.map((cat) => ({
+                                        label: cat.name,
+                                        value: cat._id,
+                                    }))}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
 
-                        {/* Description */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                <Layers size={14} className="text-blue-600" />
-                                Description
+                        {/* Badges */}
+                        <div className="pt-2 border-t border-gray-100">
+                            <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                <Box size={14} className="text-blue-600" />
+                                Product Badges & Tags
                             </label>
-                            <Input
-                                type="textarea"
-                                id="description"
-                                value={productData?.description}
-                                placeholder="Enter product description"
-                                rows={6}
-                                className="w-full resize-none"
-                                onChange={handleChange}
+                            <div className="flex flex-wrap gap-4">
+                                {["Featured", "New Arrival", "Best Seller", "Top Rated", "Special Offer"].map((badge) => (
+                                    <label key={badge} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-100">
+                                        <input
+                                            type="checkbox"
+                                            checked={(productData?.badges || []).includes(badge)}
+                                            onChange={() => handleBadgeToggle(badge)}
+                                            className="rounded text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        />
+                                        {badge}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Dynamic Description Sections */}
+                        <div className="pt-2 border-t border-gray-100">
+                            <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                                <Layers size={14} className="text-blue-600" />
+                                Details & Sections
+                            </label>
+                            <ProductDetailsBuilder
+                                details={productData?.details || []}
+                                onChange={(updatedDetails) =>
+                                    setProductData((prev) => ({ ...prev, details: updatedDetails }))
+                                }
                             />
                         </div>
                     </div>
@@ -297,24 +439,11 @@ const AddProduct = () => {
                                 />
                             </div>
                         </div>
-                        <label
-                            htmlFor="image"
-                            className="group relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
-                        >
-                            {previewUrl ? (
-                                <div className="absolute inset-0">
-                                    <img
-                                        src={previewUrl}
-                                        alt="Preview"
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <p className="text-sm font-medium text-white">
-                                            Change Image
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
+                        <div className="space-y-4">
+                            <label
+                                htmlFor="image"
+                                className="group relative flex flex-col items-center justify-center w-full aspect-[2/1] border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
+                            >
                                 <div className="text-center p-6">
                                     <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-50 transition-colors">
                                         <ImageIcon
@@ -323,21 +452,60 @@ const AddProduct = () => {
                                         />
                                     </div>
                                     <p className="text-sm font-medium text-gray-900 mb-1">
-                                        Upload Product Image
+                                        Upload Product Images
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        PNG, JPG, WEBP (Max 10MB)
+                                        PNG, JPG, WEBP (Max 10MB) - Multi select allowed
                                     </p>
                                 </div>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    hidden
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleChange}
+                                />
+                            </label>
+
+                            {/* Image Previews */}
+                            {productData?.images && productData.images.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {productData.images.map((img, idx) => {
+                                        let imgUrl = "";
+                                        if (img instanceof File) {
+                                            imgUrl = URL.createObjectURL(img);
+                                        } else if (img.url) {
+                                            imgUrl = img.url; // New format
+                                        } else if (img.filePath) {
+                                            imgUrl = `${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${img.filePath}`;
+                                        }
+
+                                        return (
+                                            <div key={idx} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group bg-gray-50">
+                                                <img src={imgUrl} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(idx)}
+                                                    className="absolute top-1.5 right-1.5 bg-white/90 text-red-500 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 shadow-sm"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             )}
-                            <input
-                                type="file"
-                                id="image"
-                                hidden
-                                accept="image/*"
-                                onChange={handleChange}
-                            />
-                        </label>
+
+                            {/* Legacy Single Image Preview */}
+                            {(!productData?.images || productData.images.length === 0) && productData?.image && previewUrl && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    <div className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Legacy Preview" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Action Buttons */}
