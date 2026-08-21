@@ -55,9 +55,9 @@ const SectionHeader = ({ title, subtitle, cta, ctaPath }) => (
     <div className="flex items-end justify-between mb-7">
         <div>
             <div className="flex items-center gap-2 mb-1.5">
-                <span className="block w-5 h-[2px] rounded-full bg-[#74AA34]" />
+                <span className="block w-5 h-[2px] rounded-full bg-primary" />
                 {/* Plus Jakarta Sans label — ultra-clear tracking for category labels */}
-                <span className="font-sans text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#74AA34]">
+                <span className="font-sans text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary">
                     {subtitle || "Curated For You"}
                 </span>
             </div>
@@ -69,7 +69,7 @@ const SectionHeader = ({ title, subtitle, cta, ctaPath }) => (
         {cta && (
             <Link
                 to={ctaPath || "/products"}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-[#74AA34] hover:text-[#3E6913] uppercase tracking-[0.14em] transition-colors group"
+                className="flex items-center gap-1.5 text-[11px] font-bold text-primary hover:text-primary-dark uppercase tracking-[0.14em] transition-colors group"
             >
                 {cta}
                 <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -132,7 +132,7 @@ const RibbonProductCard = ({ prod, onWishlist, onCart, isWishlisted }) => {
                     />
                 ) : (
                     <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                        <Pill size={22} className="text-[#A6D76E]" />
+                        <Pill size={22} className="text-accent" />
                     </div>
                 )}
             </Link>
@@ -145,7 +145,7 @@ const RibbonProductCard = ({ prod, onWishlist, onCart, isWishlisted }) => {
                                 -{discountPct}% OFF
                             </span>
                         ) : (
-                            <span className="text-[9px] font-extrabold text-[#A6D76E] tracking-wider uppercase">
+                            <span className="text-[9px] font-extrabold text-accent tracking-wider uppercase">
                                 MediCare Pick
                             </span>
                         )}
@@ -175,7 +175,7 @@ const RibbonProductCard = ({ prod, onWishlist, onCart, isWishlisted }) => {
                     <button
                         type="button"
                         onClick={(e) => onCart(e, prod)}
-                        className="w-full h-8 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider rounded-xl bg-[#74AA34] text-white hover:bg-[#629329] active:bg-[#527E23] transition-colors cursor-pointer shadow-xs"
+                        className="w-full h-8 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider rounded-xl bg-primary text-white hover:bg-primary-dark active:bg-primary-dark transition-colors cursor-pointer shadow-xs"
                     >
                         + Add to Cart
                     </button>
@@ -372,19 +372,19 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         {
             name: "Nutrition",
             icon: Apple,
-            bg: "bg-[#EDF6E5]",
-            iconClass: "text-[#3E6913]",
-            label: "text-[#3E6913]",
-            border: "border-[#D5EAC3] hover:border-[#74AA34]",
+            bg: "bg-primary-pale",
+            iconClass: "text-primary-dark",
+            label: "text-primary-dark",
+            border: "border-primary-light hover:border-primary",
             path: "/products?category=Nutrition",
         },
         {
             name: "Medicines (Rx)",
             icon: FlaskConical,
             bg: "bg-[#F4F8EE]",
-            iconClass: "text-[#74AA34]",
-            label: "text-[#3E6913]",
-            border: "border-[#D5EAC3] hover:border-[#74AA34]",
+            iconClass: "text-primary",
+            label: "text-primary-dark",
+            border: "border-primary-light hover:border-primary",
             path: "/products?category=Medicines",
         },
         {
@@ -405,7 +405,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 { bg: "bg-rose-50", text: "text-rose-500", border: "border-rose-100 hover:border-rose-300", label: "text-rose-700" },
                 { bg: "bg-teal-50", text: "text-teal-500", border: "border-teal-100 hover:border-teal-300", label: "text-teal-700" },
                 { bg: "bg-sky-50", text: "text-sky-500", border: "border-sky-100 hover:border-sky-300", label: "text-sky-700" },
-                { bg: "bg-[#EDF6E5]", text: "text-[#74AA34]", border: "border-[#D5EAC3] hover:border-[#74AA34]", label: "text-[#3E6913]" },
+                { bg: "bg-primary-pale", text: "text-primary", border: "border-primary-light hover:border-primary", label: "text-primary-dark" },
                 { bg: "bg-violet-50", text: "text-violet-500", border: "border-violet-100 hover:border-violet-300", label: "text-violet-700" },
                 { bg: "bg-pink-50", text: "text-pink-500", border: "border-pink-100 hover:border-pink-300", label: "text-pink-700" }
             ];
@@ -439,7 +439,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         { name: "Diabetes Care", icon: <Activity size={22} />, desc: "Insulin & Monitors", color: "bg-blue-50 text-blue-600 group-hover:bg-blue-500" },
         { name: "Heart & Blood Pressure", icon: <HeartPulse size={22} />, desc: "Cardio Support", color: "bg-red-50 text-red-500 group-hover:bg-red-500" },
         { name: "Digestive Health", icon: <Pill size={22} />, desc: "Probiotics & Antacids", color: "bg-amber-50 text-amber-600 group-hover:bg-amber-500" },
-        { name: "Cold & Flu", icon: <Stethoscope size={22} />, desc: "Syrups & Lozenges", color: "bg-[#EDF6E5] text-[#74AA34] group-hover:bg-[#74AA34]" },
+        { name: "Cold & Flu", icon: <Stethoscope size={22} />, desc: "Syrups & Lozenges", color: "bg-primary-pale text-primary group-hover:bg-primary" },
         { name: "Mother & Child", icon: <Baby size={22} />, desc: "Formula & Diapers", color: "bg-pink-50 text-pink-500 group-hover:bg-pink-500" },
         { name: "Skin & Hair", icon: <Smile size={22} />, desc: "Derma & Sunscreen", color: "bg-violet-50 text-violet-600 group-hover:bg-violet-500" },
     ];
@@ -448,7 +448,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     const fallbackBlogsList = [
         { title: "Top 7 Essential Vitamins for Daily Immunity in Summer", readTime: "4 min read", category: "Nutrition", author: "Dr. Ayesha Malik", icon: "Apple", accentColor: "#F59E0B" },
         { title: "First Aid Kit Checklist: 10 Must-Have Medicines for Every Home", readTime: "5 min read", category: "Emergency Care", author: "Pharmacist Tariq", icon: "Bandage", accentColor: "#EF4444" },
-        { title: "Seasonal Allergy Symptoms, Causes and Safe Treatment Options", readTime: "3 min read", category: "Wellness", author: "Dr. Hamza Khan", icon: "Leaf", accentColor: "#74AA34" },
+        { title: "Seasonal Allergy Symptoms, Causes and Safe Treatment Options", readTime: "3 min read", category: "Wellness", author: "Dr. Hamza Khan", icon: "Leaf", accentColor: "#4d8d3a" },
     ];
 
     const brandsList = [
@@ -495,7 +495,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "announcement_bar": return <div key={idx}>{wrap((() => {
                 const cfg = getSectionConfig("announcement_bar", {
                     text: "Free delivery on orders above Rs. 999!",
-                    bgColor: "#1E5128",
+                    bgColor: "#1e4d28",
                     textColor: "#FFFFFF",
                     link: "/products",
                     linkText: "Shop Now"
@@ -569,7 +569,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                                             onClick={() => setHeroSlide(idx)}
                                             aria-label={`Go to slide ${idx + 1}`}
                                             className={`h-2 rounded-full transition-all duration-300 cursor-pointer shadow-sm ${heroSlide === idx
-                                                ? "w-8 bg-[#74AA34]"
+                                                ? "w-8 bg-primary"
                                                 : "w-2 bg-white/60 hover:bg-white"
                                                 }`}
                                         />
@@ -589,8 +589,8 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                         return (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {badges.map((badge, i) => (
-                                    <div key={i} className="bg-white rounded-xl border border-gray-100 px-4 py-3.5 flex items-center gap-3 shadow-sm hover:border-[#74AA34]/30 hover:shadow-md transition-all duration-200">
-                                        <div className="w-9 h-9 rounded-xl bg-[#EDF6E5] text-[#74AA34] flex items-center justify-center shrink-0">
+                                    <div key={i} className="bg-white rounded-xl border border-gray-100 px-4 py-3.5 flex items-center gap-3 shadow-sm hover:border-primary/30 hover:shadow-md transition-all duration-200">
+                                        <div className="w-9 h-9 rounded-xl bg-primary-pale text-primary flex items-center justify-center shrink-0">
                                             {badge.icon}
                                         </div>
                                         <div>
@@ -664,18 +664,18 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                         })}
                     </div>
                 </section>)}</div>;
-            case "ribbon": return <div key={idx}>{wrap(<section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14 bg-gradient-to-r from-[#D5EAC3] to-[#EDF6E5] rounded-3xl p-6 sm:p-8">
+            case "ribbon": return <div key={idx}>{wrap(<section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14 bg-gradient-to-r from-[#D5EAC3] to-[#ebf7d9] rounded-3xl p-6 sm:p-8">
                     {(() => {
                         const cfg = getSectionConfig("ribbon", { title: "Everyday Medicine & Wellness Must-Haves", subtitle: "Essential Picks" });
                         return (
-                            <div className="rounded-2xl lg:rounded-3xl bg-gradient-to-br from-[#0D2309] via-[#1E5128] to-[#2A6835] overflow-hidden">
+                            <div className="rounded-2xl lg:rounded-3xl bg-gradient-to-br from-[#0D2309] via-primary-dark to-[#2A6835] overflow-hidden">
                                 <div className="p-6 sm:p-8">
                                     <div className="flex items-end justify-between mb-6">
                                         <div>
-                                            <p className="text-[11px] font-bold text-[#A6D76E] uppercase tracking-[0.15em] mb-1.5">{cfg.subtitle}</p>
+                                            <p className="text-[11px] font-bold text-accent uppercase tracking-[0.15em] mb-1.5">{cfg.subtitle}</p>
                                             <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{cfg.title}</h3>
                                         </div>
-                                        <Link to="/products" className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#A6D76E] hover:text-white uppercase tracking-wider transition-colors group">
+                                        <Link to="/products" className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-accent hover:text-white uppercase tracking-wider transition-colors group">
                                             View All <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
                                         </Link>
                                     </div>
@@ -686,7 +686,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                                         ))}
                                     </div>
                                     <div className="mt-5 sm:hidden text-center">
-                                        <Link to="/products" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#A6D76E] uppercase tracking-wider">
+                                        <Link to="/products" className="inline-flex items-center gap-1.5 text-xs font-bold text-accent uppercase tracking-wider">
                                             View All Products <ArrowRight size={12} />
                                         </Link>
                                     </div>
@@ -698,7 +698,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "promo_banners": return <div key={idx}>{wrap((() => {
                 const cfg = getSectionConfig("promo_banners", {
                     banners: [
-                        { badge: "Save up to 25%", badgeColor: "#74AA34", title: "Summer & Skin Care Essentials", desc: "Sunscreens, facial cleansers, hydration mists & body lotions from dermatologist-approved brands.", ctaText: "Shop Skincare", ctaLink: "/products?category=Personal", bgFrom: "#F0F9E6", bgTo: "#DCF0C4", borderColor: "#C8E2AC", ctaColor: "#3E6913" },
+                        { badge: "Save up to 25%", badgeColor: "#4d8d3a", title: "Summer & Skin Care Essentials", desc: "Sunscreens, facial cleansers, hydration mists & body lotions from dermatologist-approved brands.", ctaText: "Shop Skincare", ctaLink: "/products?category=Personal", bgFrom: "#F0F9E6", bgTo: "#DCF0C4", borderColor: "#C8E2AC", ctaColor: "#1e4d28" },
                         { badge: "Daily Immunity", badgeColor: "#0EA5E9", title: "Vitamins & Supplements Boost", desc: "Vitamin C, Zinc, Omega-3, Calcium & Joint Supplements — fuel an active & healthy lifestyle.", ctaText: "Shop Vitamins", ctaLink: "/products?category=Nutrition", bgFrom: "#E8F4FB", bgTo: "#CCE8F7", borderColor: "#B0D8F0", ctaColor: "#0369A1" },
                     ]
                 });
@@ -736,18 +736,18 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 });
                 return (
                     <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-4">
-                        <div className="rounded-xl bg-gradient-to-r from-[#1A2E0E] to-[#2C4E18] border border-[#3E6913]/50 px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="rounded-xl bg-gradient-to-r from-[#1A2E0E] to-[#2C4E18] border border-[#1e4d28]/50 px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-[#74AA34] flex items-center justify-center text-white shrink-0 shadow-md shadow-[#74AA34]/30">
+                                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0 shadow-md shadow-primary/30">
                                     <CreditCard size={18} />
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold text-white">{cfg.title}</p>
-                                    <p className="text-xs text-[#A6D76E] mt-0.5">{cfg.subtitle}</p>
+                                    <p className="text-xs text-accent mt-0.5">{cfg.subtitle}</p>
                                 </div>
                             </div>
                             <Link to={cfg.ctaLink || "/promotions"}
-                                className="shrink-0 px-4 py-2 bg-[#74AA34] hover:bg-[#629329] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm">
+                                className="shrink-0 px-4 py-2 bg-primary hover:bg-primary-dark text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm">
                                 {cfg.ctaText || "View Offers"}
                             </Link>
                         </div>
@@ -755,7 +755,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 );
             })())}</div>;
             case "rx_upload_cta": return <div key={idx}>{wrap((() => {
-                const cfg = getSectionConfig("rx_upload_cta", { title: "Upload Your Prescription", subtitle: "Get medicines delivered in 2 hours.", ctaText: "Upload Now", ctaLink: "/upload-prescription", bgColor: "#1E5128" });
+                const cfg = getSectionConfig("rx_upload_cta", { title: "Upload Your Prescription", subtitle: "Get medicines delivered in 2 hours.", ctaText: "Upload Now", ctaLink: "/upload-prescription", bgColor: "#1e4d28" });
                 return (
                     <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
                         <div className="rounded-2xl sm:rounded-3xl p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg relative overflow-hidden" style={{ backgroundColor: cfg.bgColor }}>
@@ -874,14 +874,14 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 const titleLines = (cfg.title || "").split("\n");
                 return (
                     <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
-                        <div className="relative rounded-2xl lg:rounded-3xl bg-[#74AA34] overflow-hidden">
+                        <div className="relative rounded-2xl lg:rounded-3xl bg-primary overflow-hidden">
                             <div className="absolute inset-0 overflow-hidden">
                                 <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-white/10 blur-2xl" />
-                                <div className="absolute -left-10 -bottom-10 w-56 h-56 rounded-full bg-[#629329]/50 blur-xl" />
+                                <div className="absolute -left-10 -bottom-10 w-56 h-56 rounded-full bg-primary-dark/50 blur-xl" />
                             </div>
                             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 p-8 sm:p-10 md:p-12">
                                 <div className="text-center md:text-left space-y-3">
-                                    <div className="inline-flex items-center gap-2 bg-[#629329] px-3.5 py-1.5 rounded-full">
+                                    <div className="inline-flex items-center gap-2 bg-primary-dark px-3.5 py-1.5 rounded-full">
                                         <Smartphone size={14} className="text-[#E0EED2]" />
                                         <span className="text-[11px] font-bold text-[#E0EED2] uppercase tracking-wider">MediCare Mobile App</span>
                                     </div>
@@ -900,7 +900,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                                 </div>
                                 <div className="flex items-center gap-5 shrink-0">
                                     <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-lg">
-                                        <QrCode size={70} className="text-[#1E5128]" />
+                                        <QrCode size={70} className="text-primary-dark" />
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[11px] font-bold text-white/80 mb-1">Scan to Download</p>
@@ -926,7 +926,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "conditions": return <div key={idx}>{wrap((() => {
                 const cfg = getSectionConfig("conditions", { title: "Care By Condition", subtitle: "Health Concerns", conditions: null });
                 const conditionList = cfg.conditions?.length
-                    ? cfg.conditions.map(c => ({ ...c, icon: getIcon(c.icon), color: "bg-[#EDF6E5] text-[#74AA34] group-hover:bg-[#74AA34]" }))
+                    ? cfg.conditions.map(c => ({ ...c, icon: getIcon(c.icon), color: "bg-primary-pale text-primary group-hover:bg-primary" }))
                     : fallbackConditionList;
                 return (
                     <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
@@ -934,11 +934,11 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                             {conditionList.map((cond, idx) => (
                                 <Link key={idx} to="/products"
-                                    className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center group hover:border-[#74AA34]/40 hover:shadow-lg transition-all duration-200 shadow-sm">
+                                    className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center group hover:border-primary/40 hover:shadow-lg transition-all duration-200 shadow-sm">
                                     <div className={`w-14 h-14 rounded-2xl ${cond.color} flex items-center justify-center mb-3.5 group-hover:scale-110 group-hover:text-white transition-all duration-200 shadow-sm`}>
                                         {cond.icon}
                                     </div>
-                                    <h4 className="text-[11px] font-bold text-gray-900 group-hover:text-[#74AA34] transition-colors leading-snug mb-1">{cond.name}</h4>
+                                    <h4 className="text-[11px] font-bold text-gray-900 group-hover:text-primary transition-colors leading-snug mb-1">{cond.name}</h4>
                                     <span className="text-[10px] text-gray-400 font-medium">{cond.desc}</span>
                                 </Link>
                             ))}
@@ -955,29 +955,29 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                             {blogsList.map((blog, idx) => {
                                 const BlogIconComp = ICON_MAP[blog.icon];
-                                const accentColor = blog.accentColor || "#74AA34";
+                                const accentColor = blog.accentColor || "#4d8d3a";
                                 return (
                                     <article key={idx}
-                                        className="bg-white rounded-2xl border border-gray-100 flex flex-col shadow-sm hover:shadow-lg hover:border-[#74AA34]/30 transition-all duration-200 group cursor-pointer overflow-hidden">
+                                        className="bg-white rounded-2xl border border-gray-100 flex flex-col shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-200 group cursor-pointer overflow-hidden">
                                         <div className="h-1 w-full" style={{ background: accentColor }} />
                                         <div className="p-5 sm:p-6 flex flex-col flex-1">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-2.5">
-                                                    <div className="w-9 h-9 rounded-xl bg-[#EDF6E5] flex items-center justify-center shrink-0" style={{ background: `${accentColor}18` }}>
+                                                    <div className="w-9 h-9 rounded-xl bg-primary-pale flex items-center justify-center shrink-0" style={{ background: `${accentColor}18` }}>
                                                         {BlogIconComp
                                                             ? <BlogIconComp size={17} strokeWidth={1.75} style={{ color: accentColor }} />
                                                             : <Leaf size={17} strokeWidth={1.75} style={{ color: accentColor }} />}
                                                     </div>
-                                                    <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#74AA34] bg-[#EDF6E5] px-2.5 py-1 rounded-full">{blog.category}</span>
+                                                    <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-primary bg-primary-pale px-2.5 py-1 rounded-full">{blog.category}</span>
                                                 </div>
                                                 <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                                                     <BookOpen size={11} /> {blog.readTime}
                                                 </span>
                                             </div>
-                                            <h3 className="font-sans font-bold text-sm text-gray-900 group-hover:text-[#74AA34] transition-colors leading-snug mb-auto">{blog.title}</h3>
+                                            <h3 className="font-sans font-bold text-sm text-gray-900 group-hover:text-primary transition-colors leading-snug mb-auto">{blog.title}</h3>
                                             <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
                                                 <span className="text-[11px] text-gray-500 font-medium">By {blog.author}</span>
-                                                <span className="text-[11px] font-bold text-[#74AA34] flex items-center gap-1 group-hover:translate-x-1 transition-transform duration-200">
+                                                <span className="text-[11px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform duration-200">
                                                     Read Article <ArrowRight size={11} />
                                                 </span>
                                             </div>
@@ -998,11 +998,11 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                                 <SectionHeader title={cfg.title} subtitle={cfg.subtitle} cta={cfg.ctaText} ctaPath={cfg.ctaLink} />
                                 <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-7 gap-3">
                                     {brands.map((brand, idx) => (
-                                        <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-sm hover:border-[#74AA34]/40 hover:shadow-md transition-all duration-200 group cursor-pointer">
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#EDF6E5] text-[#3E6913] flex items-center justify-center font-extrabold text-xs sm:text-sm mb-2 group-hover:bg-[#74AA34] group-hover:text-white transition-colors">
+                                        <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex flex-col items-center justify-center text-center shadow-sm hover:border-primary/40 hover:shadow-md transition-all duration-200 group cursor-pointer">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary-pale text-primary-dark flex items-center justify-center font-extrabold text-xs sm:text-sm mb-2 group-hover:bg-primary group-hover:text-white transition-colors">
                                                 {brand.abbr}
                                             </div>
-                                            <span className="text-[10px] font-semibold text-gray-600 leading-tight group-hover:text-[#74AA34] transition-colors">
+                                            <span className="text-[10px] font-semibold text-gray-600 leading-tight group-hover:text-primary transition-colors">
                                                 {brand.name}
                                             </span>
                                         </div>
@@ -1035,18 +1035,18 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 );
             })())}</div>;
             case "newsletter": return <div key={idx}>{wrap((() => {
-                const cfg = getSectionConfig("newsletter", { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#EDF6E5" });
+                const cfg = getSectionConfig("newsletter", { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#ebf7d9" });
                 return (
                     <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
                         <div className="rounded-3xl p-8 sm:p-12 text-center flex flex-col items-center justify-center border border-gray-100 shadow-sm" style={{ backgroundColor: cfg.bgColor }}>
-                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 text-[#74AA34] shadow-sm">
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 text-primary shadow-sm">
                                 <Mail size={24} />
                             </div>
                             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{cfg.title}</h3>
                             <p className="text-sm text-gray-600 mb-6 max-w-md">{cfg.subtitle}</p>
                             <form className="w-full max-w-md flex items-center gap-2" onSubmit={e => e.preventDefault()}>
-                                <input type="email" placeholder={cfg.placeholder} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#74AA34] text-sm" />
-                                <button type="submit" className="px-6 py-3 bg-[#74AA34] hover:bg-[#629329] text-white font-bold rounded-xl text-sm transition-colors shadow-sm">{cfg.ctaText}</button>
+                                <input type="email" placeholder={cfg.placeholder} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+                                <button type="submit" className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition-colors shadow-sm">{cfg.ctaText}</button>
                             </form>
                         </div>
                     </section>
@@ -1061,7 +1061,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                             {(cfg.faqs || []).map((faq, i) => (
                                 <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                                     <h4 className="font-bold text-sm text-gray-900 mb-2 flex items-start gap-2">
-                                        <HelpCircle size={16} className="text-[#74AA34] shrink-0 mt-0.5" />
+                                        <HelpCircle size={16} className="text-primary shrink-0 mt-0.5" />
                                         {faq.q}
                                     </h4>
                                     <p className="text-xs text-gray-600 pl-6 leading-relaxed">{faq.a}</p>
@@ -1118,7 +1118,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
 
                     <button
                         onClick={() => setSeoExpanded(!seoExpanded)}
-                        className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#74AA34] hover:text-[#3E6913] transition-colors cursor-pointer"
+                        className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-dark transition-colors cursor-pointer"
                     >
                         {seoExpanded ? "Read Less" : "Read More"}
                         <ChevronDown size={14} className={`transition-transform duration-200 ${seoExpanded ? "rotate-180" : ""}`} />

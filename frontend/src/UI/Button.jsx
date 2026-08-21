@@ -1,14 +1,14 @@
 import clsx from "clsx";
 
 const VARIANTS = {
-    primary: "bg-blue-700 text-white hover:bg-blue-800 focus:ring-[#1447e6]",
+    primary: "bg-primary text-white hover:bg-primary-dark focus:ring-primary-dark",
     secondary:
-        "bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400",
-    success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-600",
+        "bg-primary-pale text-primary-dark hover:bg-primary-light focus:ring-primary",
+    success: "bg-primary text-white hover:bg-primary-dark focus:ring-primary",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-600",
     outline:
-        "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-400",
-    ghost: "bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-300",
+        "bg-white border border-primary-light text-primary-dark hover:bg-primary-pale focus:ring-primary-light",
+    ghost: "bg-transparent text-primary-dark hover:bg-primary-pale focus:ring-primary-light",
 };
 
 const SIZES = {

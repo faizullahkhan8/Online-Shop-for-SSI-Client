@@ -80,9 +80,9 @@ const Select = ({
                             }}
                             className={clsx(
                                 "px-4 py-2 text-sm cursor-pointer transition-colors",
-                                "hover:bg-blue-50 hover:text-blue-700",
+                                "hover:bg-primary-pale hover:text-primary-dark",
                                 value === option.value
-                                    ? "bg-blue-50 text-blue-700 font-medium"
+                                    ? "bg-primary-pale text-primary-dark font-medium"
                                     : "text-gray-700"
                             )}
                         >

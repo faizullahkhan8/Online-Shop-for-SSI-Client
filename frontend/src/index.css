@@ -12,12 +12,12 @@
 
 @theme {
     /* ── Brand Colors ──────────────────────────────────────── */
-    --color-primary: #74AA34;
-    --color-primary-dark: #3E6913;
-    --color-primary-deep: #1E5128;
-    --color-primary-light: #EDF6E5;
-    --color-primary-pale: #F4F8EE;
-    --color-accent: #A6D76E;
+    --color-primary: #4d8d3a;
+    --color-primary-dark: #1e4d28;
+    --color-primary-deep: #1e4d28;
+    --color-primary-light: #d0ef9f;
+    --color-primary-pale: #ebf7d9;
+    --color-accent: #a6d56c;
 
     /* ── Neutrals ──────────────────────────────────────────── */
     --color-ui-dark: #111827;
@@ -118,7 +118,7 @@ p {
 
 /* ─── Smooth Selection ─────────────────────────────────────── */
 ::selection {
-    background-color: #74AA3430;
+    background-color: #4d8d3a30;
     color: var(--color-primary-dark);
 }
 
@@ -133,12 +133,12 @@ p {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #74AA3450;
+    background: #4d8d3a50;
     border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #74AA3490;
+    background: #4d8d3a90;
 }
 
 /* ─── Container ────────────────────────────────────────────── */

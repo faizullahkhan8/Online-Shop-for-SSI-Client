@@ -41,14 +41,14 @@ const ALL_SECTION_TYPES = Object.keys(SECTION_META);
 /* ─── Add Section Picker ─────────────────────────────────────────────── */
 const SECTION_DEFAULTS = {
     hero: { config: {} },
-    announcement_bar: { config: { text: "Free delivery on orders above Rs. 999!", bgColor: "#1E5128", textColor: "#FFFFFF", link: "/products", linkText: "Shop Now" } },
+    announcement_bar: { config: { text: "Free delivery on orders above Rs. 999!", bgColor: "#1e4d28", textColor: "#FFFFFF", link: "/products", linkText: "Shop Now" } },
     trust_badges: { config: { badges: [{ icon: "ShieldCheck", title: "100% Genuine", desc: "Licensed pharmacy sourcing" }, { icon: "Truck", title: "2-Hour Delivery", desc: "Major cities covered" }] } },
     stats_counter: { config: { stats: [{ value: "50K+", label: "Happy Customers" }, { value: "2 hrs", label: "Avg. Delivery" }] } },
     categories: { config: { title: "Browse Categories", subtitle: "Quick Access", ctaText: "All Products", ctaLink: "/products" } },
     ribbon: { config: { title: "Everyday Must-Haves", subtitle: "Essential Picks", ctaText: "View All", ctaLink: "/products", productSource: "top_sellers", productCount: 6 } },
-    promo_banners: { config: { banners: [{ badge: "Sale", badgeColor: "#74AA34", title: "Banner Title", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#F0F9E6", bgTo: "#DCF0C4", borderColor: "#C8E2AC", ctaColor: "#3E6913" }, { badge: "New", badgeColor: "#0EA5E9", title: "Banner Title 2", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#E8F4FB", bgTo: "#CCE8F7", borderColor: "#B0D8F0", ctaColor: "#0369A1" }] } },
+    promo_banners: { config: { banners: [{ badge: "Sale", badgeColor: "#4d8d3a", title: "Banner Title", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#F0F9E6", bgTo: "#DCF0C4", borderColor: "#C8E2AC", ctaColor: "#1e4d28" }, { badge: "New", badgeColor: "#0EA5E9", title: "Banner Title 2", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#E8F4FB", bgTo: "#CCE8F7", borderColor: "#B0D8F0", ctaColor: "#0369A1" }] } },
     payment_strip: { config: { title: "EXTRA 25% OFF with Bank Cards", subtitle: "Applies at checkout.", ctaText: "View Offers", ctaLink: "/promotions" } },
-    rx_upload_cta: { config: { title: "Upload Your Prescription", subtitle: "Get medicines delivered in 2 hours.", ctaText: "Upload Now", ctaLink: "/upload-prescription", bgColor: "#1E5128" } },
+    rx_upload_cta: { config: { title: "Upload Your Prescription", subtitle: "Get medicines delivered in 2 hours.", ctaText: "Upload Now", ctaLink: "/upload-prescription", bgColor: "#1e4d28" } },
     flash_sale: { config: { title: "Flash Sale", subtitle: "Limited Time Offers", endTime: null, productSource: "on_sale", productCount: 6 } },
     products_grid: { config: { title: "Products", subtitle: "Picks", ctaText: "View All", ctaLink: "/products", productSource: "top_sellers", productCount: 6, gridVariant: "standard" } },
     mid_banners: { config: { banners: [{ badge: "Category", title: "Banner Title", desc: "Description.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#1B3B5F", bgTo: "#2B5B8F", badgeColor: "#BAE6FD" }, { badge: "Category", title: "Banner Title 2", desc: "Description.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#5B2A36", bgTo: "#8C3A4F", badgeColor: "#FECACA" }] } },
@@ -56,8 +56,8 @@ const SECTION_DEFAULTS = {
     conditions: { config: { title: "Care By Condition", subtitle: "Health Concerns", conditions: [{ name: "Condition Name", desc: "Description", icon: "Activity" }] } },
     testimonials: { config: { title: "What Our Customers Say", subtitle: "Reviews", testimonials: [{ name: "Customer Name", rating: 5, comment: "Great service!", city: "Karachi" }] } },
     app_download: { config: { title: "Download & Get\n10% Off", subtitle: "Track orders, set reminders.", appStoreLink: "#", playStoreLink: "#", rating: "4.9", reviewCount: "50K+" } },
-    newsletter: { config: { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#EDF6E5" } },
-    blogs: { config: { title: "Health Advice & Blogs", subtitle: "Expert Insights", ctaText: "All Articles", ctaLink: "/about-us", blogs: [{ title: "Blog Title", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#74AA34" }] } },
+    newsletter: { config: { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#ebf7d9" } },
+    blogs: { config: { title: "Health Advice & Blogs", subtitle: "Expert Insights", ctaText: "All Articles", ctaLink: "/about-us", blogs: [{ title: "Blog Title", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#4d8d3a" }] } },
     brands: { config: { title: "Trusted Partner Brands", subtitle: "Our Manufacturers", brands: [{ name: "Brand Name", abbr: "BRD" }] } },
     faq: { config: { title: "Frequently Asked Questions", subtitle: "Got Questions?", faqs: [{ q: "Question?", a: "Answer." }] } },
     custom_html: { config: { html: "<!-- Add your custom HTML here -->", label: "Custom Block" } },
@@ -412,7 +412,7 @@ const EditForm = ({ section, onChange }) => {
                             <ColorField label="Accent Color" value={blog.accentColor} onChange={v => set("blogs", cfg.blogs.map((b, idx) => idx === i ? { ...b, accentColor: v } : b))} />
                         </div>
                     ))}
-                    <button onClick={() => set("blogs", [...(cfg.blogs || []), { title: "New Blog Post", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#74AA34" }])}
+                    <button onClick={() => set("blogs", [...(cfg.blogs || []), { title: "New Blog Post", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#4d8d3a" }])}
                         className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Blog
                     </button>
@@ -527,7 +527,7 @@ const MiniPreview = ({ section }) => {
             </div>
 
             {section.type === "announcement_bar" && (
-                <div className="rounded-xl p-3 text-center text-sm font-semibold text-white" style={{ backgroundColor: cfg.bgColor || "#1E5128" }}>
+                <div className="rounded-xl p-3 text-center text-sm font-semibold text-white" style={{ backgroundColor: cfg.bgColor || "#1e4d28" }}>
                     {cfg.text || "Announcement text here"}
                     {cfg.linkText && <span className="ml-2 underline text-xs">{cfg.linkText}</span>}
                 </div>
@@ -553,7 +553,7 @@ const MiniPreview = ({ section }) => {
                 <div className="grid grid-cols-2 gap-2">
                     {(cfg.stats || []).slice(0, 4).map((s, i) => (
                         <div key={i} className="bg-white border border-gray-100 rounded-lg p-3 text-center shadow-sm">
-                            <p className="text-base font-black text-[#74AA34]">{s.value}</p>
+                            <p className="text-base font-black text-primary">{s.value}</p>
                             <p className="text-[10px] text-gray-500 mt-0.5">{s.label}</p>
                         </div>
                     ))}
@@ -564,15 +564,15 @@ const MiniPreview = ({ section }) => {
                 <div className="rounded-xl p-3" style={{ background: "linear-gradient(to right, #1A2E0E, #2C4E18)" }}>
                     <p className="text-xs font-bold text-white">{cfg.title}</p>
                     <p className="text-[10px] text-green-300 mt-0.5">{cfg.subtitle}</p>
-                    <div className="mt-2 inline-block bg-[#74AA34] text-white text-[10px] font-bold px-3 py-1 rounded-lg">{cfg.ctaText}</div>
+                    <div className="mt-2 inline-block bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-lg">{cfg.ctaText}</div>
                 </div>
             )}
 
             {section.type === "rx_upload_cta" && (
-                <div className="rounded-xl p-4 text-white" style={{ backgroundColor: cfg.bgColor || "#1E5128" }}>
+                <div className="rounded-xl p-4 text-white" style={{ backgroundColor: cfg.bgColor || "#1e4d28" }}>
                     <p className="text-sm font-bold">{cfg.title}</p>
                     <p className="text-[10px] mt-1 opacity-80">{cfg.subtitle}</p>
-                    <div className="mt-3 inline-block bg-white text-[#1E5128] text-[10px] font-bold px-3 py-1.5 rounded-lg">{cfg.ctaText}</div>
+                    <div className="mt-3 inline-block bg-white text-primary-dark text-[10px] font-bold px-3 py-1.5 rounded-lg">{cfg.ctaText}</div>
                 </div>
             )}
 
@@ -607,12 +607,12 @@ const MiniPreview = ({ section }) => {
             )}
 
             {section.type === "newsletter" && (
-                <div className="rounded-xl p-4" style={{ backgroundColor: cfg.bgColor || "#EDF6E5" }}>
+                <div className="rounded-xl p-4" style={{ backgroundColor: cfg.bgColor || "#ebf7d9" }}>
                     <p className="text-sm font-bold text-gray-900">{cfg.title}</p>
                     <p className="text-[10px] text-gray-500 mt-1">{cfg.subtitle}</p>
                     <div className="flex gap-1.5 mt-3">
                         <div className="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[10px] text-gray-300">{cfg.placeholder}</div>
-                        <div className="bg-[#74AA34] text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">{cfg.ctaText}</div>
+                        <div className="bg-primary text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">{cfg.ctaText}</div>
                     </div>
                 </div>
             )}
