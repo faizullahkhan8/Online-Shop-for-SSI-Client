@@ -19,11 +19,14 @@ import {
     FileText,
     ListTree,
     LayoutTemplate,
+    Building2,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useLogoutUser } from "../../api/hooks/user.api";
+import { useGetUnreadOrdersCount } from "../../api/hooks/orders.api";
+import { useGetUnreadPrescriptionsCount } from "../../api/hooks/prescription.api";
 import { useDispatch } from "react-redux";
 import { logout } from "../../store/slices/authSlice";
 
@@ -42,6 +45,23 @@ const AdminSidebar = () => {
             navigate("/");
         }
     };
+
+    const { getUnreadCount: fetchOrdersCount, count: unreadOrders } = useGetUnreadOrdersCount();
+    const { getUnreadCount: fetchPrescriptionsCount, count: unreadPrescriptions } = useGetUnreadPrescriptionsCount();
+
+    // Fetch counts periodically or on load
+    useEffect(() => {
+        fetchOrdersCount();
+        fetchPrescriptionsCount();
+        
+        // Set up polling every 30 seconds to keep sidebar fresh
+        const interval = setInterval(() => {
+            fetchOrdersCount();
+            fetchPrescriptionsCount();
+        }, 30000);
+        
+        return () => clearInterval(interval);
+    }, [fetchOrdersCount, fetchPrescriptionsCount]);
 
     const colors = {
         primary: "#2563eb", // blue-600
@@ -72,15 +92,11 @@ const AdminSidebar = () => {
                         to={"/"}
                         className="flex items-center gap-3 animate-in fade-in duration-300"
                     >
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                            <Globe className="text-white" size={20} />
-                        </div>
-                        <div>
-                            <p className="font-bold text-base text-gray-900">
-                                E-Shop
-                            </p>
-                            <p className="text-xs text-gray-500">Admin Panel</p>
-                        </div>
+                        <img 
+                            src="/assets/images/zada-logo.webp" 
+                            alt="Zada Pharmacy" 
+                            className="h-8 w-auto object-contain" 
+                        />
                     </Link>
                 ) : (
                     ""
@@ -191,6 +207,21 @@ const AdminSidebar = () => {
                         </MenuItem>
                     </SubMenu>
 
+                    <SubMenu
+                        label="Vendors"
+                        icon={<Building2 size={18} />}
+                        defaultOpen={location.pathname.includes("vendors")}
+                    >
+                        <MenuItem
+                            component={
+                                <NavLink to="/admin-dashboard/vendors" />
+                            }
+                            icon={<ListIcon size={16} />}
+                        >
+                            All Vendors
+                        </MenuItem>
+                    </SubMenu>
+
 
                     {/* Logistics Section */}
                     <div
@@ -204,10 +235,24 @@ const AdminSidebar = () => {
                         label="Orders"
                         icon={<ShoppingCart size={18} />}
                         defaultOpen={location.pathname.includes("orders")}
+                        suffix={
+                            unreadOrders > 0 && (
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px] mr-2">
+                                    {unreadOrders > 99 ? '99+' : unreadOrders}
+                                </span>
+                            )
+                        }
                     >
                         <MenuItem
                             component={<NavLink to="/admin-dashboard/orders" />}
                             icon={<ListIcon size={16} />}
+                            suffix={
+                                unreadOrders > 0 && (
+                                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
+                                        {unreadOrders > 99 ? '99+' : unreadOrders}
+                                    </span>
+                                )
+                            }
                         >
                             All Orders
                         </MenuItem>
@@ -224,6 +269,13 @@ const AdminSidebar = () => {
                     <MenuItem
                         component={<NavLink to="/admin-dashboard/prescriptions" />}
                         icon={<FileText size={18} />}
+                        suffix={
+                            unreadPrescriptions > 0 && (
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
+                                    {unreadPrescriptions > 99 ? '99+' : unreadPrescriptions}
+                                </span>
+                            )
+                        }
                     >
                         Prescriptions
                     </MenuItem>
@@ -264,12 +316,7 @@ const AdminSidebar = () => {
                         Promotions
                     </MenuItem>
 
-                    <MenuItem
-                        component={<NavLink to="/admin-dashboard/hero" />}
-                        icon={<MonitorPlay size={18} />}
-                    >
-                        Hero Content
-                    </MenuItem>
+
 
                     <MenuItem
                         component={<NavLink to="/admin-dashboard/menu-builder" />}

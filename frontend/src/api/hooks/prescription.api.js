@@ -1,5 +1,42 @@
 import { useState, useCallback } from "react";
 import apiClient from "../apiClient.js";
+export const useGetUnreadPrescriptionsCount = () => {
+    const [count, setCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    const getUnreadCount = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await apiClient.get("/prescriptions/unread-count");
+            if (res.data?.success) setCount(res.data.count);
+        } catch (error) {
+            console.error("Error fetching unread prescriptions count:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { getUnreadCount, count, loading };
+};
+
+export const useMarkPrescriptionViewed = () => {
+    const [loading, setLoading] = useState(false);
+
+    const markAsViewed = async (id) => {
+        setLoading(true);
+        try {
+            const res = await apiClient.put(`/prescriptions/${id}/mark-viewed`);
+            return res.data;
+        } catch (error) {
+            console.error("Error marking prescription viewed:", error);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { markAsViewed, loading };
+};
 
 export const useUploadPrescription = () => {
     const [loading, setLoading] = useState(false);

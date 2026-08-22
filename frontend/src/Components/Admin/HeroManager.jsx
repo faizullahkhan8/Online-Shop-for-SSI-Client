@@ -17,6 +17,7 @@ import {
     useDeleteHeroSlide,
 } from "../../api/hooks/hero.api.js";
 import Input from "../../UI/Input.jsx";
+import { handleImageError } from "../../utils/imageHelper";
 
 const HeroManager = () => {
     const { getSlides, slides, loading } = useGetHeroSlides();
@@ -102,24 +103,20 @@ const HeroManager = () => {
 
 
     return (
-        <div className="space-y-6">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-4">
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
                 <div>
-                    <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                        <ImageIcon className="text-blue-600" size={24} />
-                        Hero Slides
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">Manage homepage carousel slides</p>
+                    <h3 className="text-sm font-bold text-gray-900">Active Slides</h3>
+                    <p className="text-xs text-gray-500">Manage your carousel slides here</p>
                 </div>
-
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-primary-dark transition-colors shadow-sm"
                 >
-                    <Plus size={16} />
+                    <Plus size={14} />
                     Add Slide
                 </button>
-            </header>
+            </div>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 bg-white border border-gray-200 rounded-lg">
@@ -137,6 +134,7 @@ const HeroManager = () => {
                                 <img
                                     src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${slide.image}`}
                                     alt="Hero Slide"
+                                    onError={(e) => handleImageError(e, "carousel")}
                                     className="w-full h-full object-contain"
                                 />
                                 <div className="absolute top-3 right-3 flex gap-2">

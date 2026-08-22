@@ -1,42 +1,105 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { loginSuccess } from "../store/slices/authSlice";
-import { useUpdateUser } from "../api/hooks/user.api";
+import { loginSuccess, logout } from "../store/slices/authSlice";
+import { useUpdateUser, useLogoutUser } from "../api/hooks/user.api";
 import {
-    User,
-    Mail,
-    Phone,
+    Clock,
     MapPin,
-    Camera,
-    ShieldCheck,
+    Heart,
+    Ticket,
+    Edit3,
     Loader2,
 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import LocationPicker from "../Components/LocationPicker.jsx";
 
 const ProfilePage = () => {
     const { user } = useSelector((state) => state.auth);
     const [userData, setUserData] = useState(null);
-    const [avatarPreview, setAvatarPreview] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { updateUser, loading: updateUserLoading } = useUpdateUser();
+    const { logoutUser, loading: logoutLoading } = useLogoutUser({});
+
+    const [mapPosition, setMapPosition] = useState(null);
+    const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
     useEffect(() => {
         if (user) {
             setUserData(user);
+            if (user.addresses?.[0]?.lat && user.addresses?.[0]?.lng) {
+                setMapPosition({ lat: user.addresses[0].lat, lng: user.addresses[0].lng });
+            }
         }
     }, [user]);
 
+    useEffect(() => {
+        // Immediately sync the coordinates to userData so they get saved 
+        // even if reverse-geocoding fails or is skipped
+        if (mapPosition && user && (user.addresses?.[0]?.lat !== mapPosition.lat || user.addresses?.[0]?.lng !== mapPosition.lng)) {
+            setUserData((prev) => ({
+                ...prev,
+                addresses: [
+                    {
+                        ...(prev?.addresses?.[0] || {}),
+                        lat: mapPosition.lat,
+                        lng: mapPosition.lng,
+                    }
+                ]
+            }));
+        }
+
+        const fetchAddress = async () => {
+            if (!mapPosition) return;
+            setIsFetchingAddress(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPosition.lat}&lon=${mapPosition.lng}`
+                );
+                const data = await response.json();
+                if (data && data.display_name) {
+                    setUserData((prev) => {
+                        const existingAddress = prev?.addresses?.[0] || {};
+                        return {
+                            ...prev,
+                            addresses: [
+                                {
+                                    ...existingAddress,
+                                    lat: mapPosition.lat,
+                                    lng: mapPosition.lng,
+                                    street: data.display_name,
+                                    city: data.address?.city || data.address?.town || data.address?.state_district || existingAddress.city,
+                                    state: data.address?.state || existingAddress.state,
+                                    postalCode: data.address?.postcode || existingAddress.postalCode,
+                                    country: data.address?.country || existingAddress.country,
+                                }
+                            ]
+                        };
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching address:", error);
+            } finally {
+                setIsFetchingAddress(false);
+            }
+        };
+
+        // Don't auto-fetch if we just set it from the user's existing DB record
+        if (user && user.addresses?.[0]?.lat === mapPosition?.lat && user.addresses?.[0]?.lng === mapPosition?.lng) {
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            fetchAddress();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [mapPosition, user]);
+
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
-    };
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setAvatarPreview(URL.createObjectURL(file));
-        }
     };
 
     const handleAddressChange = (field, value) => {
@@ -55,247 +118,197 @@ const ProfilePage = () => {
         e.preventDefault();
         const formData = new FormData();
         formData.append("data", JSON.stringify(userData));
-        if (selectedFile) {
-            formData.append("avatar", selectedFile);
-        }
 
         const response = await updateUser({ userId: user._id, user: formData });
 
         if (response && response.user) {
             dispatch(loginSuccess(response.user));
-            setSelectedFile(null);
+            toast.success("Profile updated successfully!");
         }
     };
 
+    const handleLogout = async () => {
+        const response = await logoutUser();
+        if (response?.success) {
+            dispatch(logout());
+            navigate("/");
+            toast.success("Logged out successfully");
+        }
+    };
+
+    if (!userData) return null;
+
     return (
-        <div className="bg-slate-50/50 min-h-screen py-12">
-            <div className="container mx-auto px-4 max-w-4xl">
-                <header className="mb-10 flex items-end justify-between">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">
-                            Account Settings
-                        </h1>
-                        <p className="text-slate-500 font-medium mt-1">
-                            Manage your public profile and delivery preferences.
-                        </p>
-                    </div>
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <ShieldCheck size={16} className="text-emerald-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                            Verified Account
-                        </span>
-                    </div>
-                </header>
+        <div className="bg-white min-h-screen pb-20">
+            <div className="container mx-auto px-4 max-w-5xl pt-6">
+                
+                {/* Breadcrumbs */}
+                <div className="text-sm font-medium mb-10 flex items-center gap-2">
+                    <Link to="/" className="text-pink-500 hover:text-pink-600 transition-colors">Home</Link>
+                    <span className="text-gray-400">›</span>
+                    <span className="text-primary">user profile</span>
+                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1">
-                        <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 text-center shadow-xl shadow-slate-200/40">
-                            <div className="relative inline-block mb-6">
-                                <div className="w-32 h-32 rounded-[2.5rem] bg-slate-100 overflow-hidden border-4 border-white shadow-inner">
-                                    <img
-                                        src={
-                                            avatarPreview ||
-                                            user?.avatar ||
-                                            `https://ui-avatars.com/api/?name=${user?.name}&background=0f172a&color=fff`
-                                        }
-                                        alt="Avatar"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <label
-                                    htmlFor="avatar-upload"
-                                    className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg border-4 border-white hover:scale-110 transition-transform cursor-pointer"
-                                >
-                                    <Camera size={16} />
-                                </label>
-                                <input
-                                    id="avatar-upload"
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageChange}
-                                />
-                            </div>
-                            <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight truncate">
-                                {user?.name || "Guest User"}
-                            </h2>
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
-                                Customer Level 01
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-2">
-                        <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 lg:p-10 shadow-xl shadow-slate-200/40">
-                            <form onSubmit={handleSubmit} className="space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <ProfileInput
-                                        label="Full Name"
-                                        name="name"
-                                        icon={<User size={16} />}
-                                        value={userData?.name}
-                                        onChange={handleChange}
-                                    />
-                                    <ProfileInput
-                                        label="Email Address"
-                                        name="email"
-                                        disabled
-                                        icon={<Mail size={16} />}
-                                        value={userData?.email}
-                                    />
-                                    <ProfileInput
-                                        label="Phone Number"
-                                        name="phone"
-                                        icon={<Phone size={16} />}
-                                        value={userData?.phone}
-                                        onChange={handleChange}
-                                    />
-                                    <ProfileInput
-                                        label="Street Address"
-                                        name="street"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]?.street ||
-                                            ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "street",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    <ProfileInput
-                                        label="Apartment / Suite"
-                                        name="addressLine2"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]
-                                                ?.addressLine2 || ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "addressLine2",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    <ProfileInput
-                                        label="City"
-                                        name="city"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]?.city || ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "city",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    <ProfileInput
-                                        label="State / Province"
-                                        name="state"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]?.state ||
-                                            ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "state",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    <ProfileInput
-                                        label="Postal Code"
-                                        name="postalCode"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]
-                                                ?.postalCode || ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "postalCode",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    <ProfileInput
-                                        label="Country"
-                                        name="country"
-                                        icon={<MapPin size={16} />}
-                                        value={
-                                            userData?.addresses?.[0]?.country ||
-                                            ""
-                                        }
-                                        onChange={(e) =>
-                                            handleAddressChange(
-                                                "country",
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-50">
-                                    <button
-                                        type="submit"
-                                        disabled={updateUserLoading}
-                                        className="w-full md:w-auto bg-slate-900 text-white px-10 h-14 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 hover:bg-primary transition-all active:scale-95 shadow-xl shadow-slate-900/10 disabled:opacity-50"
-                                    >
-                                        {updateUserLoading ? (
-                                            <Loader2
-                                                size={18}
-                                                className="animate-spin"
-                                            />
-                                        ) : (
-                                            "Update Profile"
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                {/* Header Profile Info */}
+                <div className="mb-12">
+                    <h1 className="text-4xl md:text-5xl font-bold text-primary mb-3">
+                        {user?.name || "Guest User"}
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-2xl md:text-3xl font-medium text-primary">
+                            {user?.phone || "No phone added"}
+                        </h2>
+                        {user?.phone && (
+                            <span className="bg-primary text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
+                                Verified
+                            </span>
+                        )}
                     </div>
                 </div>
+
+                {/* Quick Action Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-16">
+                    <Link to="/orders" className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all group">
+                        <div className="w-14 h-14 bg-primary-pale/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Clock size={28} className="text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 text-center">Order<br/>History</span>
+                    </Link>
+                    <Link to="/wishlist" className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all group">
+                        <div className="w-14 h-14 bg-primary-pale/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Heart size={28} className="text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 text-center">Saved<br/>Wishlist</span>
+                    </Link>
+                    <div 
+                        onClick={() => document.getElementById('address-section').scrollIntoView({ behavior: 'smooth' })}
+                        className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all group cursor-pointer"
+                    >
+                        <div className="w-14 h-14 bg-primary-pale/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <MapPin size={28} className="text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 text-center">Delivery<br/>Address</span>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all group cursor-pointer opacity-70">
+                        <div className="w-14 h-14 bg-primary-pale/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Ticket size={28} className="text-primary" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 text-center">My<br/>Vouchers</span>
+                    </div>
+                </div>
+
+                {/* Editable Form */}
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mb-12">
+                        <DVAGOInput
+                            label="Full Name"
+                            name="name"
+                            value={userData?.name}
+                            onChange={handleChange}
+                        />
+                        <DVAGOInput
+                            label="Email"
+                            name="email"
+                            value={userData?.email}
+                            onChange={handleChange}
+                            disabled
+                        />
+                    </div>
+
+                    <div id="address-section" className="pt-8 border-t border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6 flex justify-between items-center">
+                            Delivery Address
+                            {isFetchingAddress && <Loader2 size={16} className="animate-spin text-primary" />}
+                        </h3>
+                        
+                        <div className="mb-8">
+                            <label className="text-[13px] font-bold text-gray-900 ml-1 mb-2 block">
+                                Pin Exact Location
+                            </label>
+                            <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm h-64 relative z-0">
+                                <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mb-12">
+                            <DVAGOInput
+                                label="Street Address"
+                                value={userData?.addresses?.[0]?.street}
+                                onChange={(e) => handleAddressChange("street", e.target.value)}
+                            />
+                            <DVAGOInput
+                                label="Apartment / Suite"
+                                value={userData?.addresses?.[0]?.addressLine2}
+                                onChange={(e) => handleAddressChange("addressLine2", e.target.value)}
+                            />
+                            <DVAGOInput
+                                label="City"
+                                value={userData?.addresses?.[0]?.city}
+                                onChange={(e) => handleAddressChange("city", e.target.value)}
+                            />
+                            <DVAGOInput
+                                label="State / Province"
+                                value={userData?.addresses?.[0]?.state}
+                                onChange={(e) => handleAddressChange("state", e.target.value)}
+                            />
+                            <DVAGOInput
+                                label="Postal Code"
+                                value={userData?.addresses?.[0]?.postalCode}
+                                onChange={(e) => handleAddressChange("postalCode", e.target.value)}
+                            />
+                            <DVAGOInput
+                                label="Country"
+                                value={userData?.addresses?.[0]?.country}
+                                onChange={(e) => handleAddressChange("country", e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-100">
+                        <button
+                            type="submit"
+                            disabled={updateUserLoading}
+                            className="bg-primary hover:bg-primary-dark text-white px-10 py-3.5 rounded-lg font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            {updateUserLoading ? <Loader2 size={18} className="animate-spin" /> : "SAVE CHANGES"}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            disabled={logoutLoading}
+                            className="bg-red-50 hover:bg-red-100 text-red-500 px-10 py-3.5 rounded-lg font-bold text-sm tracking-wide transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            {logoutLoading ? <Loader2 size={18} className="animate-spin" /> : "LOGOUT"}
+                        </button>
+                    </div>
+                </form>
+
             </div>
         </div>
     );
 };
 
-const ProfileInput = ({
-    label,
-    name,
-    value,
-    onChange,
-    disabled,
-    icon,
-    type = "text",
-}) => (
-    <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
+const DVAGOInput = ({ label, name, value, onChange, disabled }) => (
+    <div className="flex flex-col gap-2">
+        <label className="text-[13px] font-bold text-gray-900 ml-1">
             {label}
         </label>
         <div className="relative">
-            <div
-                className={`absolute left-4 top-1/2 -translate-y-1/2 ${disabled ? "text-slate-300" : "text-slate-400"}`}
-            >
-                {icon}
-            </div>
             <input
                 name={name}
                 value={value || ""}
                 onChange={onChange}
                 disabled={disabled}
-                type={type}
-                className={`w-full border-none rounded-2xl pl-12 pr-4 py-4 text-sm font-bold outline-none transition-all ${disabled
-                        ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
-                        : "bg-slate-50 text-slate-900 focus:ring-2 focus:ring-primary/20"
-                    }`}
+                className={`w-full bg-[#FCFCFC] border border-gray-200 rounded-lg p-3.5 text-sm font-medium text-gray-700 outline-none focus:border-primary transition-colors ${
+                    disabled ? "opacity-60 cursor-not-allowed bg-gray-50" : ""
+                }`}
+                placeholder={`Enter your ${label.toLowerCase()}`}
             />
+            {!disabled && (
+                <Edit3 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
+            )}
         </div>
     </div>
 );

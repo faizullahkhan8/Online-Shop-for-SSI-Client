@@ -65,9 +65,9 @@ const FooterLink = ({ to, children }) => (
     <li>
         <Link
             to={to}
-            className="flex items-center gap-1.5 text-[#A6D76E]/80 hover:text-[#A6D76E] text-[12px] font-medium transition-colors group"
+            className="flex items-center gap-2 text-gray-400 hover:text-primary text-xs font-bold transition-colors group"
         >
-            <ChevronRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <ChevronRight size={12} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all shrink-0 text-primary" />
             {children}
         </Link>
     </li>
@@ -75,7 +75,7 @@ const FooterLink = ({ to, children }) => (
 
 /* ─── Column Heading ─────────────────────────────────────────── */
 const ColHeading = ({ children }) => (
-    <h4 className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#74AA34] mb-4">
+    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white mb-5">
         {children}
     </h4>
 );
@@ -83,20 +83,20 @@ const ColHeading = ({ children }) => (
 /* ─── Footer Component ──────────────────────────────────────── */
 const Footer = () => {
     return (
-        <footer className="w-full bg-[#1A3A1E] text-white">
+        <footer className="w-full bg-gray-950 text-white mt-14">
 
             {/* ── Trust Badges Strip ──────────────────────────────── */}
-            <div className="bg-[#1E5128] border-b border-white/10">
+            <div className="bg-gray-900 border-b border-gray-800">
                 <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-5">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
                         {trustBadges.map((badge, i) => (
                             <div key={i} className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-[#74AA34]/20 border border-[#74AA34]/30 flex items-center justify-center text-[#74AA34] shrink-0">
+                                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shrink-0 shadow-inner">
                                     {badge.icon}
                                 </div>
                                 <div>
-                                    <p className="text-[12px] font-bold text-white leading-tight">{badge.title}</p>
-                                    <p className="text-[11px] text-[#A6D76E]/70 mt-0.5">{badge.desc}</p>
+                                    <p className="text-[12px] font-black text-white leading-tight uppercase tracking-wider">{badge.title}</p>
+                                    <p className="text-[11px] font-bold text-gray-400 mt-0.5">{badge.desc}</p>
                                 </div>
                             </div>
                         ))}
@@ -105,63 +105,57 @@ const Footer = () => {
             </div>
 
             {/* ── Main Footer Grid ─────────────────────────────────── */}
-            <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-12 pb-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
+            <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-16 pb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
 
                     {/* Brand Column — spans 4 cols */}
-                    <div className="lg:col-span-4 space-y-5">
+                    <div className="lg:col-span-4 space-y-6">
                         {/* Logo */}
-                        <Link to="/" className="inline-flex items-center gap-3">
-                            <div className="w-10 h-10 bg-[#74AA34] rounded-xl flex items-center justify-center font-black text-lg text-white shadow-md">
-                                M+
-                            </div>
-                            <div>
-                                <span className="font-extrabold text-xl text-white tracking-tight leading-tight block">
-                                    Medi<span className="text-[#74AA34]">Care</span>
-                                </span>
-                                <span className="text-[10px] font-semibold text-[#A6D76E]/70 uppercase tracking-[0.14em]">
-                                    Pharmacy &amp; Wellness
-                                </span>
-                            </div>
+                        <Link to="/" className="inline-flex items-center justify-center group mb-2 bg-white px-5 py-2.5 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+                            <img 
+                                src="/assets/images/zada-logo.webp" 
+                                alt="Zada Pharmacy" 
+                                className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
+                            />
                         </Link>
 
                         {/* Description */}
-                        <p className="text-[12.5px] text-[#A6D76E]/70 leading-relaxed max-w-xs">
+                        <p className="text-xs font-bold text-gray-400 leading-relaxed max-w-sm">
                             Pakistan's most trusted licensed online pharmacy. Delivering authentic medicines with 2-hour doorstep service across major cities.
                         </p>
 
                         {/* Contact Info */}
-                        <div className="space-y-2.5 text-[12px]">
-                            <a href="tel:021111633422" className="flex items-center gap-2.5 text-[#A6D76E]/80 hover:text-[#74AA34] transition-colors font-medium">
-                                <div className="w-7 h-7 rounded-lg bg-[#74AA34]/15 flex items-center justify-center shrink-0">
-                                    <PhoneCall size={13} className="text-[#74AA34]" />
+                        <div className="space-y-3.5 text-xs font-bold text-gray-300">
+                            <a href="tel:021111633422" className="flex items-center gap-3 hover:text-primary transition-colors group">
+                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                                    <PhoneCall size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
                                 </div>
                                 (021) 111-633-422
                             </a>
-                            <a href="mailto:support@medicare.pk" className="flex items-center gap-2.5 text-[#A6D76E]/80 hover:text-[#74AA34] transition-colors font-medium">
-                                <div className="w-7 h-7 rounded-lg bg-[#74AA34]/15 flex items-center justify-center shrink-0">
-                                    <Mail size={13} className="text-[#74AA34]" />
+                            <a href="mailto:support@zada.pk" className="flex items-center gap-3 hover:text-primary transition-colors group">
+                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                                    <Mail size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
                                 </div>
-                                support@medicare.pk
+                                support@zada.pk
                             </a>
-                            <div className="flex items-start gap-2.5 text-[#A6D76E]/70">
-                                <div className="w-7 h-7 rounded-lg bg-[#74AA34]/15 flex items-center justify-center shrink-0 mt-0.5">
-                                    <MapPin size={13} className="text-[#74AA34]" />
+                            <div className="flex items-start gap-3 text-gray-400">
+                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
+                                    <MapPin size={14} className="text-gray-500" />
                                 </div>
-                                <span>Main Commercial Area, Karachi &amp; Lahore, Pakistan</span>
+                                <span className="pt-1">Main Commercial Area, Karachi & Lahore, Pakistan</span>
                             </div>
                         </div>
 
                         {/* Social Icons */}
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6D76E]/50 mb-2.5">Follow Us</p>
-                            <div className="flex gap-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-3">Follow Us</p>
+                            <div className="flex gap-2.5">
                                 {socialLinks.map((s, i) => (
                                     <a
                                         key={i}
                                         href={s.href}
                                         aria-label={s.label}
-                                        className={`w-8 h-8 rounded-lg bg-white/10 text-[#A6D76E] flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 ${s.color}`}
+                                        className={`w-9 h-9 rounded-xl bg-gray-800 text-gray-400 flex items-center justify-center transition-all duration-300 hover:text-white hover:scale-110 shadow-sm ${s.color}`}
                                     >
                                         {s.icon}
                                     </a>
@@ -173,7 +167,7 @@ const Footer = () => {
                     {/* Categories — spans 2 cols */}
                     <div className="lg:col-span-2">
                         <ColHeading>Categories</ColHeading>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {categoriesLinks.map((link, i) => (
                                 <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
                             ))}
@@ -183,7 +177,7 @@ const Footer = () => {
                     {/* Quick Links — spans 2 cols */}
                     <div className="lg:col-span-2">
                         <ColHeading>Quick Links</ColHeading>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {quickLinks.map((link, i) => (
                                 <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
                             ))}
@@ -193,7 +187,7 @@ const Footer = () => {
                     {/* Support — spans 2 cols */}
                     <div className="lg:col-span-2">
                         <ColHeading>Support</ColHeading>
-                        <ul className="space-y-2">
+                        <ul className="space-y-3">
                             {supportLinks.map((link, i) => (
                                 <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
                             ))}
@@ -202,30 +196,30 @@ const Footer = () => {
 
                     {/* Newsletter — spans 2 cols */}
                     <div className="lg:col-span-2">
-                        <ColHeading>Health Newsletter</ColHeading>
-                        <p className="text-[12px] text-[#A6D76E]/70 mb-4 leading-relaxed">
-                            Get weekly health tips, new arrivals &amp; exclusive deals in your inbox.
+                        <ColHeading>Newsletter</ColHeading>
+                        <p className="text-xs font-bold text-gray-400 mb-5 leading-relaxed">
+                            Get weekly health tips, new arrivals & exclusive deals in your inbox.
                         </p>
-                        <form className="flex flex-col gap-2" onSubmit={(e) => e.preventDefault()}>
+                        <form className="flex flex-col gap-2.5" onSubmit={(e) => e.preventDefault()}>
                             <input
                                 type="email"
                                 placeholder="Your email address"
-                                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-[#A6D76E]/40 outline-none focus:border-[#74AA34] focus:bg-white/15 transition-all"
+                                className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-xs font-bold text-white placeholder:text-gray-600 outline-none focus:border-primary focus:bg-gray-800 transition-all shadow-inner"
                             />
                             <button
                                 type="submit"
-                                className="flex items-center justify-center gap-1.5 bg-[#74AA34] hover:bg-[#629329] text-white text-[11px] font-extrabold uppercase tracking-wider px-4 py-2 rounded-lg transition-colors cursor-pointer"
+                                className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-[11px] font-black uppercase tracking-widest px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
                             >
-                                Subscribe <ArrowRight size={12} />
+                                Subscribe <ArrowRight size={14} strokeWidth={3} />
                             </button>
                         </form>
 
                         {/* Trust badge */}
-                        <div className="mt-5 p-3 rounded-xl bg-[#74AA34]/15 border border-[#74AA34]/25 flex items-center gap-2.5">
-                            <HeartPulse size={18} className="text-[#74AA34] shrink-0" />
-                            <div className="text-[11px] leading-snug">
-                                <span className="font-bold text-white block">Licensed Pharmacy</span>
-                                <span className="text-[#A6D76E]/70">Registered with DRAP, Pakistan</span>
+                        <div className="mt-6 p-4 rounded-2xl bg-gray-900 border border-gray-800 flex items-start gap-3">
+                            <HeartPulse size={20} className="text-primary shrink-0 mt-0.5" />
+                            <div className="text-xs leading-snug">
+                                <span className="font-black text-white block mb-1 uppercase tracking-wider">Licensed</span>
+                                <span className="font-bold text-gray-500">Registered with DRAP, Pakistan</span>
                             </div>
                         </div>
                     </div>
@@ -233,21 +227,17 @@ const Footer = () => {
             </div>
 
             {/* ── Bottom Bar ───────────────────────────────────────── */}
-            <div className="border-t border-white/10 bg-black/20">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-[11px] text-[#A6D76E]/50 text-center sm:text-left">
-                        © 2026 MediCare Online Pharmacy. All Rights Reserved.
+            <div className="border-t border-gray-800 bg-black/40">
+                <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-[11px] font-bold text-gray-500 text-center md:text-left tracking-wide">
+                        © {new Date().getFullYear()} Zada Online Pharmacy. All Rights Reserved.
                     </p>
-                    <div className="flex items-center gap-3 text-[11px] text-[#A6D76E]/50">
-                        <Link to="/about-us" className="hover:text-[#A6D76E] transition-colors">Privacy</Link>
-                        <span className="text-white/20">·</span>
-                        <Link to="/about-us" className="hover:text-[#A6D76E] transition-colors">Terms</Link>
-                        <span className="text-white/20">·</span>
-                        <Link to="/about-us" className="hover:text-[#A6D76E] transition-colors">Cookies</Link>
-                        <span className="text-white/20">·</span>
-                        <span className="text-[#A6D76E]/40">
-                            Disclaimer: Fulfilled by certified pharmacist partners.
-                        </span>
+                    <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                        <Link to="/about-us" className="hover:text-primary transition-colors">Privacy</Link>
+                        <span className="text-gray-700">·</span>
+                        <Link to="/about-us" className="hover:text-primary transition-colors">Terms</Link>
+                        <span className="text-gray-700">·</span>
+                        <Link to="/about-us" className="hover:text-primary transition-colors">Cookies</Link>
                     </div>
                 </div>
             </div>

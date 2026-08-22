@@ -139,6 +139,7 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
 
     const products = await ProductModel.find(query)
         .populate("category", "name")
+        .populate("vendor", "name image")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit));
@@ -176,7 +177,9 @@ export const getProductById = expressAsyncHandler(async (req, res, next) => {
 
     const { id } = req.params;
 
-    const product = await ProductModel.findById(id).populate("category");
+    const product = await ProductModel.findById(id)
+        .populate("category")
+        .populate("vendor", "name description image");
     if (!product) return next(new ErrorResponse("Product not found", 404));
 
     const { price: effectivePrice, promotion } = await getEffectivePrice(

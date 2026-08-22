@@ -3,6 +3,26 @@ import { getLocalPrescriptionModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 
+export const getUnreadPrescriptionsCount = expressAsyncHandler(async (req, res, next) => {
+    const PrescriptionModel = getLocalPrescriptionModel();
+    if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
+    const count = await PrescriptionModel.countDocuments({ isViewed: { $ne: true } });
+    res.status(200).json({ success: true, count });
+});
+
+export const markPrescriptionViewed = expressAsyncHandler(async (req, res, next) => {
+    const PrescriptionModel = getLocalPrescriptionModel();
+    if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
+    
+    const prescription = await PrescriptionModel.findById(req.params.id);
+    if (!prescription) return next(new ErrorResponse("Prescription not found", 404));
+    
+    prescription.isViewed = true;
+    await prescription.save({ validateModifiedOnly: true });
+    
+    res.status(200).json({ success: true, message: "Marked as viewed" });
+});
+
 // @desc    Upload a new prescription
 // @route   POST /api/prescriptions
 // @access  Private

@@ -11,6 +11,7 @@ import reviewSchema from "../models/review.model.js";
 import prescriptionSchema from "../models/prescription.model.js";
 import menuSchema from "../models/menu.model.js";
 import homePageSchema from "../models/homePage.model.js";
+import vendorSchema from "../models/vendor.model.js";
 
 let connectionPromise = null;
 let localDbConnection = null;
@@ -26,6 +27,7 @@ let localReviewModel;
 let localPrescriptionModel;
 let localMenuModel;
 let localHomePageModel;
+let localVendorModel;
 
 export const connectToDB = async () => {
     if (connectionPromise) return connectionPromise;
@@ -72,6 +74,7 @@ export const connectToDB = async () => {
             localPrescriptionModel = localDbConnection.model("Prescription", prescriptionSchema);
             localMenuModel = localDbConnection.model("Menu", menuSchema);
             localHomePageModel = localDbConnection.model("HomePage", homePageSchema);
+            localVendorModel = localDbConnection.model("Vendor", vendorSchema);
 
             return localDbConnection;
         } catch (error) {
@@ -96,3 +99,4 @@ export const getLocalReviewModel = () => localReviewModel || null;
 export const getLocalPrescriptionModel = () => localPrescriptionModel || null;
 export const getLocalMenuModel = () => localMenuModel || null;
 export const getLocalHomePageModel = () => localHomePageModel || null;
+export const getLocalVendorModel = () => localVendorModel || null;

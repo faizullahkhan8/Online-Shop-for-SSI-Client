@@ -5,7 +5,11 @@ const productSchema = new Schema(
         name: { type: String, required: true },
         slug: { type: String, unique: true, sparse: true },
         productType: { type: String, default: "" },
-        vendor: { type: String, default: "" },
+        vendor: { 
+            type: SchemaTypes.ObjectId, 
+            ref: "Vendor", 
+            default: null 
+        },
         price: { type: Number, required: true },
         minPrice: { type: Number },
         maxPrice: { type: Number },

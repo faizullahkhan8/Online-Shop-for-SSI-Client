@@ -1,7 +1,25 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ORDER_ROUTES } from "../routes";
 import apiClient from "../apiClient.js";
 import { toast } from "react-toastify";
+export const useGetUnreadOrdersCount = () => {
+    const [count, setCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    const getUnreadCount = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await apiClient.get("/orders/unread-count");
+            if (res.data?.success) setCount(res.data.count);
+        } catch (error) {
+            console.error("Error fetching unread orders count:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { getUnreadCount, count, loading };
+};
 
 export const usePlaceOrder = () => {
     const [loading, setLoading] = useState();

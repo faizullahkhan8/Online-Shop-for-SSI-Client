@@ -26,6 +26,7 @@ const Button = ({
     loading = false,
     className,
     onClick,
+    ...props
 }) => {
     return (
         <button
@@ -41,6 +42,7 @@ const Button = ({
                 (disabled || loading) && "opacity-60 cursor-not-allowed",
                 className
             )}
+            {...props}
         >
             {loading && (
                 <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

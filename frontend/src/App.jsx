@@ -30,6 +30,7 @@ const ProductsListPage = lazy(() => import("./Pages/Admin/ProductsListPage"));
 const AddProductPage = lazy(() => import("./Pages/Admin/AddProductPage"));
 const TaxShippingPage = lazy(() => import("./Pages/Admin/TaxShippingPage"));
 const CategoriesListPage = lazy(() => import("./Pages/Admin/CategoriesListPage"));
+const VendorsListPage = lazy(() => import("./Pages/Admin/VendorsListPage"));
 const OrdersListPage = lazy(() => import("./Pages/Admin/OrdersListPage"));
 const OrderDetailsPage = lazy(() => import("./Pages/Admin/OrderDetailsPage"));
 const AddOrderPage = lazy(() => import("./Pages/Admin/AddOrderPage"));
@@ -37,7 +38,6 @@ const UsersListPage = lazy(() => import("./Pages/Admin/UsersListPage"));
 const AddUserPage = lazy(() => import("./Pages/Admin/AddUserPage"));
 const AdminPromotionsPage = lazy(() => import("./Pages/Admin/PromotionsPage"));
 const PromotionBuilderPage = lazy(() => import("./Pages/Admin/PromotionBuilderPage"));
-const HeroManagerPage = lazy(() => import("./Pages/Admin/HeroManagerPage"));
 const PrescriptionsListPage = lazy(() => import("./Pages/Admin/PrescriptionsList"));
 const MenuBuilderPage = lazy(() => import("./Pages/Admin/MenuBuilderPage"));
 const HomePageBuilderPage = lazy(() => import("./Pages/Admin/HomePageBuilderPage"));
@@ -135,6 +135,7 @@ const App = () => {
                         <Route path="products/add" element={<AddProductPage />} />
                         <Route path="settings/tax-shipping" element={<TaxShippingPage />} />
                         <Route path="categories" element={<CategoriesListPage />} />
+                        <Route path="vendors" element={<VendorsListPage />} />
                         <Route path="orders" element={<OrdersListPage />} />
                         <Route path="orders/:id" element={<OrderDetailsPage />} />
                         <Route path="orders/add" element={<AddOrderPage />} />
@@ -142,7 +143,6 @@ const App = () => {
                         <Route path="users/add" element={<AddUserPage />} />
                         <Route path="promotions" element={<AdminPromotionsPage />} />
                         <Route path="promotions/create" element={<PromotionBuilderPage />} />
-                        <Route path="hero" element={<HeroManagerPage />} />
                         <Route path="menu-builder" element={<MenuBuilderPage />} />
                         <Route path="homepage-builder" element={<HomePageBuilderPage />} />
                         

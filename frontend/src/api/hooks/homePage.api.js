@@ -97,3 +97,43 @@ export const useResetHomePage = () => {
 
     return { resetHomePage, loading };
 };
+
+
+export const useUploadHomePageImage = () => {
+    const [loading, setLoading] = useState(false);
+
+    const uploadImage = async (file) => {
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+            
+            const res = await apiClient.post("/homepage/upload-image", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            return res.data;
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteImage = async (fileId) => {
+        if (!fileId) return { success: false };
+        setLoading(true);
+        try {
+            const res = await apiClient.delete(`/homepage/delete-image/${fileId}`);
+            return res.data;
+        } catch (error) {
+            console.error("Error deleting image:", error);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { uploadImage, deleteImage, loading };
+};
+

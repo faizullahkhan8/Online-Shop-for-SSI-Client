@@ -1,10 +1,11 @@
-import { Star, Heart, ShoppingCart } from "lucide-react";
+import { Star, Heart, ShoppingCart, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
 import { useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const ProductCard = ({ product }) => {
     const dispatch = useDispatch();
@@ -62,10 +63,7 @@ const ProductCard = ({ product }) => {
 
     let discountBadgeText = "SALE";
     if (isDiscounted) {
-        if (
-            product?.promotion?.discountType === "PERCENTAGE" &&
-            product?.promotion?.discountValue
-        ) {
+        if (product?.promotion?.discountType === "PERCENTAGE" && product?.promotion?.discountValue) {
             discountBadgeText = `-${product.promotion.discountValue}%`;
         } else if (rawPrice > 0) {
             const pct = Math.round(((rawPrice - rawEffectivePrice) / rawPrice) * 100);
@@ -76,122 +74,96 @@ const ProductCard = ({ product }) => {
     const ratingVal = Number(product?.rating || 5);
     const roundedRating = Math.min(5, Math.max(1, Math.round(ratingVal)));
 
-    const getImageUrl = (img) => {
-        if (!img) return "https://placehold.co/300x300/F4F8EE/74AA34?text=MediCare";
-        if (img.startsWith("http://") || img.startsWith("https://")) return img;
-        const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
-        if (endpoint) {
-            return `${endpoint.replace(/\/+$/, "")}/${img.replace(/^\/+/, "")}`;
-        }
-        return img;
-    };
-
     const imageSrc = getImageUrl(product?.image);
 
+    // Get Brand or Category safely
+    const getBrandOrCategory = () => {
+        const vendorName = product?.vendor?.name || (typeof product?.vendor === 'string' ? product?.vendor : null);
+        const categoryName = product?.category?.name || (typeof product?.category === 'string' ? product?.category : null);
+        return vendorName || categoryName || "Zada Pick";
+    };
+
     return (
-        <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-gray-200/85 hover:border-[#74AA34]/60 p-3 sm:p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(116,170,52,0.12)] transition-all duration-300">
+        <div className="group relative flex flex-col h-full bg-white rounded-3xl border-2 border-transparent hover:border-primary-light p-3 shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
             {/* Top Image Box */}
-            <div className="relative aspect-square w-full bg-[#FAFBF9] rounded-xl overflow-hidden border border-gray-100/90 mb-3 flex items-center justify-center">
+            <div className="relative aspect-square w-full bg-gray-50/80 rounded-2xl overflow-hidden mb-4 flex items-center justify-center group-hover:bg-primary-pale/30 transition-colors duration-300">
                 {/* Discount Badge */}
                 {isDiscounted && (
-                    <div className="absolute top-2 left-2 z-10 bg-rose-500 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs tracking-tight">
+                    <div className="absolute top-3 left-3 z-10 bg-amber-400 text-amber-900 font-black text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg shadow-sm">
                         {discountBadgeText}
                     </div>
                 )}
 
                 {/* Wishlist Button */}
                 <button
-                    type="button"
                     onClick={handleWishlist}
-                    aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                    className={`absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer shadow-2xs ${
-                        isInWishlist
-                            ? "bg-rose-50 text-rose-500 border border-rose-200"
-                            : "bg-white/90 backdrop-blur-xs text-gray-400 hover:text-rose-500 hover:bg-white border border-gray-200/80"
-                    }`}
+                    className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer"
                 >
                     <Heart
-                        size={13}
-                        fill={isInWishlist ? "currentColor" : "none"}
+                        size={16}
+                        className={isInWishlist ? "text-red-500 fill-red-500" : ""}
                     />
                 </button>
 
-                {/* Image Link */}
                 <Link
                     to={`/product/${productId}`}
-                    className="w-full h-full p-2.5 flex items-center justify-center"
+                    className="w-full h-full flex items-center justify-center p-4"
                 >
                     <img
                         src={imageSrc}
                         alt={product?.name || "Product"}
-                        loading="lazy"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://placehold.co/300x300/F4F8EE/74AA34?text=MediCare";
-                        }}
-                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out"
+                        className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => handleImageError(e, "product")}
                     />
                 </Link>
             </div>
 
-            {/* Content & Details */}
-            <div className="flex flex-col flex-1 justify-between">
-                <div>
-                    {/* Rating Row */}
-                    <div className="flex items-center gap-1.5 mb-1.5 h-4">
-                        <div className="flex text-amber-400">
-                            {[...Array(5)].map((_, i) => (
-                                <Star
-                                    key={i}
-                                    size={11}
-                                    fill={i < roundedRating ? "currentColor" : "none"}
-                                    className={
-                                        i < roundedRating
-                                            ? "text-amber-400"
-                                            : "text-gray-200"
-                                    }
-                                />
-                            ))}
-                        </div>
-                        <span className="font-mono text-[11px] font-medium text-gray-400 leading-none">
-                            ({ratingVal.toFixed(1)})
+            {/* Info Section */}
+            <div className="flex flex-col flex-1 px-1.5 pb-1">
+                {/* Brand & Rating Line */}
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate pr-2 group-hover:text-primary transition-colors">
+                        {getBrandOrCategory()}
+                    </span>
+                    <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                        <Star size={10} className="text-amber-400 fill-amber-400" />
+                        <span className="text-[10px] font-black text-amber-600">
+                            {roundedRating}.0
                         </span>
                     </div>
-
-                    {/* Product Title (enlarged font with more space beneath) */}
-                    <Link
-                        to={`/product/${productId}`}
-                        title={product?.name}
-                        className="font-sans text-gray-900 font-bold text-[13px] sm:text-sm leading-snug line-clamp-2 h-[42px] hover:text-[#74AA34] transition-colors mb-3.5 block"
-                    >
-                        {product?.name || "Healthcare Product"}
-                    </Link>
                 </div>
 
-                {/* Footer Section (Price & Action) */}
-                <div className="mt-auto pt-1 flex flex-col gap-2.5">
-                    {/* Price Slot - fixed height 34px */}
-                    <div className="h-[34px] flex flex-col justify-center">
-                        <div className="flex items-baseline gap-1.5 flex-wrap">
-                            <span className="font-mono text-sm sm:text-base font-bold text-gray-900 leading-none">
-                                Rs. {displayPrice?.toLocaleString()}
+                {/* Product Title */}
+                <Link
+                    to={`/product/${productId}`}
+                    className="text-sm font-black text-gray-900 leading-snug line-clamp-2 mb-3 group-hover:text-primary-dark transition-colors"
+                    style={{ minHeight: '2.5rem' }}
+                >
+                    {product?.name || "Unnamed Product"}
+                </Link>
+
+                {/* Price & Action Button */}
+                <div className="mt-auto flex items-end justify-between">
+                    <div className="flex flex-col">
+                        {strikePrice && (
+                            <span className="text-[11px] font-bold text-gray-400 line-through leading-none mb-1">
+                                Rs {strikePrice.toLocaleString()}
                             </span>
-                            {strikePrice && (
-                                <span className="font-mono text-[11px] text-gray-400 line-through leading-none">
-                                    Rs. {strikePrice?.toLocaleString()}
-                                </span>
-                            )}
+                        )}
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-xs font-black text-primary uppercase tracking-wider">Rs</span>
+                            <span className="text-lg font-black text-gray-900 leading-none group-hover:text-primary-dark transition-colors">
+                                {displayPrice.toLocaleString()}
+                            </span>
                         </div>
                     </div>
 
-                    {/* Add to Cart Button */}
                     <button
-                        type="button"
                         onClick={handleAddToCart}
-                        className="w-full flex items-center justify-center gap-1.5 bg-[#74AA34] hover:bg-[#629329] active:bg-[#527E23] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider h-9 rounded-xl transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-[0.98] cursor-pointer"
+                        className="w-10 h-10 bg-primary-pale text-primary-dark hover:bg-primary hover:text-white rounded-xl flex items-center justify-center transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                        title="Add to Cart"
                     >
-                        <ShoppingCart size={13} className="shrink-0" />
-                        <span>Add to Cart</span>
+                        <Plus size={20} strokeWidth={2.5} />
                     </button>
                 </div>
             </div>

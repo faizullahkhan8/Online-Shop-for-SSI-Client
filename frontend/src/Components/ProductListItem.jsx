@@ -11,6 +11,7 @@ import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
 import { useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
+import { handleImageError } from "../utils/imageHelper";
 
 const ProductListItem = ({ product }) => {
     const dispatch = useDispatch();
@@ -70,7 +71,7 @@ const ProductListItem = ({ product }) => {
     const roundedRating = Math.min(5, Math.max(1, Math.round(ratingVal)));
 
     const getImageUrl = (img) => {
-        if (!img) return "https://placehold.co/300x300/F4F8EE/74AA34?text=MediCare";
+        if (!img) return "https://placehold.co/300x300/F4F8EE/74AA34?text=Zada";
         if (img.startsWith("http://") || img.startsWith("https://")) return img;
         const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
         if (endpoint) {
@@ -89,10 +90,7 @@ const ProductListItem = ({ product }) => {
                         src={imageSrc}
                         alt={product?.name || "Product"}
                         loading="lazy"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://placehold.co/300x300/F4F8EE/74AA34?text=MediCare";
-                        }}
+                        onError={(e) => handleImageError(e, "product")}
                         className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                 </Link>

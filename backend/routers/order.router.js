@@ -11,6 +11,7 @@ import {
     getDashboardStats,
     cancelOrder,
     cancelOrderItem,
+    getUnreadOrdersCount,
 } from "../controllers/order.controller.js";
 
 const router = new Router();
@@ -20,6 +21,7 @@ router.get("/get-all", isAuth, authorize("admin"), getAllOrder);
 
 // Dashboard stats (admin only) - must be above /:id
 router.get("/dashboard-stats", isAuth, authorize("admin"), getDashboardStats);
+router.get("/unread-count", isAuth, authorize("admin"), getUnreadOrdersCount);
 
 router.get("/my-orders", isAuth, getUserOrders);
 router.get("/:id", isAuth, getOrderById);

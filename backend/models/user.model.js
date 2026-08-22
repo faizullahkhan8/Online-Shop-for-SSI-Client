@@ -43,6 +43,8 @@ const userSchema = new Schema(
                 state: { type: String, default: "" },
                 postalCode: { type: String, default: "" },
                 country: { type: String, default: "" },
+                lat: { type: Number },
+                lng: { type: Number },
             },
         ],
         cart: [

@@ -22,6 +22,11 @@ const MobileSideBar = ({
     setIsMenuOpen,
     isAuthenticated,
     cartCount,
+    onCartClick,
+    onWishlistClick,
+    onOrdersClick,
+    onRegisterClick,
+    onLoginClick,
 }) => {
     const { user } = useSelector((state) => state.auth);
 
@@ -37,12 +42,12 @@ const MobileSideBar = ({
 
             {/* Sidebar Panel */}
             <div
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#f8f9fa] z-[70] md:hidden transform transition-transform duration-400 ease-in-out shadow-2xl flex flex-col ${
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-gray-50 z-[70] md:hidden transform transition-transform duration-400 ease-in-out shadow-2xl flex flex-col ${
                     isMenuOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
                 {/* Modern Gradient Header */}
-                <div className="bg-gradient-to-br from-[#1A3A1E] to-[#1E5128] pt-10 pb-6 px-6 relative overflow-hidden rounded-bl-3xl">
+                <div className="bg-gradient-to-br from-gray-950 to-primary-dark pt-10 pb-6 px-6 relative overflow-hidden rounded-bl-3xl">
                     <div className="absolute top-0 right-0 p-4">
                         <button
                             onClick={() => setIsMenuOpen(false)}
@@ -58,7 +63,7 @@ const MobileSideBar = ({
                                 <User size={28} className="text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-[#A6D76E] text-xs font-semibold uppercase tracking-wider mb-1">
+                                <p className="text-primary-light text-xs font-semibold uppercase tracking-wider mb-1">
                                     Welcome back
                                 </p>
                                 <p className="font-bold text-white text-lg truncate">
@@ -69,24 +74,37 @@ const MobileSideBar = ({
                     ) : (
                         <div className="mt-4">
                             <h3 className="font-extrabold text-2xl text-white mb-2 leading-tight">
-                                Your <span className="text-[#A6D76E]">Wellness</span><br/>Journey Starts Here
+                                Your <span className="text-primary-light">Wellness</span><br/>Journey Starts Here
                             </h3>
                             <p className="text-white/80 text-sm mb-5 leading-relaxed max-w-[240px]">
                                 Login to track orders, manage prescriptions, and access exclusive deals.
                             </p>
-                            <Link
-                                to="/login"
-                                onClick={() => setIsMenuOpen(false)}
-                                className="inline-flex w-full items-center justify-center bg-white text-[#1E5128] hover:bg-[#F4F8EE] py-3 rounded-xl text-sm font-bold shadow-md transition-all"
-                            >
-                                Login or Register
-                            </Link>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        setIsMenuOpen(false);
+                                        if (onLoginClick) onLoginClick(e);
+                                    }}
+                                    className="inline-flex flex-1 items-center justify-center bg-white/10 text-white hover:bg-white/20 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer"
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        setIsMenuOpen(false);
+                                        if (onRegisterClick) onRegisterClick(e);
+                                    }}
+                                    className="inline-flex flex-1 items-center justify-center bg-white text-primary-dark hover:bg-primary-pale py-3 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer"
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
                         </div>
                     )}
                     
                     {/* Decorative Background Elements */}
                     <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-                    <div className="absolute top-10 -left-10 w-24 h-24 bg-[#74AA34]/20 rounded-full blur-xl"></div>
+                    <div className="absolute top-10 -left-10 w-24 h-24 bg-primary/20 rounded-full blur-xl"></div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-6">
@@ -96,9 +114,9 @@ const MobileSideBar = ({
                             <Link
                                 to="/profile"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-[#A6D76E] transition-all"
+                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-primary-light transition-all"
                             >
-                                <div className="w-10 h-10 rounded-full bg-[#F4F8EE] text-[#74AA34] flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-primary-pale text-primary flex items-center justify-center">
                                     <User size={20} />
                                 </div>
                                 <span className="text-xs font-semibold text-gray-700">Profile</span>
@@ -106,9 +124,9 @@ const MobileSideBar = ({
                             <Link
                                 to="/upload-prescription"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-[#A6D76E] transition-all"
+                                className="flex flex-col items-center justify-center gap-2 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 hover:border-primary-light transition-all"
                             >
-                                <div className="w-10 h-10 rounded-full bg-[#EDF6E5] text-[#3E6913] flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-primary-pale text-primary-dark flex items-center justify-center">
                                     <FileText size={20} />
                                 </div>
                                 <span className="text-xs font-semibold text-gray-700">Upload Rx</span>
@@ -153,19 +171,19 @@ const MobileSideBar = ({
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <NavItem
                                 setIsMenuOpen={setIsMenuOpen}
-                                to="/orders"
+                                onClick={onOrdersClick}
                                 icon={<Package size={18} />}
                                 label="My Orders"
                             />
                             <NavItem
                                 setIsMenuOpen={setIsMenuOpen}
-                                to="/wishlist"
+                                onClick={onWishlistClick}
                                 icon={<Heart size={18} />}
                                 label="Favorites"
                             />
                             <NavItem
                                 setIsMenuOpen={setIsMenuOpen}
-                                to="/cart"
+                                onClick={onCartClick}
                                 icon={<ShoppingCart size={18} />}
                                 label="My Cart"
                                 badge={cartCount}
@@ -187,10 +205,11 @@ const MobileSideBar = ({
                 <div className="p-5 bg-white border-t border-gray-100 rounded-tl-3xl mt-auto">
                     <div className="flex items-center justify-between text-gray-400">
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 bg-[#74AA34] rounded flex items-center justify-center text-white font-black text-[10px]">
-                                M+
-                            </div>
-                            <span className="text-[11px] font-semibold">MediCare</span>
+                            <img 
+                                src="/assets/images/zada-logo.webp" 
+                                alt="Zada Pharmacy" 
+                                className="h-6 w-auto object-contain" 
+                            />
                         </div>
                         <div className="flex gap-2 items-center bg-gray-50 px-2 py-1 rounded-md">
                             <Globe size={12} />
@@ -212,29 +231,36 @@ const NavItem = ({
     badge,
     color = "text-gray-500 bg-gray-50",
     setIsMenuOpen,
-}) => (
-    <Link
+    onClick,
+}) => {
+    const Component = onClick ? "button" : Link;
+    return (
+    <Component
         to={to}
-        onClick={() => setIsMenuOpen(false)}
-        className="flex items-center gap-3 px-4 py-3.5 hover:bg-[#F4F8EE] transition-colors border-b border-gray-50 last:border-b-0 group"
+        onClick={(e) => {
+            setIsMenuOpen(false);
+            if (onClick) onClick(e);
+        }}
+        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-primary-pale transition-colors border-b border-gray-50 last:border-b-0 group cursor-pointer text-left"
     >
         <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-[#74AA34] group-hover:text-white transition-all ${color}`}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all ${color}`}
         >
             {icon}
         </div>
-        <span className="font-semibold text-gray-700 group-hover:text-[#1E5128] text-[13px] flex-1 transition-colors">
+        <span className="font-semibold text-gray-700 group-hover:text-primary-dark text-[13px] flex-1 transition-colors">
             {label}
         </span>
         {badge > 0 ? (
-            <span className="bg-[#74AA34] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+            <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
                 {badge}
             </span>
         ) : (
             <ChevronRight
                 size={16}
-                className="text-gray-300 group-hover:text-[#74AA34] group-hover:translate-x-1 transition-all"
+                className="text-gray-300 group-hover:text-primary transition-colors group-hover:translate-x-1"
             />
         )}
-    </Link>
-);
+    </Component>
+    );
+};

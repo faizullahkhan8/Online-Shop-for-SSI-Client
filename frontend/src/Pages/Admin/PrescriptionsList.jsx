@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 import { 
     useGetAllPrescriptions, 
     useUpdatePrescriptionStatus, 
-    useDeletePrescription 
+    useDeletePrescription,
+    useMarkPrescriptionViewed
 } from "../../api/hooks/prescription.api.js";
 import { Eye, Trash2, X, Check, Loader, Printer, Download, MapPin } from "lucide-react";
 
@@ -65,6 +66,20 @@ const PrescriptionsList = () => {
             }
         } catch (error) {
             toast.error("Failed to delete prescription");
+        }
+    };
+
+    const { markAsViewed } = useMarkPrescriptionViewed();
+
+    const handleViewImage = async (p) => {
+        setSelectedImage(p.image);
+        if (!p.isViewed) {
+            const res = await markAsViewed(p._id);
+            if (res?.success) {
+                setPrescriptions(prescriptions.map(presc => 
+                    presc._id === p._id ? { ...presc, isViewed: true } : presc
+                ));
+            }
         }
     };
 
@@ -180,10 +195,13 @@ const PrescriptionsList = () => {
                                                         <Download size={16} />
                                                     </button>
                                                     <button 
-                                                        onClick={() => setSelectedImage(p.image)}
-                                                        className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded"
+                                                        onClick={() => handleViewImage(p)}
+                                                        className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded relative"
                                                         title="View Image"
                                                     >
+                                                        {!p.isViewed && (
+                                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-white"></span>
+                                                        )}
                                                         <Eye size={16} />
                                                     </button>
                                                     <button 

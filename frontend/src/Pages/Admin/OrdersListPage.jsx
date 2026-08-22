@@ -88,10 +88,15 @@ const OrdersList = () => {
                                     key={order._id}
                                     className="hover:bg-gray-50 transition-colors group"
                                 >
-                                    <td className="px-4 py-3.5">
-                                        <span className="text-sm font-mono font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
-                                            #{order._id.slice(-8).toUpperCase()}
-                                        </span>
+                                    <td className="px-4 py-3.5 relative">
+                                        <div className="flex items-center gap-2">
+                                            {!order.isViewed && (
+                                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                                            )}
+                                            <span className="text-sm font-mono font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
+                                                #{order._id.slice(-8).toUpperCase()}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3.5">
                                         <p className="text-sm font-medium text-gray-900">

@@ -184,6 +184,23 @@ const DEFAULT_SECTIONS = [
         },
     },
     {
+        type: "single_mid_banner",
+        isVisible: false,
+        order: 12,
+        config: {
+            badge: "Special Offer",
+            title: "Exclusive Full Width Banner",
+            desc: "This is a full-width promotional banner. Great for big announcements or major brand showcases.",
+            ctaText: "Shop Now",
+            ctaLink: "/products",
+            bgFrom: "#1e4d28",
+            bgTo: "#4d8d3a",
+            badgeColor: "#dcfce7",
+            image: "",
+            imagekitFileId: ""
+        },
+    },
+    {
         type: "products_grid",
         isVisible: true,
         order: 12,

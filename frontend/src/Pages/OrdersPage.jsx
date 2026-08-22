@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import CancellationModal from "../Components/CancellationModal.jsx";
 import { useCancelOrder } from "../api/hooks/orders.api.js";
+import { getImageUrl } from "../utils/imageHelper";
 
 const OrdersPage = () => {
     const [orders, setOrders] = useState([]);
@@ -29,8 +30,11 @@ const OrdersPage = () => {
                 return "bg-green-50 text-green-700 border-green-200";
             case "pending":
                 return "bg-amber-50 text-amber-700 border-amber-200";
+            case "processing":
             case "shipped":
-                return "bg-blue-50 text-blue-700 border-blue-200";
+                return "bg-primary-pale text-primary-dark border-primary-light";
+            case "cancelled":
+                return "bg-red-50 text-red-700 border-red-200";
             default:
                 return "bg-gray-50 text-gray-600 border-gray-200";
         }
@@ -67,153 +71,155 @@ const OrdersPage = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 lg:px-8 py-8 min-h-[70vh]">
-            <CancellationModal
-                isOpen={cancelModal.isOpen}
-                onClose={handleCloseCancelModal}
-                onConfirm={handleConfirmCancel}
-                loading={cancelLoading}
-                title="Cancel Order"
-                description="Are you sure you want to cancel this order? This action cannot be undone and we will stop processing your shipment."
-            />
+        <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
+            <div className="container mx-auto px-4 lg:px-8 max-w-[1200px]">
+                <CancellationModal
+                    isOpen={cancelModal.isOpen}
+                    onClose={handleCloseCancelModal}
+                    onConfirm={handleConfirmCancel}
+                    loading={cancelLoading}
+                    title="Cancel Order"
+                    description="Are you sure you want to cancel this order? This action cannot be undone and we will stop processing your shipment."
+                />
 
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4 pb-4 border-b border-gray-200">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Package className="text-blue-600" size={20} />
-                        <span className="text-sm text-gray-500 font-medium">
-                            Order History
-                        </span>
-                    </div>
-                    <h1 className="text-2xl lg:text-3xl font-semibold text-gray-900">
-                        My Orders
-                    </h1>
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="flex flex-col items-center justify-center py-24 bg-white border border-gray-200 rounded-lg">
-                    <Loader2
-                        className="animate-spin text-blue-600 mb-3"
-                        size={32}
-                    />
-                    <p className="text-gray-500 text-sm">
-                        Loading your orders...
-                    </p>
-                </div>
-            ) : orders.length === 0 ? (
-                <div className="bg-white border border-gray-200 rounded-lg py-16 px-6 flex flex-col items-center justify-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                        <ShoppingBag size={32} className="text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No orders found
-                    </h3>
-                    <p className="text-gray-500 text-sm mb-6 max-w-xs text-center">
-                        You haven't placed any orders yet. Once you do, they'll
-                        appear here.
-                    </p>
-                    <Link
-                        to="/products"
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                        Start Shopping
-                        <ChevronRight size={16} />
-                    </Link>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {orders.map((order) => (
-                        <div
-                            key={order._id}
-                            className="bg-white border border-gray-200 rounded-lg p-5 lg:p-6 hover:border-blue-500 hover:shadow-md transition-all"
-                        >
-                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-gray-100 pb-4 mb-4">
-                                <div className="flex flex-wrap gap-6">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                            <Tag size={14} /> Order ID
-                                        </div>
-                                        <div className="text-sm font-semibold text-gray-900">
-                                            #{order._id}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                            <Calendar size={14} /> Date
-                                        </div>
-                                        <div className="text-sm font-medium text-gray-700">
-                                            {new Date(
-                                                order.date,
-                                            ).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto gap-3">
-                                    <div className="flex items-center gap-3">
-                                        {order.status === 'pending' && (
-                                            <button
-                                                onClick={() => handleOpenCancelModal(order._id)}
-                                                className="px-3 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                                            >
-                                                Cancel Order
-                                            </button>
-                                        )}
-                                        <span
-                                            className={`px-3 py-1 rounded text-xs font-medium border ${getStatusStyles(order.status)}`}
-                                        >
-                                            {order.status}
-                                        </span>
-                                    </div>
-                                    <div className="text-lg font-semibold text-gray-900">
-                                        Rs {order.totalAmount?.toLocaleString(
-                                            undefined,
-                                            { minimumFractionDigits: 2 },
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {order.items.map((item, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="flex gap-3 items-center bg-gray-50 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all"
-                                    >
-                                        <div className="w-14 h-14 bg-white border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                                            <img
-                                                src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${item.product?.image}`}
-                                                className="w-full h-full object-contain p-1.5"
-                                                alt="product"
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium text-gray-900 text-sm truncate">
-                                                {item.title ||
-                                                    item.product?.name}
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs text-gray-500">
-                                                    Qty: {item.quantity}
-                                                </span>
-                                                <div className="w-1 h-1 bg-gray-300 rounded-full" />
-                                                <span className={`text-xs font-medium ${item.status === 'cancelled' ? 'text-red-600' : 'text-green-600'}`}>
-                                                    {item.status === 'cancelled' ? 'Cancelled' : 'Fulfilled'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Package className="text-primary" size={20} />
+                            <span className="text-sm text-gray-500 font-bold uppercase tracking-wider">
+                                Order History
+                            </span>
                         </div>
-                    ))}
+                        <h1 className="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">
+                            My Orders
+                        </h1>
+                    </div>
                 </div>
-            )}
+
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-32 bg-white border border-gray-100 rounded-3xl shadow-sm">
+                        <Loader2 className="animate-spin text-primary mb-4" size={40} />
+                        <p className="text-gray-500 text-sm font-bold">
+                            Loading your orders...
+                        </p>
+                    </div>
+                ) : orders.length === 0 ? (
+                    <div className="bg-white border border-gray-100 shadow-sm rounded-3xl py-24 px-6 flex flex-col items-center justify-center text-center">
+                        <div className="w-24 h-24 bg-primary-pale rounded-full flex items-center justify-center mb-6">
+                            <ShoppingBag size={40} className="text-primary-dark" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">
+                            No orders found
+                        </h3>
+                        <p className="text-gray-500 text-sm mb-8 max-w-sm">
+                            You haven't placed any orders yet. Once you do, they'll appear here.
+                        </p>
+                        <Link
+                            to="/products"
+                            className="flex items-center gap-2 bg-primary text-white px-8 py-3.5 rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg"
+                        >
+                            Start Shopping
+                            <ChevronRight size={16} />
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {orders.map((order) => (
+                            <div
+                                key={order._id}
+                                className="bg-white border-2 border-transparent hover:border-primary-light rounded-3xl p-5 lg:p-8 shadow-sm hover:shadow-md transition-all group"
+                            >
+                                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-gray-100 pb-5 mb-5">
+                                    <div className="flex flex-wrap gap-8">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                <Tag size={14} /> Order ID
+                                            </div>
+                                            <div className="text-sm font-black text-gray-900">
+                                                #{order._id}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                                <Calendar size={14} /> Date Placed
+                                            </div>
+                                            <div className="text-sm font-bold text-gray-700">
+                                                {new Date(order.date).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto gap-3">
+                                        <div className="flex items-center gap-3">
+                                            {order.status === 'pending' && (
+                                                <button
+                                                    onClick={() => handleOpenCancelModal(order._id)}
+                                                    className="px-3 py-1 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                                >
+                                                    Cancel Order
+                                                </button>
+                                            )}
+                                            <span
+                                                className={`px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest font-black border ${getStatusStyles(order.status)}`}
+                                            >
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                        <div className="text-xl font-black text-gray-900">
+                                            Rs {order.totalAmount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {order.items.map((item, idx) => (
+                                        <Link
+                                            to={`/product/${item.product?._id}`}
+                                            key={idx}
+                                            className="flex gap-4 items-center bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-primary-light hover:bg-white transition-all"
+                                        >
+                                            <div className="w-16 h-16 bg-white border border-gray-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                                                <img
+                                                    src={getImageUrl(item.product?.image)}
+                                                    className="w-full h-full object-contain p-2 mix-blend-multiply"
+                                                    alt="product"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = "https://placehold.co/100x100/EDF6E5/4d8d3a?text=Rx";
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-gray-900 text-sm truncate group-hover:text-primary transition-colors">
+                                                    {item.title || item.product?.name}
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    <span className="text-xs font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-md">
+                                                        Qty: {item.quantity}
+                                                    </span>
+                                                    <div className="w-1 h-1 bg-gray-300 rounded-full" />
+                                                    <span className={`text-[10px] font-black uppercase tracking-wider ${item.status === 'cancelled' ? 'text-red-500' : 'text-primary'}`}>
+                                                        {item.status === 'cancelled' ? 'Cancelled' : 'Fulfilled'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                                <div className="mt-5 pt-5 border-t border-gray-100 flex justify-end">
+                                    <Link to={`/order-details/${order._id}`} className="text-sm font-bold text-primary hover:text-primary-dark flex items-center gap-1 transition-colors">
+                                        View Full Order Details <ChevronRight size={16} />
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

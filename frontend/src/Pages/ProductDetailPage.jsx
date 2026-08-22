@@ -16,7 +16,11 @@ import {
 } from "lucide-react";
 import { useParams, Link } from "react-router-dom";
 import Breadcrumb from "../Components/Breadcrumb";
-import { useGetProductById, useGetAllProducts } from "../api/hooks/product.api";
+import { 
+    useGetProductById, 
+    useGetAllProducts
+} from "../api/hooks/product.api";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 import { useGetProductReviews, useAddReview } from "../api/hooks/review.api";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
@@ -312,6 +316,7 @@ const ProductDetailPage = () => {
 
     useEffect(() => {
         if (tabList.length > 0 && !tabList.find(t => t.id === activeTab)) {
+            // eslint-disable-next-line
             setActiveTab(tabList[0].id);
         }
     }, [tabList, activeTab]);
@@ -372,6 +377,7 @@ const ProductDetailPage = () => {
                                         <img
                                             src={mainImage.url || `${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${mainImage.filePath}`}
                                             alt={product?.name}
+                                            onError={(e) => handleImageError(e, "product")}
                                             className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                                         />
                                     </div>
@@ -398,6 +404,7 @@ const ProductDetailPage = () => {
                                             <img
                                                 src={img.url || `${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${img.filePath}`}
                                                 alt={`Thumbnail ${idx}`}
+                                                onError={(e) => handleImageError(e, "product")}
                                                 className="w-full h-full object-cover"
                                             />
                                         </button>
@@ -452,10 +459,10 @@ const ProductDetailPage = () => {
                             {/* Brand Line */}
                             <div className="text-xs sm:text-sm text-gray-600 mb-4 flex items-center gap-4 flex-wrap">
                                 {product?.vendor && (
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-medium text-gray-500">Brand:</span>
-                                        <span className="font-semibold text-[#74AA34] bg-[#F4F8EE] px-2 py-0.5 rounded text-xs">
-                                            {product.vendor}
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg shrink-0">
+                                        <Box size={14} className="text-gray-400" />
+                                        <span className="text-[11px] font-bold text-gray-700 tracking-wide">
+                                            {typeof product.vendor === 'object' ? product.vendor.name : product.vendor}
                                         </span>
                                     </div>
                                 )}
@@ -1086,7 +1093,7 @@ const ProductDetailPage = () => {
                                                     {rev.name}
                                                 </h4>
                                                 <span className="text-[11px] text-gray-400">
-                                                    {new Date(rev.createdAt || Date.now()).toLocaleDateString(
+                                                    {new Date(rev.createdAt || "2024-01-01T00:00:00Z").toLocaleDateString(
                                                         "en-US",
                                                         {
                                                             month: "short",

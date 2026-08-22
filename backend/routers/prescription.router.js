@@ -7,6 +7,8 @@ import {
     getUserPrescriptions,
     updatePrescriptionStatus,
     deletePrescription,
+    getUnreadPrescriptionsCount,
+    markPrescriptionViewed
 } from "../controllers/prescription.controller.js";
 
 const router = express.Router();
@@ -18,9 +20,13 @@ router
 
 router.route("/my").get(isAuth, getUserPrescriptions);
 
+router.get("/unread-count", isAuth, authorize("admin"), getUnreadPrescriptionsCount);
+
 router
     .route("/:id/status")
     .put(isAuth, authorize("admin"), updatePrescriptionStatus);
+
+router.put("/:id/mark-viewed", isAuth, authorize("admin"), markPrescriptionViewed);
 
 router
     .route("/:id")

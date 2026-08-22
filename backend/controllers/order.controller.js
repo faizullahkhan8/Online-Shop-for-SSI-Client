@@ -7,6 +7,13 @@ import {
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { getEffectivePrice } from "../utils/promotionHelper.js";
 
+export const getUnreadOrdersCount = expressAsyncHandler(async (req, res, next) => {
+    const OrderModel = getLocalOrderModel();
+    if (!OrderModel) return next(new ErrorResponse("Model not found", 400));
+    const count = await OrderModel.countDocuments({ isViewed: { $ne: true }, isDeleted: false });
+    res.status(200).json({ success: true, count });
+});
+
 export const placeOrder = expressAsyncHandler(async (req, res, next) => {
     const OrderModel = getLocalOrderModel();
     const ProductModel = getLocalProductModel();
@@ -182,6 +189,11 @@ export const getOrderById = expressAsyncHandler(async (req, res, next) => {
         .populate("userId");
 
     if (!order) return next(new ErrorResponse("Order not found", 404));
+
+    if (req.user?.role === "admin" && !order.isViewed) {
+        order.isViewed = true;
+        await order.save({ validateModifiedOnly: true });
+    }
 
     return res
         .status(200)

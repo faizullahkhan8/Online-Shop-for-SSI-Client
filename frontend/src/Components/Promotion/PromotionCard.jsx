@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Clock, Tag, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { handleImageError } from "../../utils/imageHelper";
 
 // Compact Time Unit Component
 const TimeUnit = memo(({ value, suffix }) => (
@@ -154,6 +155,7 @@ const PromotionCard = ({ deal, currentTime }) => {
                                                 src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${product.image}`}
                                                 className="w-full h-full object-contain group-hover/product:scale-105 transition-transform duration-300"
                                                 alt={product.name}
+                                                onError={(e) => handleImageError(e, "product")}
                                             />
                                         </div>
                                     </div>

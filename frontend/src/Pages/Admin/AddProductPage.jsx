@@ -23,6 +23,7 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useGetAllCategories } from "../../api/hooks/category.api.js";
+import { useGetAllVendors } from "../../api/hooks/vendor.api.js";
 
 const INITAIL_STATE = {
     _id: "",
@@ -61,12 +62,14 @@ const AddProduct = () => {
     const isEditing = Boolean(productData?._id);
 
     const [categories, setCategories] = useState([]);
+    const [vendors, setVendors] = useState([]);
     const [previewUrl, setPreviewUrl] = useState("");
 
     const { createProduct, loading: createProductLoading } =
         useCreateProuduct();
     const { updateProduct, loading: updateProductLoading } = useUpdateProduct();
     const { getAllCategories } = useGetAllCategories();
+    const { getAllVendors } = useGetAllVendors();
 
     useEffect(() => {
         (async () => {
@@ -74,6 +77,10 @@ const AddProduct = () => {
             if (response.success) {
                 setCategories(response.categories);
             }
+        })();
+        (async () => {
+            const res = await getAllVendors();
+            if (res?.success) setVendors(res.vendors);
         })();
     }, []);
 
@@ -235,13 +242,22 @@ const AddProduct = () => {
                                     <Box size={14} className="text-blue-600" />
                                     Vendor
                                 </label>
-                                <Input
-                                    type="text"
+                                <Select
                                     id="vendor"
-                                    value={productData?.vendor}
-                                    placeholder="e.g. GSK"
+                                    value={productData?.vendor?._id || productData?.vendor || ""}
+                                    onChange={(value) =>
+                                        handleChange({
+                                            target: { id: "vendor", value },
+                                        })
+                                    }
+                                    options={[
+                                        { value: "", label: "Select Vendor" },
+                                        ...vendors.map((v) => ({
+                                            value: v._id,
+                                            label: v.name,
+                                        })),
+                                    ]}
                                     className="w-full"
-                                    onChange={handleChange}
                                 />
                             </div>
                         </div>

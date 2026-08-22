@@ -6,7 +6,7 @@ import { Tag } from "lucide-react";
 const PromotionsPage = () => {
     const { getActiveDeals, loading } = useGetActiveDeals();
     const [deals, setDeals] = useState([]);
-    const [currentTime, setCurrentTime] = useState(Date.now());
+    const [currentTime, setCurrentTime] = useState(() => Date.now());
 
     useEffect(() => {
         const timer = setInterval(() => {

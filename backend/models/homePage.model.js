@@ -9,6 +9,7 @@ const homePageSchema = new Schema(
                     required: true,
                     enum: [
                         "hero",
+                        "top_micro_bar",
                         "announcement_bar",
                         "trust_badges",
                         "stats_counter",
@@ -20,6 +21,7 @@ const homePageSchema = new Schema(
                         "products_grid",
                         "flash_sale",
                         "mid_banners",
+                        "single_mid_banner",
                         "featured_category",
                         "conditions",
                         "testimonials",

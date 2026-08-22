@@ -89,7 +89,6 @@ export const formatDateForInput = (date) => {
 };
 
 export const getDateRangeFromPreset = (preset) => {
-    const now = new Date();
 
     switch (preset) {
         case "today":

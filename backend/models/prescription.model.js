@@ -37,6 +37,10 @@ const prescriptionSchema = new Schema(
             type: String,
             default: "",
         },
+        isViewed: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,

@@ -36,6 +36,12 @@ const orderSchema = new Schema(
                 type: String,
                 required: true,
             },
+            lat: {
+                type: Number,
+            },
+            lng: {
+                type: Number,
+            },
         },
         items: [
             {
@@ -111,6 +117,10 @@ const orderSchema = new Schema(
             default: "pending",
         },
         isDeleted: {
+            type: Boolean,
+            default: false,
+        },
+        isViewed: {
             type: Boolean,
             default: false,
         },
