@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../store/slices/authSlice";
 import { useUpdateUser, useLogoutUser } from "../api/hooks/user.api";
@@ -25,6 +25,7 @@ const ProfilePage = () => {
 
     const [mapPosition, setMapPosition] = useState(null);
     const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+    const lastReverseGeocodedAddress = useRef("");
 
     useEffect(() => {
         if (user) {
@@ -38,7 +39,7 @@ const ProfilePage = () => {
     useEffect(() => {
         // Immediately sync the coordinates to userData so they get saved 
         // even if reverse-geocoding fails or is skipped
-        if (mapPosition && user && (user.addresses?.[0]?.lat !== mapPosition.lat || user.addresses?.[0]?.lng !== mapPosition.lng)) {
+        if (mapPosition && user && (userData?.addresses?.[0]?.lat !== mapPosition.lat || userData?.addresses?.[0]?.lng !== mapPosition.lng)) {
             setUserData((prev) => ({
                 ...prev,
                 addresses: [
@@ -60,6 +61,7 @@ const ProfilePage = () => {
                 );
                 const data = await response.json();
                 if (data && data.display_name) {
+                    lastReverseGeocodedAddress.current = data.display_name;
                     setUserData((prev) => {
                         const existingAddress = prev?.addresses?.[0] || {};
                         return {
@@ -93,10 +95,43 @@ const ProfilePage = () => {
 
         const timeoutId = setTimeout(() => {
             fetchAddress();
-        }, 500);
+        }, 800);
 
         return () => clearTimeout(timeoutId);
     }, [mapPosition, user]);
+
+    // Forward Geocoding: Update map when typing address manually
+    useEffect(() => {
+        const addressText = userData?.addresses?.[0]?.street;
+        if (!addressText || addressText.length < 5) return;
+        
+        // Prevent infinite loop if the address change came from the map's reverse geocode
+        if (addressText === lastReverseGeocodedAddress.current) return;
+
+        const fetchCoordinates = async () => {
+            setIsFetchingAddress(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
+                );
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const { lat, lon } = data[0];
+                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
+                }
+            } catch (error) {
+                console.error("Error forward geocoding address:", error);
+            } finally {
+                setIsFetchingAddress(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchCoordinates();
+        }, 1500); // 1.5s debounce for typing
+
+        return () => clearTimeout(timeoutId);
+    }, [userData?.addresses?.[0]?.street]);
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -222,9 +257,26 @@ const ProfilePage = () => {
                         </h3>
                         
                         <div className="mb-8">
-                            <label className="text-[13px] font-bold text-gray-900 ml-1 mb-2 block">
-                                Pin Exact Location
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-[13px] font-bold text-gray-900 ml-1">
+                                    Pin Exact Location
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if ("geolocation" in navigator) {
+                                            navigator.geolocation.getCurrentPosition(
+                                                (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                                                (err) => alert("Please allow location access to auto-detect your location.")
+                                            );
+                                        }
+                                    }}
+                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+                                >
+                                    <MapPin size={12} />
+                                    Locate Me
+                                </button>
+                            </div>
                             <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm h-64 relative z-0">
                                 <LocationPicker position={mapPosition} setPosition={setMapPosition} />
                             </div>

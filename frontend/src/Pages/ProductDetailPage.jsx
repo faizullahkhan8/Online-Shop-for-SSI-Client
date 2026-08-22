@@ -51,6 +51,7 @@ const ProductDetailPage = () => {
     const { addReview, loading: submittingReview } = useAddReview();
 
     const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
     const wishlistItems = useSelector((state) => state.wishlist.items || []);
@@ -180,35 +181,9 @@ const ProductDetailPage = () => {
         ];
     }, [allProducts, id, product]);
 
-    // Fallback & dynamic reviews calculation
-    const defaultStaticReviews = useMemo(
-        () => [
-            {
-                _id: "rev-static-1",
-                name: "Asma Mustafa",
-                rating: 5,
-                createdAt: "2024-04-18T10:30:00.000Z",
-                comment: "Very effective and authentic medicine. Fast doorstep delivery and perfectly packed.",
-                verified: true,
-            },
-            {
-                _id: "rev-static-2",
-                name: "M. Anwar",
-                rating: 5,
-                createdAt: "2024-03-02T14:15:00.000Z",
-                comment: "Genuine product with valid expiry date. Great service as always!",
-                verified: true,
-            },
-        ],
-        [],
-    );
-
     const combinedReviews = useMemo(() => {
-        if (reviews && reviews.length > 0) {
-            return [...reviews, ...defaultStaticReviews];
-        }
-        return defaultStaticReviews;
-    }, [reviews, defaultStaticReviews]);
+        return reviews && reviews.length > 0 ? reviews : [];
+    }, [reviews]);
 
     const filteredReviews = useMemo(() => {
         if (reviewFilter === "all") return combinedReviews;
@@ -227,7 +202,7 @@ const ProductDetailPage = () => {
     }, [combinedReviews]);
 
     const avgRating = useMemo(() => {
-        if (combinedReviews.length === 0) return 5;
+        if (combinedReviews.length === 0) return 0;
         const sum = combinedReviews.reduce((acc, r) => acc + (r.rating || 5), 0);
         return (sum / combinedReviews.length).toFixed(1);
     }, [combinedReviews]);
@@ -257,6 +232,10 @@ const ProductDetailPage = () => {
 
     const handleAddReviewSubmit = async (e) => {
         e.preventDefault();
+        if (!user) {
+            toast.warn("Please log in to write a review");
+            return;
+        }
         if (newRating === 0) {
             toast.warn("Please select a rating");
             return;

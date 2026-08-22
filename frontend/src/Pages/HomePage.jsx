@@ -66,6 +66,7 @@ import NewsletterSection from "../Components/HomeSections/NewsletterSection";
 import FaqSection from "../Components/HomeSections/FaqSection";
 import CustomHtmlSection from "../Components/HomeSections/CustomHtmlSection";
 import SpacerSection from "../Components/HomeSections/SpacerSection";
+import WhatsappFab from "../Components/HomeSections/WhatsappFab";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
@@ -488,6 +489,13 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "custom_html": return <div key={idx}>{wrap(
                 <CustomHtmlSection config={getSectionConfig("custom_html", { html: "" })} />
             )}</div>;
+            case "whatsapp_fab": 
+                // Only render inside HomePage if we are in the admin preview mode.
+                // For the live site, it is globally rendered in BaseLayout.jsx instead!
+                if (!previewSections) return null;
+                return <div key={idx}>{wrap(
+                    <WhatsappFab config={getSectionConfig("whatsapp_fab", { phoneNumber: "+923001234567", message: "Hello! I need help with my order.", position: "right" })} />
+                )}</div>;
             case "spacer": return <div key={idx}>{wrap(
                 <SpacerSection config={getSectionConfig("spacer", { height: 40, showDivider: false, dividerColor: "#E5E7EB" })} />
             )}</div>;

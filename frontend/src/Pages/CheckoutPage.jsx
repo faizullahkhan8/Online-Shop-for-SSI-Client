@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { usePlaceOrder } from "../api/hooks/orders.api";
@@ -55,8 +55,12 @@ const CheckoutPage = () => {
         shippingMethod: "standard",
     });
     const [settingsLoaded, setSettingsLoaded] = useState(false);
+    const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
     const [mapPosition, setMapPosition] = useState(null);
     const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+    const [baseShippingFee, setBaseShippingFee] = useState(0);
+    const [advShippingConfig, setAdvShippingConfig] = useState(null);
+    const lastReverseGeocodedAddress = useRef("");
 
     useEffect(() => {
         const fetchAddress = async () => {
@@ -68,6 +72,7 @@ const CheckoutPage = () => {
                 );
                 const data = await response.json();
                 if (data && data.display_name) {
+                    lastReverseGeocodedAddress.current = data.display_name;
                     setFormData((prev) => {
                         return {
                             ...prev,
@@ -91,10 +96,43 @@ const CheckoutPage = () => {
 
         const timeoutId = setTimeout(() => {
             fetchAddress();
-        }, 500);
+        }, 800);
 
         return () => clearTimeout(timeoutId);
     }, [mapPosition]);
+
+    // Forward Geocoding: Update map when typing address manually
+    useEffect(() => {
+        const addressText = formData.recipient.street;
+        if (!addressText || addressText.length < 5) return;
+        
+        // Prevent infinite loop if the address change came from the map's reverse geocode
+        if (addressText === lastReverseGeocodedAddress.current) return;
+
+        const fetchCoordinates = async () => {
+            setIsFetchingAddress(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
+                );
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const { lat, lon } = data[0];
+                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
+                }
+            } catch (error) {
+                console.error("Error forward geocoding address:", error);
+            } finally {
+                setIsFetchingAddress(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchCoordinates();
+        }, 1500); // 1.5s debounce for typing
+
+        return () => clearTimeout(timeoutId);
+    }, [formData.recipient.street]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -125,18 +163,100 @@ const CheckoutPage = () => {
         if (!settingsLoaded) {
             getSettings().then((res) => {
                 if (res?.settings) {
+                    const defaultFee = Number(res.settings.shippingFee) || 0;
+                    setBaseShippingFee(defaultFee);
+                    setAdvShippingConfig(res.settings.advancedShipping || null);
+
                     setFormData((prev) => ({
                         ...prev,
                         taxAmount: Number(res.settings.taxAmount) || 0,
-                        shippingFee: Number(res.settings.shippingFee) || 0,
+                        shippingFee: defaultFee,
                         shippingMethod:
                             res.settings.shippingMethod || "standard",
                     }));
+                    if (res.settings.paymentMethods && res.settings.paymentMethods.length > 0) {
+                        const activeMethods = res.settings.paymentMethods.filter(m => m.isActive);
+                        setAvailablePaymentMethods(activeMethods);
+                        // Auto-select first available method if COD is not explicitly kept
+                        if (activeMethods.length > 0) {
+                            setFormData(prev => ({
+                                ...prev,
+                                payment: { ...prev.payment, method: activeMethods[0].title }
+                            }));
+                        }
+                    }
                 }
                 setSettingsLoaded(true);
             });
         }
     }, [settingsLoaded, getSettings]);
+
+    // Calculate distance between two coordinates in km using Haversine formula
+    const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+        const R = 6371; // Radius of the earth in km
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Distance in km
+    };
+
+    // Calculate Advanced Shipping Fee
+    useEffect(() => {
+        if (!settingsLoaded) return;
+        
+        let calculatedFee = baseShippingFee;
+
+        if (advShippingConfig) {
+            const { calculationMethod, storeLocation, distanceRatePerKm, percentageRate, cityRates, conditionalOverride } = advShippingConfig;
+
+            if (calculationMethod === "distance" && mapPosition && storeLocation?.lat) {
+                const distanceKm = getDistanceFromLatLonInKm(storeLocation.lat, storeLocation.lng, mapPosition.lat, mapPosition.lng);
+                if (distanceKm !== null) {
+                    calculatedFee = distanceKm * (distanceRatePerKm || 0);
+                }
+            } else if (calculationMethod === "percentage") {
+                calculatedFee = totalAmount * ((percentageRate || 0) / 100);
+            } else if (calculationMethod === "city_based" && formData.recipient.city) {
+                const normalizeCity = (name) => {
+                    if (!name) return "";
+                    return name.toLowerCase()
+                        .replace(/\b(division|district|city|tehsil|town|cantt|cantonment)\b/g, "")
+                        .replace(/\s+/g, " ")
+                        .trim();
+                };
+
+                const currentCity = normalizeCity(formData.recipient.city);
+                const matchedCity = (cityRates || []).find(cr => {
+                    const ruleCity = normalizeCity(cr.city);
+                    return currentCity === ruleCity || currentCity.includes(ruleCity) || ruleCity.includes(currentCity);
+                });
+                
+                if (matchedCity) {
+                    calculatedFee = matchedCity.fee;
+                }
+            }
+
+            // Apply Conditional Override
+            if (conditionalOverride?.enabled) {
+                const threshold = conditionalOverride.orderValueThreshold || 0;
+                if (conditionalOverride.operator === "greater_than" && totalAmount > threshold) {
+                    calculatedFee = conditionalOverride.overrideFee || 0;
+                } else if (conditionalOverride.operator === "less_than" && totalAmount < threshold) {
+                    calculatedFee = conditionalOverride.overrideFee || 0;
+                }
+            }
+        }
+
+        // Only update if it actually changed to prevent infinite loops
+        if (Math.round(calculatedFee) !== Math.round(formData.shippingFee)) {
+            setFormData(prev => ({ ...prev, shippingFee: Math.round(calculatedFee) }));
+        }
+    }, [totalAmount, formData.recipient.city, mapPosition, advShippingConfig, settingsLoaded, baseShippingFee]);
 
     useEffect(() => {
         if (!user) return;
@@ -382,10 +502,27 @@ const CheckoutPage = () => {
                                     
                                     {/* Map Picker */}
                                     <div className="md:col-span-2 flex flex-col gap-2 pt-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                                            <span>Pin Exact Location</span>
-                                            {isFetchingAddress && <Loader2 size={12} className="animate-spin text-primary" />}
-                                        </label>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                                <span>Pin Exact Location</span>
+                                                {isFetchingAddress && <Loader2 size={12} className="animate-spin text-primary" />}
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if ("geolocation" in navigator) {
+                                                        navigator.geolocation.getCurrentPosition(
+                                                            (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                                                            (err) => alert("Please allow location access to auto-detect your location.")
+                                                        );
+                                                    }
+                                                }}
+                                                className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+                                            >
+                                                <MapPin size={12} />
+                                                Locate Me
+                                            </button>
+                                        </div>
                                         <div className="rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm h-48 relative z-0">
                                             <LocationPicker position={mapPosition} setPosition={setMapPosition} />
                                         </div>
@@ -448,37 +585,44 @@ const CheckoutPage = () => {
                                     Payment Method
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {[
-                                        {
-                                            value: "COD",
-                                            title: "Cash on Delivery",
-                                            description: "Pay when you receive",
-                                            icon: <Wallet size={20} />,
-                                        },
-                                        {
-                                            value: "card",
-                                            title: "Card Payment",
-                                            description: "Visa / MasterCard",
-                                            icon: <CreditCard size={20} />,
-                                        },
-                                    ].map((method) => (
+                                    {availablePaymentMethods.length > 0 ? availablePaymentMethods.map((method, idx) => (
                                         <PaymentCard
-                                            key={method.value}
-                                            active={formData.payment.method === method.value}
+                                            key={idx}
+                                            active={formData.payment.method === method.title}
                                             onClick={() =>
                                                 setFormData((p) => ({
                                                     ...p,
                                                     payment: {
                                                         ...p.payment,
-                                                        method: method.value,
+                                                        method: method.title,
                                                     },
                                                 }))
                                             }
                                             title={method.title}
-                                            description={method.description}
-                                            icon={method.icon}
+                                            description={method.information}
+                                            icon={
+                                                method.image ? (
+                                                    <img src={method.image} alt={method.title} className="w-6 h-6 object-contain" />
+                                                ) : (
+                                                    <CreditCard size={20} />
+                                                )
+                                            }
                                         />
-                                    ))}
+                                    )) : (
+                                        // Fallback if none configured
+                                        <PaymentCard
+                                            active={formData.payment.method === "COD"}
+                                            onClick={() =>
+                                                setFormData((p) => ({
+                                                    ...p,
+                                                    payment: { ...p.payment, method: "COD" },
+                                                }))
+                                            }
+                                            title="Cash on Delivery"
+                                            description="Pay when you receive"
+                                            icon={<Wallet size={20} />}
+                                        />
+                                    )}
                                 </div>
                             </section>
                         </form>

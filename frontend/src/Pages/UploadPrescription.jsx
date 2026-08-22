@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUploadPrescription } from "../api/hooks/prescription.api.js";
 import { toast } from "react-toastify";
@@ -48,6 +48,7 @@ const UploadPrescription = () => {
             : null
     );
     const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+    const lastReverseGeocodedAddress = useRef("");
 
     useEffect(() => {
         const fetchAddress = async () => {
@@ -59,6 +60,7 @@ const UploadPrescription = () => {
                 );
                 const data = await response.json();
                 if (data && data.display_name) {
+                    lastReverseGeocodedAddress.current = data.display_name;
                     setAddressText(data.display_name);
                 }
             } catch (error) {
@@ -70,10 +72,42 @@ const UploadPrescription = () => {
 
         const timeoutId = setTimeout(() => {
             fetchAddress();
-        }, 500);
+        }, 800);
 
         return () => clearTimeout(timeoutId);
     }, [mapPosition]);
+
+    // Forward Geocoding: Update map when typing address manually
+    useEffect(() => {
+        if (!addressText || addressText.length < 5) return;
+        
+        // Prevent infinite loop if the address change came from the map's reverse geocode
+        if (addressText === lastReverseGeocodedAddress.current) return;
+
+        const fetchCoordinates = async () => {
+            setIsFetchingAddress(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
+                );
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const { lat, lon } = data[0];
+                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
+                }
+            } catch (error) {
+                console.error("Error forward geocoding address:", error);
+            } finally {
+                setIsFetchingAddress(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchCoordinates();
+        }, 1500); // 1.5s debounce for typing
+
+        return () => clearTimeout(timeoutId);
+    }, [addressText]);
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -321,6 +355,34 @@ const UploadPrescription = () => {
                                     />
                                 </div>
 
+                                {/* Map Picker */}
+                                <div className="flex flex-col gap-2 pt-2 pb-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                            <span>Pin Exact Location</span>
+                                            {isFetchingAddress && <Loader size={12} className="animate-spin text-primary" />}
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if ("geolocation" in navigator) {
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                                                        (err) => alert("Please allow location access to auto-detect your location.")
+                                                    );
+                                                }
+                                            }}
+                                            className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+                                        >
+                                            <MapPin size={12} />
+                                            Locate Me
+                                        </button>
+                                    </div>
+                                    <div className="rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm h-48 relative z-0">
+                                        <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                                    </div>
+                                </div>
+
                                 {/* Address Input */}
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
@@ -333,16 +395,9 @@ const UploadPrescription = () => {
                                         placeholder="Building, Street, Area..."
                                         className="bg-gray-50 border-2 border-gray-100 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all w-full resize-none h-24"
                                     />
-                                </div>
-
-                                {/* Map Picker */}
-                                <div className="flex flex-col gap-2 pt-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Pin Exact Location
-                                    </label>
-                                    <div className="rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm h-48 relative z-0">
-                                        <LocationPicker position={mapPosition} setPosition={setMapPosition} />
-                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-[-4px]">
+                                        * Automatically filled when you drop the pin on the map.
+                                    </p>
                                 </div>
                             </div>
 

@@ -1,15 +1,65 @@
 import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { Locate } from "lucide-react";
 
-// Fix for default marker icon in react-leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+// Explicitly define the default marker icon using reliable unpkg URLs
+// This avoids React prototype pollution where the icon changes or breaks across different pages
+const defaultIcon = new L.Icon({
+    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+    iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 });
+
+const LocateControl = ({ setPosition }) => {
+    const map = useMap();
+    const [locating, setLocating] = useState(false);
+
+    const handleLocate = () => {
+        setLocating(true);
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    setPosition(newPos);
+                    map.flyTo([newPos.lat, newPos.lng], 15, { animate: true, duration: 1 });
+                    setLocating(false);
+                },
+                (err) => {
+                    console.error("Location access denied", err);
+                    setLocating(false);
+                }
+            );
+        } else {
+            setLocating(false);
+        }
+    };
+
+    return (
+        <div className="leaflet-bottom leaflet-right" style={{ marginBottom: '20px', marginRight: '10px' }}>
+            <div className="leaflet-control leaflet-bar">
+                <button 
+                    type="button"
+                    className="bg-white hover:bg-gray-50 flex items-center justify-center transition-colors shadow-sm"
+                    style={{ width: '34px', height: '34px', cursor: locating ? 'wait' : 'pointer' }}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleLocate();
+                    }}
+                    title="Focus on my location"
+                >
+                    <Locate size={18} className={locating ? "animate-pulse text-blue-500" : "text-gray-700"} />
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const LocationMarker = ({ position, setPosition }) => {
     const markerRef = useRef(null);
@@ -18,9 +68,12 @@ const LocationMarker = ({ position, setPosition }) => {
         click(e) {
             setPosition(e.latlng);
         },
+        dblclick(e) {
+            setPosition(e.latlng);
+        }
     });
 
-    return position === null ? null : (
+    return !position || position.lat === undefined ? null : (
         <Marker 
             draggable={true}
             eventHandlers={{
@@ -33,6 +86,7 @@ const LocationMarker = ({ position, setPosition }) => {
             }}
             position={position} 
             ref={markerRef}
+            icon={defaultIcon}
         />
     );
 };
@@ -50,11 +104,15 @@ const LocationPicker = ({ position, setPosition }) => {
                     },
                     (err) => {
                         console.error("Location access denied", err);
+                        // Fallback to default center if geolocation fails so the marker is visible
+                        setPosition({ lat: defaultCenter[0], lng: defaultCenter[1] });
                     }
                 );
+            } else {
+                setPosition({ lat: defaultCenter[0], lng: defaultCenter[1] });
             }
         }
-    }, [position, setPosition]);
+    }, []);
 
     return (
         <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mt-2 z-0 relative">
@@ -70,6 +128,7 @@ const LocationPicker = ({ position, setPosition }) => {
                     attribution='&copy; OpenStreetMap contributors'
                 />
                 <LocationMarker position={position} setPosition={setPosition} />
+                <LocateControl setPosition={setPosition} />
             </MapContainer>
         </div>
     );

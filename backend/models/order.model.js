@@ -104,7 +104,6 @@ const orderSchema = new Schema(
             method: {
                 type: String,
                 required: true,
-                enum: ["COD", "online", "card", "bank", "wallet"],
             },
             ispaid: {
                 type: Boolean,

@@ -31,6 +31,7 @@ const homePageSchema = new Schema(
                         "brands",
                         "faq",
                         "custom_html",
+                        "whatsapp_fab",
                         "spacer",
                     ],
                 },

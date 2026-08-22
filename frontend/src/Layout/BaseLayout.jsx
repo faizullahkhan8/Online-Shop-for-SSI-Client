@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Header from "../Components/Bars/Header";
 import Footer from "../Components/Home/Footer";
 import MobileBottomNav from "../Components/Bars/MobileBottomNav";
+import GlobalWhatsappFab from "../Components/HomeSections/GlobalWhatsappFab";
 
 const BaseLayout = () => {
     return (
@@ -15,6 +16,7 @@ const BaseLayout = () => {
             <Footer />
             
             <MobileBottomNav />
+            <GlobalWhatsappFab />
         </div>
     );
 };

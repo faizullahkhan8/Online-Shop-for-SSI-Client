@@ -15,6 +15,7 @@ import {
     DollarSign,
     Box,
     Boxes,
+    Wand2,
 } from "lucide-react";
 import {
     useCreateProuduct,
@@ -112,7 +113,16 @@ const AddProduct = () => {
                 images: [...(prev.images || []), ...newFiles] 
             }));
         } else {
-            setProductData((prev) => ({ ...prev, [id]: value }));
+            setProductData((prev) => {
+                const updated = { ...prev, [id]: value };
+                if (id === "name" && !isEditing) {
+                    updated.slug = value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)+/g, "");
+                }
+                return updated;
+            });
         }
     };
 
@@ -222,10 +232,24 @@ const AddProduct = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Slug */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Hash size={14} className="text-blue-600" />
-                                    Slug (URL)
-                                </label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <Hash size={14} className="text-blue-600" />
+                                        Slug (URL)
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!productData?.name) return toast.warn("Please enter a product name first");
+                                            const generated = productData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+                                            setProductData(prev => ({ ...prev, slug: generated }));
+                                        }}
+                                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded transition-colors"
+                                    >
+                                        <Wand2 size={12} />
+                                        Auto-generate
+                                    </button>
+                                </div>
                                 <Input
                                     type="text"
                                     id="slug"

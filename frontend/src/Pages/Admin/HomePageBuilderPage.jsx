@@ -38,6 +38,7 @@ const SECTION_META = {
     brands: { label: "Partner Brands", icon: "🏢", color: "bg-slate-100 text-slate-700", category: "Content" },
     faq: { label: "FAQ Accordion", icon: "❓", color: "bg-orange-100 text-orange-700", category: "Content" },
     custom_html: { label: "Custom HTML Block", icon: "🖥️", color: "bg-gray-100 text-gray-700", category: "Utility" },
+    whatsapp_fab: { label: "WhatsApp FAB", icon: "💬", color: "bg-green-100 text-green-700", category: "Utility" },
     spacer: { label: "Spacer / Divider", icon: "➖", color: "bg-gray-100 text-gray-500", category: "Utility" },
 };
 
@@ -68,6 +69,7 @@ const SECTION_DEFAULTS = {
     brands: { config: { title: "Trusted Partner Brands", subtitle: "Our Manufacturers", brands: [{ name: "Brand Name", abbr: "BRD" }] } },
     faq: { config: { title: "Frequently Asked Questions", subtitle: "Got Questions?", faqs: [{ q: "Question?", a: "Answer." }] } },
     custom_html: { config: { html: "<!-- Add your custom HTML here -->", label: "Custom Block" } },
+    whatsapp_fab: { config: { phoneNumber: "+923001234567", message: "Hello! I need help with my order.", position: "right" } },
     spacer: { config: { height: 40, showDivider: false, dividerColor: "#E5E7EB" } },
 };
 
@@ -827,6 +829,21 @@ const EditForm = ({ section, onChange }) => {
                     </div>
                     <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-3 text-xs text-yellow-700">
                         ⚠️ Only use trusted HTML. Scripts may not execute for security reasons.
+                    </div>
+                </div>
+            );
+
+        case "whatsapp_fab":
+            return (
+                <div>
+                    <TextField label="Phone Number (include country code, e.g. +923001234567)" value={cfg.phoneNumber} onChange={v => set("phoneNumber", v)} />
+                    <TextField label="Pre-filled Message" value={cfg.message} onChange={v => set("message", v)} multiline />
+                    <div className="mb-4">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Position</label>
+                        <select value={cfg.position || "right"} onChange={e => set("position", e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none">
+                            <option value="right">Bottom Right</option>
+                            <option value="left">Bottom Left</option>
+                        </select>
                     </div>
                 </div>
             );
