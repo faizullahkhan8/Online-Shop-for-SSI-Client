@@ -189,20 +189,49 @@ const HeroManager = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div className="space-y-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-gray-700">
-                                                Image
-                                            </label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-sm font-medium text-gray-700">
+                                                    Slide Image
+                                                </label>
+                                                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                    Rec: 1920 × 600 px
+                                                </span>
+                                            </div>
+
+                                            {/* Size Guidance Alert */}
+                                            <div className="bg-blue-50/60 border border-blue-100 rounded-lg p-2.5 text-xs text-blue-800 flex flex-col gap-0.5">
+                                                <div className="flex items-center justify-between font-semibold">
+                                                    <span>📐 Optimal Ratio: ~16:5 (Wide Banner)</span>
+                                                    <span className="text-[10px] text-blue-600">Max: 2MB</span>
+                                                </div>
+                                                <span className="text-[11px] text-blue-600/90">
+                                                    High-res landscape images (e.g. 1920×600 or 1600×500) fit best on desktop & mobile carousels.
+                                                </span>
+                                            </div>
+
                                             <div
                                                 onClick={() => document.getElementById("hero-image").click()}
-                                                className="aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all overflow-hidden"
+                                                className="aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-4 cursor-pointer hover:border-primary hover:bg-primary-pale/20 transition-all overflow-hidden relative group"
                                             >
                                                 {previewUrl ? (
-                                                    <img src={previewUrl} className="w-full h-full object-contain" alt="Preview" />
+                                                    <>
+                                                        <img
+                                                            src={previewUrl}
+                                                            className="w-full h-full object-contain"
+                                                            alt="Preview"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
+                                                            Click to Change Image
+                                                        </div>
+                                                    </>
                                                 ) : (
                                                     <>
                                                         <ImageIcon size={32} className="text-gray-300 mb-2" />
-                                                        <p className="text-sm text-gray-500">
-                                                            Click to upload
+                                                        <p className="text-sm font-medium text-gray-600">
+                                                            Click to upload slide image
+                                                        </p>
+                                                        <p className="text-[11px] text-gray-400 mt-1">
+                                                            1920 × 600 px recommended (WebP / PNG / JPG)
                                                         </p>
                                                     </>
                                                 )}

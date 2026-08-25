@@ -29,6 +29,7 @@ import { useGetUnreadOrdersCount } from "../../api/hooks/orders.api";
 import { useGetUnreadPrescriptionsCount } from "../../api/hooks/prescription.api";
 import { useDispatch } from "react-redux";
 import { logout } from "../../store/slices/authSlice";
+import { useSocket } from "../../context/SocketContext";
 
 const AdminSidebar = () => {
     const [collapsed, setCollapsed] = useState(false);
@@ -48,13 +49,14 @@ const AdminSidebar = () => {
 
     const { getUnreadCount: fetchOrdersCount, count: unreadOrders } = useGetUnreadOrdersCount();
     const { getUnreadCount: fetchPrescriptionsCount, count: unreadPrescriptions } = useGetUnreadPrescriptionsCount();
+    const { socket, SOCKET_EVENTS } = useSocket();
 
     // Fetch counts periodically or on load
     useEffect(() => {
         fetchOrdersCount();
         fetchPrescriptionsCount();
         
-        // Set up polling every 30 seconds to keep sidebar fresh
+        // Set up polling every 30 seconds as background fallback
         const interval = setInterval(() => {
             fetchOrdersCount();
             fetchPrescriptionsCount();
@@ -62,6 +64,28 @@ const AdminSidebar = () => {
         
         return () => clearInterval(interval);
     }, [fetchOrdersCount, fetchPrescriptionsCount]);
+
+    // Instant real-time updates when new orders or prescriptions arrive
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleRefresh = () => {
+            fetchOrdersCount();
+            fetchPrescriptionsCount();
+        };
+
+        socket.on(SOCKET_EVENTS.ORDER_NEW, handleRefresh);
+        socket.on(SOCKET_EVENTS.ORDER_STATUS_UPDATED, handleRefresh);
+        socket.on(SOCKET_EVENTS.PRESCRIPTION_NEW, handleRefresh);
+        socket.on(SOCKET_EVENTS.PRESCRIPTION_STATUS_UPDATED, handleRefresh);
+
+        return () => {
+            socket.off(SOCKET_EVENTS.ORDER_NEW, handleRefresh);
+            socket.off(SOCKET_EVENTS.ORDER_STATUS_UPDATED, handleRefresh);
+            socket.off(SOCKET_EVENTS.PRESCRIPTION_NEW, handleRefresh);
+            socket.off(SOCKET_EVENTS.PRESCRIPTION_STATUS_UPDATED, handleRefresh);
+        };
+    }, [socket, fetchOrdersCount, fetchPrescriptionsCount, SOCKET_EVENTS]);
 
     const colors = {
         primary: "#2563eb", // blue-600

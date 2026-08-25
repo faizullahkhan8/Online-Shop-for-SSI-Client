@@ -6,12 +6,32 @@ import {
 } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { getEffectivePrice } from "../utils/promotionHelper.js";
+import { emitNewOrder, emitOrderStatusUpdate } from "../config/socket.js";
 
 export const getUnreadOrdersCount = expressAsyncHandler(async (req, res, next) => {
     const OrderModel = getLocalOrderModel();
     if (!OrderModel) return next(new ErrorResponse("Model not found", 400));
     const count = await OrderModel.countDocuments({ isViewed: { $ne: true }, isDeleted: false });
     res.status(200).json({ success: true, count });
+});
+
+export const markOrderViewed = expressAsyncHandler(async (req, res, next) => {
+    const OrderModel = getLocalOrderModel();
+    if (!OrderModel) return next(new ErrorResponse("Order model not found", 500));
+    
+    const order = await OrderModel.findById(req.params.id);
+    if (!order) return next(new ErrorResponse("Order not found", 404));
+    
+    order.isViewed = true;
+    await order.save({ validateModifiedOnly: true });
+
+    try {
+        emitOrderStatusUpdate(order);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit order view update:", socketErr);
+    }
+    
+    res.status(200).json({ success: true, message: "Order marked as viewed" });
 });
 
 export const placeOrder = expressAsyncHandler(async (req, res, next) => {
@@ -134,6 +154,18 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
 
     await order.save();
 
+    // Populate for real-time socket payload
+    const populatedOrder = await OrderModel.findById(order._id)
+        .populate("items.product")
+        .populate("userId", "name email phone");
+
+    // Real-time socket broadcast to Admins
+    try {
+        emitNewOrder(populatedOrder || order);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit new order:", socketErr);
+    }
+
     return res.status(201).json({
         success: true,
         message: "Order placed successfully",
@@ -146,7 +178,9 @@ export const getAllOrder = expressAsyncHandler(async (req, res, next) => {
 
     if (!OrderModel) return next(new ErrorResponse("Model not found!", 400));
 
-    const allOrders = await OrderModel.find({ isDeleted: false });
+    const allOrders = await OrderModel.find({ isDeleted: false })
+        .populate("userId", "name email phone")
+        .sort({ createdAt: -1 });
 
     return res.status(200).json({
         success: true,
@@ -163,10 +197,12 @@ export const getUserOrders = expressAsyncHandler(async (req, res, next) => {
     const orders = await OrderModel.find({
         userId: req.user._id,
         isDeleted: false,
-    }).populate({
-        path: "items.product",
-        model: "Product",
-    });
+    })
+        .populate({
+            path: "items.product",
+            model: "Product",
+        })
+        .sort({ createdAt: -1 });
 
     return res
         .status(200)
@@ -193,6 +229,12 @@ export const getOrderById = expressAsyncHandler(async (req, res, next) => {
     if (req.user?.role === "admin" && !order.isViewed) {
         order.isViewed = true;
         await order.save({ validateModifiedOnly: true });
+
+        try {
+            emitOrderStatusUpdate(order);
+        } catch (socketErr) {
+            console.error("[Socket.io] Failed to emit order view update:", socketErr);
+        }
     }
 
     return res
@@ -215,6 +257,12 @@ export const updateOrderStatus = expressAsyncHandler(async (req, res, next) => {
     const populatedOrder = await OrderModel.findById(order._id)
         .populate("userId")
         .populate("items.product");
+
+    try {
+        emitOrderStatusUpdate(populatedOrder);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit order status update:", socketErr);
+    }
 
     return res.status(200).json({
         success: true,

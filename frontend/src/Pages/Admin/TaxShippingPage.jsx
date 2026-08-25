@@ -542,15 +542,20 @@ const TaxShippingSettings = () => {
                                                 <ImageIcon size={20} className="text-gray-300" />
                                             )}
                                         </div>
-                                        <label className="text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                            {uploadingImage ? <Loader2 size={14} className="animate-spin" /> : "Upload Logo"}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={(e) => handleImageUpload(index, e.target.files[0])}
-                                            />
-                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                                {uploadingImage ? <Loader2 size={14} className="animate-spin" /> : "Upload Logo"}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => handleImageUpload(index, e.target.files[0])}
+                                                />
+                                            </label>
+                                            <span className="text-[10px] text-gray-400 font-medium">
+                                                Rec: 120 × 60 px (PNG/SVG)
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 border border-gray-200 rounded-lg shadow-sm">

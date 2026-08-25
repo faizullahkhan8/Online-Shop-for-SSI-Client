@@ -128,18 +128,44 @@ const SelectField = ({ label, value, onChange, options }) => (
     </div>
 );
 
-const ImageField = ({ label, value, fileId, onChange }) => {
+const ImageField = ({
+    label,
+    value,
+    fileId,
+    onChange,
+    recommendedSize = "",
+    aspectRatio = "",
+    formatHint = "WebP, PNG, JPG (Max 2MB)",
+}) => {
     const { uploadImage, deleteImage, loading } = useUploadHomePageImage();
+    const [detectedDimensions, setDetectedDimensions] = useState(null);
+
+    // Detect natural dimensions whenever value changes
+    useEffect(() => {
+        if (!value) {
+            setDetectedDimensions(null);
+            return;
+        }
+        const img = new window.Image();
+        img.onload = () => {
+            setDetectedDimensions({
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+            });
+        };
+        img.onerror = () => setDetectedDimensions(null);
+        img.src = value;
+    }, [value]);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         // If there's an existing image, delete it from cloud first
         if (fileId) {
             await deleteImage(fileId);
         }
-        
+
         const data = await uploadImage(file);
         if (data?.success) {
             onChange(data.url, data.fileId);
@@ -153,33 +179,62 @@ const ImageField = ({ label, value, fileId, onChange }) => {
             await deleteImage(fileId);
         }
         onChange("", "");
+        setDetectedDimensions(null);
     };
 
     return (
-        <div className="mb-3">
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
+        <div className="mb-4 bg-white p-3.5 rounded-xl border border-gray-200/90 shadow-2xs">
+            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1.5">
+                <label className="block text-xs font-bold text-gray-700">{label}</label>
+                {recommendedSize && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        📏 Rec: {recommendedSize}
+                    </span>
+                )}
+            </div>
+
             <div className="flex gap-2">
                 <input
                     type="text"
                     value={value || ""}
                     onChange={(e) => onChange(e.target.value, fileId)}
-                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 focus:bg-white transition-colors"
                     placeholder="https://..."
                 />
-                <label className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 rounded-lg cursor-pointer text-sm font-medium border border-gray-200 transition-colors">
-                    {loading ? <Loader2 size={16} className="animate-spin" /> : "Upload"}
+                <label className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 rounded-lg cursor-pointer text-xs font-bold border border-gray-200 transition-colors shrink-0">
+                    {loading ? <Loader2 size={15} className="animate-spin" /> : "Upload"}
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 </label>
             </div>
+
+            {/* Size & Format Guidance Subtext */}
+            <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-400 font-medium flex-wrap gap-1">
+                <span>
+                    {aspectRatio && <strong className="text-gray-600 font-semibold">Ratio: {aspectRatio} • </strong>}
+                    {formatHint}
+                </span>
+                {detectedDimensions && (
+                    <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/70">
+                        Current: {detectedDimensions.width} × {detectedDimensions.height} px
+                    </span>
+                )}
+            </div>
+
             {value && (
-                <div className="mt-2 h-20 w-32 rounded border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
-                    <img src={value} alt="preview" className="h-full w-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                <div className="mt-2.5 h-24 w-40 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group shadow-2xs">
+                    <img
+                        src={value}
+                        alt="preview"
+                        className="h-full w-full object-contain"
+                        onError={(e) => (e.target.style.display = "none")}
+                    />
                     <button
+                        type="button"
                         onClick={handleDelete}
-                        className="absolute top-1 right-1 bg-white/80 hover:bg-white text-red-500 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1.5 right-1.5 bg-white/95 hover:bg-red-50 text-red-600 rounded-md p-1 opacity-0 group-hover:opacity-100 transition-all shadow-xs cursor-pointer"
                         title="Remove Image"
                     >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                     </button>
                 </div>
             )}
@@ -398,9 +453,12 @@ const EditForm = ({ section, onChange }) => {
                                     <ColorField label="BG Gradient To" value={banner.bgTo} onChange={v => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, bgTo: v } : b))} />
                                     <ColorField label="CTA Color" value={banner.ctaColor} onChange={v => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, ctaColor: v } : b))} />
                                     <ImageField
-                                        label="Banner Image (Optional – covers background)"
+                                        label="Banner Graphic / Background Image (Optional)"
                                         value={banner.image}
                                         fileId={banner.imagekitFileId}
+                                        recommendedSize="600 × 350 px"
+                                        aspectRatio="16:9 or 4:3"
+                                        formatHint="WebP, PNG, JPG (Max 2MB)"
                                         onChange={(url, fileId) => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, image: url, imagekitFileId: fileId } : b))}
                                     />
                                 </>
@@ -414,6 +472,9 @@ const EditForm = ({ section, onChange }) => {
                                         label="Banner Image (Optional)" 
                                         value={banner.image} 
                                         fileId={banner.imagekitFileId}
+                                        recommendedSize="600 × 300 px"
+                                        aspectRatio="2:1 (Side-by-side banner)"
+                                        formatHint="WebP, PNG, JPG (Max 2MB)"
                                         onChange={(url, fileId) => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, image: url, imagekitFileId: fileId } : b))} 
                                     />
                                 </>
@@ -435,9 +496,12 @@ const EditForm = ({ section, onChange }) => {
                     <ColorField label="Gradient From" value={cfg.bgFrom} onChange={v => set("bgFrom", v)} />
                     <ColorField label="Gradient To" value={cfg.bgTo} onChange={v => set("bgTo", v)} />
                     <ImageField 
-                        label="Banner Image (Optional)" 
+                        label="Full-Width Banner Image (Optional)" 
                         value={cfg.image} 
                         fileId={cfg.imagekitFileId}
+                        recommendedSize="1200 × 350 px"
+                        aspectRatio="3.4:1 (Ultra-wide desktop banner)"
+                        formatHint="WebP, PNG, JPG (Max 2MB)"
                         onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }} 
                     />
                 </div>
@@ -503,6 +567,15 @@ const EditForm = ({ section, onChange }) => {
                     <TextField label="CTA Text" value={cfg.ctaText} onChange={v => set("ctaText", v)} />
                     <TextField label="CTA Link" value={cfg.ctaLink} onChange={v => set("ctaLink", v)} />
                     <ColorField label="Background Color" value={cfg.bgColor} onChange={v => set("bgColor", v)} />
+                    <ImageField 
+                        label="Featured Graphic / Banner Image (Optional)" 
+                        value={cfg.image} 
+                        fileId={cfg.imagekitFileId}
+                        recommendedSize="500 × 500 px"
+                        aspectRatio="1:1 (Square)"
+                        formatHint="Transparent PNG, WebP, JPG"
+                        onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }} 
+                    />
                 </div>
             );
 
@@ -719,9 +792,12 @@ const EditForm = ({ section, onChange }) => {
                                                 </div>
                                             </div>
                                             <ImageField 
-                                                label="Brand Logo" 
+                                                label="Brand Logo Image" 
                                                 value={brand.image} 
                                                 fileId={brand.imagekitFileId}
+                                                recommendedSize="240 × 120 px"
+                                                aspectRatio="2:1 (Horizontal Logo)"
+                                                formatHint="Transparent PNG / SVG / WebP"
                                                 onChange={(url, fileId) => {
                                                     if (idx !== null) {
                                                         set("brands", manualBrands.map((b, i) => i === idx ? { ...b, image: url, imagekitFileId: fileId } : b));

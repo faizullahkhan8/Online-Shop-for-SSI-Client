@@ -1,7 +1,9 @@
 import express from "express";
+import http from "http";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectToDB } from "./config/localDb.js";
+import { initSocket } from "./config/socket.js";
 import userRouter from "./routers/user.router.js";
 import productRouter from "./routers/product.router.js";
 import categoryRouter from "./routers/category.router.js";
@@ -21,12 +23,17 @@ import { ErrorResponse } from "./utils/ErrorResponse.js";
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocket(server);
+
 app.use("/public", express.static("public"));
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(
     cors({
-        origin: [process.env.FRONTEND_URL, "http://localhost:5173"],
+        origin: [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean),
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         credentials: true,
     }),
@@ -66,6 +73,7 @@ connectToDB().catch((err) =>
     console.error("Initial DB connection failed:", err),
 );
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server and Socket.io running on port ${PORT}`);
 });

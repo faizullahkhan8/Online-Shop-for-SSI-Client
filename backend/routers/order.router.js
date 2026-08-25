@@ -12,6 +12,7 @@ import {
     cancelOrder,
     cancelOrderItem,
     getUnreadOrdersCount,
+    markOrderViewed,
 } from "../controllers/order.controller.js";
 
 const router = new Router();
@@ -22,6 +23,7 @@ router.get("/get-all", isAuth, authorize("admin"), getAllOrder);
 // Dashboard stats (admin only) - must be above /:id
 router.get("/dashboard-stats", isAuth, authorize("admin"), getDashboardStats);
 router.get("/unread-count", isAuth, authorize("admin"), getUnreadOrdersCount);
+router.patch("/:id/mark-viewed", isAuth, authorize("admin"), markOrderViewed);
 
 router.get("/my-orders", isAuth, getUserOrders);
 router.get("/:id", isAuth, getOrderById);

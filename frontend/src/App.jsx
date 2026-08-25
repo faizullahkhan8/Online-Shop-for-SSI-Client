@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import LoadingSpinner from "./Components/LoadingSpinner";
+import ScrollToTop from "./Components/ScrollToTop";
 import AboutPage from "./Pages/AboutUsPage";
 import AdminLayout from "./Layout/AdminLayout.jsx";
 
@@ -46,6 +47,7 @@ const HomePageBuilderPage = lazy(() => import("./Pages/Admin/HomePageBuilderPage
 const App = () => {
     return (
         <>
+            <ScrollToTop />
             <ToastContainer
                 position="top-right"
                 autoClose={3000}

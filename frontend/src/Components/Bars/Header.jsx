@@ -28,6 +28,7 @@ import WishlistDrawer from "../WishlistDrawer";
 import OrdersDrawer from "../OrdersDrawer";
 import RegisterModal from "../Auth/RegisterModal";
 import LoginModal from "../Auth/LoginModal";
+import SearchModal from "../SearchModal";
 
 /* ─── Mega Menu Data Structure ─────────────────────────────────────── */
 // (Now generated dynamically inside the Header component)
@@ -92,6 +93,7 @@ const Header = () => {
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [userDropDownOpen, setUserDropDownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
@@ -152,6 +154,18 @@ const Header = () => {
                 setMegaMenuData(dynamicMenu);
             }
         })();
+    }, []);
+
+    // Global keyboard shortcut (Ctrl+K / Cmd+K) to open search modal
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+                e.preventDefault();
+                setIsSearchModalOpen((prev) => !prev);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
 
     const handleSearch = (e) => {
@@ -255,25 +269,34 @@ const Header = () => {
                         />
                     </Link>
 
-                    {/* Search Bar */}
-                    <div className="hidden md:flex flex-1">
-                        <form onSubmit={handleSearch} className="flex w-full h-10 bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all shadow-sm">
-                            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="shrink-0 bg-gray-50 text-[11px] font-semibold text-gray-600 px-3 border-r border-gray-200 outline-none cursor-pointer hover:text-primary transition-colors">
-                                <option value="all">All Categories</option>
-                                <option value="Medicines">Medicines</option>
-                                <option value="Baby">Baby Care</option>
-                                <option value="Nutrition">Nutrition</option>
-                                <option value="Personal">Personal Care</option>
-                                <option value="OTC">OTC Needs</option>
-                            </select>
-                            <div className="flex items-center flex-1 px-3 gap-2">
-                                <Search size={15} className="text-gray-400 shrink-0" />
-                                <input type="text" placeholder="Search medicines, vitamins, baby care..." className="flex-1 text-[13px] text-gray-900 placeholder:text-gray-400 outline-none bg-transparent" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    {/* Search Bar Trigger */}
+                    <div className="hidden md:flex flex-1 max-w-2xl">
+                        <div
+                            onClick={() => setIsSearchModalOpen(true)}
+                            className="flex w-full h-10.5 bg-gray-50/80 hover:bg-gray-50 border border-gray-200 hover:border-primary/50 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 rounded-xl overflow-hidden transition-all shadow-2xs cursor-pointer group items-center justify-between"
+                        >
+                            <div className="flex items-center flex-1 px-3.5 gap-2.5">
+                                <Search size={16} className="text-gray-400 group-hover:text-primary transition-colors shrink-0" />
+                                <span className="text-[13px] text-gray-400 group-hover:text-gray-600 transition-colors">
+                                    Search for Medicines & more...
+                                </span>
                             </div>
-                            <button type="submit" className="shrink-0 px-5 bg-primary text-white text-[11px] font-extrabold uppercase tracking-wider hover:bg-primary-dark transition-colors cursor-pointer">
-                                Search
-                            </button>
-                        </form>
+                            <div className="flex items-center gap-2 pr-1.5">
+                                <span className="hidden lg:inline-flex text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-2xs">
+                                    Ctrl K
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsSearchModalOpen(true);
+                                    }}
+                                    className="px-4 py-1.5 bg-primary text-white text-[11px] font-extrabold uppercase tracking-wider rounded-lg group-hover:bg-primary-dark transition-colors cursor-pointer"
+                                >
+                                    Search
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Right Actions */}
@@ -339,11 +362,14 @@ const Header = () => {
 
             {/* Mobile Search */}
             <div className="md:hidden px-4 pb-2.5">
-                <form onSubmit={handleSearch} className="flex h-9 w-full bg-gray-50 border border-gray-200 rounded-xl overflow-hidden focus-within:border-primary transition-all">
-                    <div className="flex items-center pl-3 text-gray-400"><Search size={14} /></div>
-                    <input type="text" placeholder="Search medicines, health products..." className="flex-1 px-2 text-xs text-gray-900 outline-none bg-transparent" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    <button type="submit" className="px-4 bg-primary text-white text-[11px] font-bold">Go</button>
-                </form>
+                <div
+                    onClick={() => setIsSearchModalOpen(true)}
+                    className="flex h-9 w-full bg-gray-50 border border-gray-200 rounded-xl overflow-hidden items-center px-3 gap-2 cursor-pointer shadow-2xs"
+                >
+                    <Search size={14} className="text-gray-400 shrink-0" />
+                    <span className="text-xs text-gray-400 flex-1 truncate">Search for Medicines & more...</span>
+                    <span className="px-2.5 py-0.5 rounded bg-primary text-white text-[10px] font-bold">Search</span>
+                </div>
             </div>
 
             <MobileSideBar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} isAuthenticated={isAuthenticated} cartCount={cartCount} onCartClick={() => setIsCartOpen(true)} onWishlistClick={() => setIsWishlistOpen(true)} onOrdersClick={() => setIsOrdersOpen(true)} onRegisterClick={() => setIsRegisterOpen(true)} onLoginClick={() => setIsLoginOpen(true)} />
@@ -395,6 +421,11 @@ const Header = () => {
             <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <OrdersDrawer isOpen={isOrdersOpen} onClose={() => setIsOrdersOpen(false)} />
             
+            <SearchModal 
+                isOpen={isSearchModalOpen} 
+                onClose={() => setIsSearchModalOpen(false)} 
+            />
+
             <RegisterModal 
                 isOpen={isRegisterOpen} 
                 onClose={() => setIsRegisterOpen(false)} 

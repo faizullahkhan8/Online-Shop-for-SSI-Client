@@ -21,6 +21,25 @@ export const useGetUnreadOrdersCount = () => {
     return { getUnreadCount, count, loading };
 };
 
+export const useMarkOrderViewed = () => {
+    const [loading, setLoading] = useState(false);
+
+    const markOrderViewed = async (id) => {
+        setLoading(true);
+        try {
+            const res = await apiClient.patch(`/orders/${id}/mark-viewed`);
+            return res.data;
+        } catch (error) {
+            console.error("Error marking order viewed:", error);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { markOrderViewed, loading };
+};
+
 export const usePlaceOrder = () => {
     const [loading, setLoading] = useState();
 

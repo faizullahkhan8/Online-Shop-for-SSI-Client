@@ -2,6 +2,7 @@ import expressAsyncHandler from "express-async-handler";
 import { getLocalPrescriptionModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
+import { emitNewPrescription, emitPrescriptionStatusUpdate } from "../config/socket.js";
 
 export const getUnreadPrescriptionsCount = expressAsyncHandler(async (req, res, next) => {
     const PrescriptionModel = getLocalPrescriptionModel();
@@ -19,6 +20,12 @@ export const markPrescriptionViewed = expressAsyncHandler(async (req, res, next)
     
     prescription.isViewed = true;
     await prescription.save({ validateModifiedOnly: true });
+
+    try {
+        emitPrescriptionStatusUpdate(prescription);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit prescription view update:", socketErr);
+    }
     
     res.status(200).json({ success: true, message: "Marked as viewed" });
 });
@@ -53,6 +60,12 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
         imagekitFileId: req.image.fileId,
         notes: notes || "",
     });
+
+    try {
+        emitNewPrescription(prescription);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit new prescription:", socketErr);
+    }
 
     res.status(201).json({
         success: true,
@@ -115,6 +128,12 @@ export const updatePrescriptionStatus = expressAsyncHandler(async (req, res, nex
 
     prescription.status = status;
     await prescription.save();
+
+    try {
+        emitPrescriptionStatusUpdate(prescription);
+    } catch (socketErr) {
+        console.error("[Socket.io] Failed to emit prescription status update:", socketErr);
+    }
 
     res.status(200).json({
         success: true,

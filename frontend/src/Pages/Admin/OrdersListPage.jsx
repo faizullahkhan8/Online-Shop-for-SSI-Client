@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { useGetAllOrder } from "../../api/hooks/orders.api.js";
+import { useGetAllOrder, useMarkOrderViewed } from "../../api/hooks/orders.api.js";
 import { Eye, Package, Loader2, CreditCard, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSocket, SOCKET_EVENTS } from "../../context/SocketContext";
 
 const OrdersList = () => {
     const [orders, setOrders] = useState([]);
     const { getAllOrder, loading } = useGetAllOrder();
+    const { markOrderViewed } = useMarkOrderViewed();
+    const { socket } = useSocket();
 
     useEffect(() => {
         (async () => {
@@ -15,6 +18,25 @@ const OrdersList = () => {
             }
         })();
     }, []);
+
+    const handleMarkViewed = async (orderId) => {
+        setOrders(prev => prev.map(o => o._id === orderId ? { ...o, isViewed: true } : o));
+        await markOrderViewed(orderId);
+    };
+
+    // Live socket listener for instant order arrivals
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewOrder = (data) => {
+            if (data?.order) {
+                setOrders(prev => [{ ...data.order, isViewed: false }, ...prev.filter(o => o._id !== data.order._id)]);
+            }
+        };
+
+        socket.on(SOCKET_EVENTS.ORDER_NEW, handleNewOrder);
+        return () => socket.off(SOCKET_EVENTS.ORDER_NEW, handleNewOrder);
+    }, [socket]);
 
     const getStatusStyles = (status) => {
         switch (status?.toLowerCase()) {
@@ -89,9 +111,9 @@ const OrdersList = () => {
                                     className="hover:bg-gray-50 transition-colors group"
                                 >
                                     <td className="px-4 py-3.5 relative">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2.5">
                                             {!order.isViewed && (
-                                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                                                <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-100 shrink-0 animate-pulse" title="New / Unread Order" />
                                             )}
                                             <span className="text-sm font-mono font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
                                                 #{order._id.slice(-8).toUpperCase()}
@@ -180,10 +202,12 @@ const OrdersList = () => {
                                     <td className="px-4 py-3.5 text-right relative">
                                         <Link
                                             to={`/admin-dashboard/orders/${order._id}`}
+                                            onClick={() => handleMarkViewed(order._id)}
+                                            className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 inline-flex items-center justify-center transition-colors"
+                                            title="View Order Details"
                                         >
                                             <Eye
                                                 size={18}
-                                                className="text-gray-500 hover:text-blue-500"
                                             />
                                         </Link>
                                     </td>
