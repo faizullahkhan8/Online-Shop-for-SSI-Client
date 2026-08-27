@@ -41,11 +41,11 @@ const Select = ({
                 onClick={() => setOpen((prev) => !prev)}
                 className={clsx(
                     "flex items-center justify-between w-full",
-                    "px-4 py-2",
-                    "bg-white border border-gray-300 rounded-md",
+                    "px-4 py-2.5",
+                    "bg-white border-2 border-gray-200 rounded-xl",
                     "text-sm outline-none",
-                    "hover:bg-gray-50 transition-colors",
-                    "disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    "hover:border-primary-light transition-all duration-300",
+                    "disabled:bg-gray-50 disabled:cursor-not-allowed"
                 )}
             >
                 <span className="truncate mr-2 text-gray-800">
@@ -67,8 +67,8 @@ const Select = ({
                     className={clsx(
                         "absolute z-50 mt-1 inset-x-0",
                         "max-h-64",
-                        "bg-white border border-gray-200 rounded-md",
-                        "shadow-lg py-1 overflow-y-auto"
+                        "bg-white border-2 border-gray-100 rounded-xl",
+                        "shadow-xl shadow-primary-pale/30 py-2 overflow-y-auto"
                     )}
                 >
                     {options.map((option) => (

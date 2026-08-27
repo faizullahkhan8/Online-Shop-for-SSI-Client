@@ -17,7 +17,7 @@ import ProductSelector from "../../Components/Admin/ProductSelector";
 const SECTION_META = {
     hero: { label: "Hero Banner", icon: "🖼️", color: "bg-purple-100 text-purple-700", category: "Banner" },
     announcement_bar: { label: "Announcement Bar", icon: "📢", color: "bg-yellow-100 text-yellow-700", category: "Banner" },
-    trust_badges: { label: "Trust Badges", icon: "🏅", color: "bg-blue-100 text-blue-700", category: "Content" },
+    trust_badges: { label: "Trust Badges", icon: "🏅", color: "bg-primary-light text-primary-dark", category: "Content" },
     stats_counter: { label: "Stats Counter", icon: "📊", color: "bg-indigo-100 text-indigo-700", category: "Content" },
     categories: { label: "Categories Grid", icon: "📂", color: "bg-teal-100 text-teal-700", category: "Content" },
     ribbon: { label: "Green Ribbon", icon: "🎗️", color: "bg-green-100 text-green-700", category: "Content" },
@@ -29,7 +29,7 @@ const SECTION_META = {
     mid_banners: { label: "Mid Banners (Double)", icon: "🌟", color: "bg-cyan-100 text-cyan-700", category: "Banner" },
     single_mid_banner: { label: "Single Mid Banner", icon: "🌠", color: "bg-indigo-100 text-indigo-700", category: "Banner" },
     featured_category: { label: "Featured Category", icon: "🗂️", color: "bg-rose-100 text-rose-700", category: "Banner" },
-    conditions: { label: "Care by Condition", icon: "🏥", color: "bg-blue-100 text-blue-700", category: "Content" },
+    conditions: { label: "Care by Condition", icon: "🏥", color: "bg-primary-light text-primary-dark", category: "Content" },
     testimonials: { label: "Testimonials", icon: "⭐", color: "bg-amber-100 text-amber-700", category: "Content" },
     top_micro_bar: { label: "Top Micro Bar (Header)", icon: "☎️", color: "bg-teal-100 text-teal-700", category: "Banner" },
     app_download: { label: "App Download", icon: "📱", color: "bg-green-100 text-green-700", category: "Banner" },
@@ -83,7 +83,7 @@ const TextField = ({ label, value, onChange, placeholder, multiline = false }) =
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
                 rows={3}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full text-sm border border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all resize-none"
             />
         ) : (
             <input
@@ -91,7 +91,7 @@ const TextField = ({ label, value, onChange, placeholder, multiline = false }) =
                 value={value || ""}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full text-sm border border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all"
             />
         )}
     </div>
@@ -104,7 +104,7 @@ const ColorField = ({ label, value, onChange }) => (
             <input type="color" value={value || "#000000"} onChange={e => onChange(e.target.value)}
                 className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
             <input type="text" value={value || ""} onChange={e => onChange(e.target.value)}
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                className="flex-1 text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all font-mono"
                 placeholder="#000000" />
         </div>
     </div>
@@ -114,7 +114,7 @@ const NumberField = ({ label, value, onChange, min, max }) => (
     <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
         <input type="number" value={value ?? ""} onChange={e => onChange(Number(e.target.value))} min={min} max={max}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all" />
     </div>
 );
 
@@ -122,7 +122,7 @@ const SelectField = ({ label, value, onChange, options }) => (
     <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
         <select value={value || ""} onChange={e => onChange(e.target.value)}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all bg-white">
             {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
     </div>
@@ -183,7 +183,7 @@ const ImageField = ({
     };
 
     return (
-        <div className="mb-4 bg-white p-3.5 rounded-xl border border-gray-200/90 shadow-2xs">
+        <div className="mb-4 bg-white p-4 rounded-3xl border-2 border-transparent shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all">
             <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1.5">
                 <label className="block text-xs font-bold text-gray-700">{label}</label>
                 {recommendedSize && (
@@ -198,7 +198,7 @@ const ImageField = ({
                     type="text"
                     value={value || ""}
                     onChange={(e) => onChange(e.target.value, fileId)}
-                    className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 focus:bg-white transition-colors"
+                    className="flex-1 text-xs border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all bg-gray-50/50 focus:bg-white transition-colors"
                     placeholder="https://..."
                 />
                 <label className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 rounded-lg cursor-pointer text-xs font-bold border border-gray-200 transition-colors shrink-0">
@@ -292,7 +292,7 @@ const EditForm = ({ section, onChange }) => {
                 <div>
                     <div className="mb-3">
                         <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Style Variant</label>
-                        <select className="w-full text-xs p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-blue-400"
+                        <select className="w-full text-xs p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary"
                             value={cfg.style || "classic"} onChange={(e) => set("style", e.target.value)}>
                             <option value="classic">Classic (3 Columns)</option>
                             <option value="marquee">Marquee (Scrolling)</option>
@@ -328,7 +328,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("badges", [...(cfg.badges || []), { icon: "ShieldCheck", title: "New Badge", desc: "Description" }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Badge
                     </button>
                 </div>
@@ -348,7 +348,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("stats", [...(cfg.stats || []), { value: "0+", label: "New Stat" }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Stat
                     </button>
                 </div>
@@ -382,7 +382,7 @@ const EditForm = ({ section, onChange }) => {
                     {ribbonProducts.length > 0 ? (
                         <div className="grid grid-cols-2 gap-2 mb-3">
                             {ribbonProducts.map((p, i) => (
-                                <div key={p._id || i} className="bg-white border border-gray-200 rounded-xl p-2 flex items-center gap-2 relative group shadow-sm">
+                                <div key={p._id || i} className="bg-white border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl p-2 flex items-center gap-2 relative group shadow-sm">
                                     <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 p-0.5">
                                         <img
                                             src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${p.image}`}
@@ -422,7 +422,7 @@ const EditForm = ({ section, onChange }) => {
                     </button>
 
                     {showRibbonPicker && (
-                        <div className="border border-gray-200 rounded-xl overflow-hidden mb-2">
+                        <div className="border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl overflow-hidden mb-2">
                             <ProductSelector
                                 selectedProducts={ribbonProducts}
                                 onChange={selected => set("selectedProducts", selected)}
@@ -537,7 +537,7 @@ const EditForm = ({ section, onChange }) => {
                         <label className="block text-xs font-semibold text-gray-600 mb-1.5">Sale End Date & Time</label>
                         <input type="datetime-local" value={cfg.endTime ? new Date(cfg.endTime).toISOString().slice(0, 16) : ""}
                             onChange={e => set("endTime", e.target.value ? new Date(e.target.value).toISOString() : null)}
-                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all" />
                     </div>
                     <SelectField label="Products Source" value={cfg.productSource} onChange={v => set("productSource", v)}
                         options={[{ value: "on_sale", label: "On Sale" }, { value: "featured", label: "Featured" }, { value: "top_sellers", label: "Top Sellers" }]} />
@@ -596,7 +596,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("conditions", [...(cfg.conditions || []), { name: "New Condition", desc: "Description", icon: "Activity" }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Condition
                     </button>
                 </div>
@@ -621,7 +621,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("testimonials", [...(cfg.testimonials || []), { name: "Customer", rating: 5, comment: "Great service!", city: "Karachi" }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Testimonial
                     </button>
                 </div>
@@ -673,7 +673,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("blogs", [...(cfg.blogs || []), { title: "New Blog Post", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#4d8d3a" }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Blog
                     </button>
                 </div>
@@ -711,10 +711,10 @@ const EditForm = ({ section, onChange }) => {
                         </button>
                         
                         <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
-                            <button onClick={() => setBrandUI({ ...brandUI, tab: "vendors" })} className={`flex-1 text-xs font-bold py-2 rounded-md transition-colors ${brandUI.tab === "vendors" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+                            <button onClick={() => setBrandUI({ ...brandUI, tab: "vendors" })} className={`flex-1 text-xs font-bold py-2 rounded-md transition-colors ${brandUI.tab === "vendors" ? "bg-white shadow-sm text-primary" : "text-gray-500 hover:text-gray-700"}`}>
                                 From Directory
                             </button>
-                            <button onClick={() => setBrandUI({ ...brandUI, tab: "manual" })} className={`flex-1 text-xs font-bold py-2 rounded-md transition-colors ${brandUI.tab === "manual" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+                            <button onClick={() => setBrandUI({ ...brandUI, tab: "manual" })} className={`flex-1 text-xs font-bold py-2 rounded-md transition-colors ${brandUI.tab === "manual" ? "bg-white shadow-sm text-primary" : "text-gray-500 hover:text-gray-700"}`}>
                                 Custom Brand
                             </button>
                         </div>
@@ -722,7 +722,7 @@ const EditForm = ({ section, onChange }) => {
                         {brandUI.tab === "vendors" && (
                             <div>
                                 <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Select Vendors</h4>
-                                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="bg-white border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl overflow-hidden shadow-sm">
                                     <div className="max-h-80 overflow-y-auto p-2 space-y-1">
                                         {dbVendors.length === 0 ? (
                                             <p className="p-4 text-center text-xs text-gray-500">No vendors found in directory.</p>
@@ -730,7 +730,7 @@ const EditForm = ({ section, onChange }) => {
                                             dbVendors.map(vendor => {
                                                 const isSelected = selectedVendorIds.includes(vendor._id);
                                                 return (
-                                                    <label key={vendor._id} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-blue-50 border border-blue-100" : "hover:bg-gray-50 border border-transparent"}`}>
+                                                    <label key={vendor._id} className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-primary-pale border border-blue-100" : "hover:bg-gray-50 border border-transparent"}`}>
                                                         <input type="checkbox" checked={isSelected}
                                                             onChange={() => {
                                                                 if (isSelected) set("selectedVendors", selectedVendorIds.filter(id => id !== vendor._id));
@@ -741,7 +741,7 @@ const EditForm = ({ section, onChange }) => {
                                                                     set("sources", [...currentSources, "vendors"]);
                                                                 }
                                                             }}
-                                                            className="rounded text-blue-500" />
+                                                            className="rounded text-primary" />
                                                         <div className="w-8 h-8 rounded bg-white border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                                                             {vendor.image ? <img src={vendor.image} className="w-full h-full object-contain" /> : <span className="text-[10px] font-bold text-gray-400">{vendor.name.substring(0,2).toUpperCase()}</span>}
                                                         </div>
@@ -760,7 +760,7 @@ const EditForm = ({ section, onChange }) => {
                         )}
 
                         {brandUI.tab === "manual" && (
-                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                            <div className="bg-gray-50 border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl p-4">
                                 <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-4">
                                     {brandUI.editingManualIdx !== null ? "Edit Custom Brand" : "Add Custom Brand"}
                                 </h4>
@@ -785,11 +785,11 @@ const EditForm = ({ section, onChange }) => {
                                             <div className="flex gap-3">
                                                 <div className="flex-1">
                                                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">Brand Name</label>
-                                                    <input value={brand.name} onChange={e => updateField("name", e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2" placeholder="e.g. Acme Corp" />
+                                                    <input value={brand.name} onChange={e => updateField("name", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all" placeholder="e.g. Acme Corp" />
                                                 </div>
                                                 <div className="w-20 shrink-0">
                                                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">Abbr</label>
-                                                    <input value={brand.abbr} onChange={e => updateField("abbr", e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-center" placeholder="ACM" />
+                                                    <input value={brand.abbr} onChange={e => updateField("abbr", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all text-center" placeholder="ACM" />
                                                 </div>
                                             </div>
                                             <ImageField 
@@ -829,9 +829,9 @@ const EditForm = ({ section, onChange }) => {
                     <div className="grid grid-cols-2 gap-3 mb-4">
                         {/* Render Manual Brands */}
                         {manualBrands.map((brand, i) => (
-                            <div key={`manual-${i}`} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center relative group shadow-sm hover:shadow-md transition-shadow">
+                            <div key={`manual-${i}`} className="bg-white border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl p-3 flex flex-col items-center relative group shadow-sm hover:shadow-md transition-shadow">
                                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setBrandUI({ isOpen: true, tab: "manual", editingManualIdx: i })} className="p-1 text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-md">
+                                    <button onClick={() => setBrandUI({ isOpen: true, tab: "manual", editingManualIdx: i })} className="p-1 text-primary bg-primary-pale hover:bg-primary-light rounded-md">
                                         <Settings2 size={12} />
                                     </button>
                                     <button onClick={() => set("brands", manualBrands.filter((_, idx) => idx !== i))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
@@ -842,13 +842,13 @@ const EditForm = ({ section, onChange }) => {
                                     {brand.image ? <img src={brand.image} className="w-full h-full object-contain" /> : <span className="text-[10px] font-bold text-gray-400">{brand.abbr || "NA"}</span>}
                                 </div>
                                 <span className="text-xs font-semibold text-gray-800 text-center line-clamp-1">{brand.name || "Unnamed"}</span>
-                                <span className="text-[9px] font-bold text-blue-500 bg-blue-50 px-1.5 rounded uppercase mt-1">Custom</span>
+                                <span className="text-[9px] font-bold text-primary bg-primary-pale px-1.5 rounded uppercase mt-1">Custom</span>
                             </div>
                         ))}
 
                         {/* Render Selected Vendors */}
                         {selectedVendors.map(vendor => (
-                            <div key={`vendor-${vendor._id}`} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center relative group shadow-sm hover:shadow-md transition-shadow">
+                            <div key={`vendor-${vendor._id}`} className="bg-white border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl p-3 flex flex-col items-center relative group shadow-sm hover:shadow-md transition-shadow">
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => set("selectedVendors", selectedVendorIds.filter(id => id !== vendor._id))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
                                         <Trash2 size={12} />
@@ -863,7 +863,7 @@ const EditForm = ({ section, onChange }) => {
                         ))}
                         
                         <button onClick={() => setBrandUI({ isOpen: true, tab: "vendors", editingManualIdx: null })}
-                            className="flex flex-col items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl h-[120px] text-gray-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                            className="flex flex-col items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl h-[120px] text-gray-400 hover:text-primary hover:border-primary-light hover:bg-primary-pale transition-colors">
                             <Plus size={20} />
                             <span className="text-xs font-bold">Add Brand</span>
                         </button>
@@ -889,7 +889,7 @@ const EditForm = ({ section, onChange }) => {
                         </div>
                     ))}
                     <button onClick={() => set("faqs", [...(cfg.faqs || []), { q: "New Question?", a: "Answer here." }])}
-                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                        className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add FAQ
                     </button>
                 </div>
@@ -902,7 +902,7 @@ const EditForm = ({ section, onChange }) => {
                     <div className="mb-4">
                         <label className="block text-xs font-semibold text-gray-600 mb-1.5">HTML Code</label>
                         <textarea value={cfg.html || ""} onChange={e => set("html", e.target.value)} rows={8}
-                            className="w-full text-xs font-mono border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none" />
+                            className="w-full text-xs font-mono border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all bg-gray-50 resize-none" />
                     </div>
                     <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-3 text-xs text-yellow-700">
                         ⚠️ Only use trusted HTML. Scripts may not execute for security reasons.
@@ -917,7 +917,7 @@ const EditForm = ({ section, onChange }) => {
                     <TextField label="Pre-filled Message" value={cfg.message} onChange={v => set("message", v)} multiline />
                     <div className="mb-4">
                         <label className="block text-xs font-semibold text-gray-600 mb-1.5">Position</label>
-                        <select value={cfg.position || "right"} onChange={e => set("position", e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none">
+                        <select value={cfg.position || "right"} onChange={e => set("position", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all">
                             <option value="right">Bottom Right</option>
                             <option value="left">Bottom Left</option>
                         </select>
@@ -932,7 +932,7 @@ const EditForm = ({ section, onChange }) => {
                     <div className="mb-4 flex items-center gap-3">
                         <label className="text-xs font-semibold text-gray-600">Show Divider Line</label>
                         <button onClick={() => set("showDivider", !cfg.showDivider)}
-                            className={`w-10 h-5 rounded-full transition-colors relative ${cfg.showDivider ? "bg-blue-500" : "bg-gray-200"}`}>
+                            className={`w-10 h-5 rounded-full transition-colors relative ${cfg.showDivider ? "bg-primary-pale0" : "bg-gray-200"}`}>
                             <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${cfg.showDivider ? "left-5" : "left-0.5"}`} />
                         </button>
                     </div>
@@ -982,7 +982,7 @@ const MiniPreview = ({ section }) => {
             {section.type === "trust_badges" && (
                 <div className="grid grid-cols-2 gap-2">
                     {(cfg.badges || []).slice(0, 4).map((b, i) => (
-                        <div key={i} className="bg-white border border-gray-100 rounded-lg p-2.5 flex items-center gap-2 shadow-sm">
+                        <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-2.5 flex items-center gap-2 shadow-sm">
                             <div className="w-7 h-7 rounded-lg bg-green-100 text-green-600 flex items-center justify-center shrink-0">
                                 <Shield size={13} />
                             </div>
@@ -998,7 +998,7 @@ const MiniPreview = ({ section }) => {
             {section.type === "stats_counter" && (
                 <div className="grid grid-cols-2 gap-2">
                     {(cfg.stats || []).slice(0, 4).map((s, i) => (
-                        <div key={i} className="bg-white border border-gray-100 rounded-lg p-3 text-center shadow-sm">
+                        <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-3 text-center shadow-sm">
                             <p className="text-base font-black text-primary">{s.value}</p>
                             <p className="text-[10px] text-gray-500 mt-0.5">{s.label}</p>
                         </div>
@@ -1047,7 +1047,7 @@ const MiniPreview = ({ section }) => {
             {section.type === "testimonials" && (
                 <div className="space-y-2">
                     {(cfg.testimonials || []).slice(0, 2).map((t, i) => (
-                        <div key={i} className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm">
+                        <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-3 shadow-sm">
                             <div className="flex items-center gap-1 mb-1">
                                 {[...Array(t.rating || 5)].map((_, j) => <Star key={j} size={9} className="text-amber-400 fill-amber-400" />)}
                             </div>
@@ -1072,7 +1072,7 @@ const MiniPreview = ({ section }) => {
             {section.type === "faq" && (
                 <div className="space-y-2">
                     {(cfg.faqs || []).slice(0, 3).map((faq, i) => (
-                        <div key={i} className="bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm">
+                        <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-2.5 shadow-sm">
                             <div className="flex items-start justify-between gap-1">
                                 <p className="text-[10px] font-bold text-gray-900">{faq.q}</p>
                                 <ChevronDown size={10} className="text-gray-400 shrink-0 mt-0.5" />
@@ -1092,7 +1092,7 @@ const MiniPreview = ({ section }) => {
             {section.type === "brands" && (
                 <div className="grid grid-cols-4 gap-1.5">
                     {(cfg.brands || []).slice(0, 7).map((b, i) => (
-                        <div key={i} className="bg-white border border-gray-100 rounded-lg p-2 text-center shadow-sm">
+                        <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-2 text-center shadow-sm">
                             <div className="w-7 h-7 bg-green-50 text-green-700 rounded-lg flex items-center justify-center font-extrabold text-[9px] mx-auto mb-1">{b.abbr}</div>
                             <p className="text-[8px] text-gray-500 leading-tight">{b.name}</p>
                         </div>
@@ -1149,9 +1149,9 @@ const AddSectionModal = ({ onAdd, onClose, existingTypes }) => {
                                         return (
                                             <button key={type} onClick={() => { onAdd(type); onClose(); }}
                                                 disabled={!canAdd}
-                                                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-center group ${canAdd ? "border-gray-100 hover:border-blue-200 hover:bg-blue-50 cursor-pointer" : "border-gray-100 opacity-40 cursor-not-allowed bg-gray-50"}`}>
+                                                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-center group ${canAdd ? "border-gray-100 hover:border-primary-light hover:bg-primary-pale cursor-pointer" : "border-gray-100 opacity-40 cursor-not-allowed bg-gray-50"}`}>
                                                 <span className="text-xl">{meta.icon}</span>
-                                                <span className="text-[10px] font-semibold text-gray-600 group-hover:text-blue-600 transition-colors leading-tight">{meta.label}</span>
+                                                <span className="text-[10px] font-semibold text-gray-600 group-hover:text-primary transition-colors leading-tight">{meta.label}</span>
                                                 {!canAdd && <span className="text-[8px] text-gray-300">Already added</span>}
                                             </button>
                                         );
@@ -1335,7 +1335,7 @@ const HomePageBuilderPage = () => {
         return (
             <div className="flex items-center justify-center h-full min-h-screen bg-gray-50">
                 <div className="text-center">
-                    <Loader2 size={32} className="animate-spin text-blue-500 mx-auto mb-3" />
+                    <Loader2 size={32} className="animate-spin text-primary mx-auto mb-3" />
                     <p className="text-sm text-gray-500">Loading Page Builder...</p>
                 </div>
             </div>
@@ -1347,7 +1347,7 @@ const HomePageBuilderPage = () => {
             {/* ── Top Bar ─────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-5 py-3.5 bg-white border-b border-gray-200 shadow-sm shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                         <LayoutTemplate size={16} className="text-white" />
                     </div>
                     <div>
@@ -1368,11 +1368,11 @@ const HomePageBuilderPage = () => {
                         <RotateCcw size={13} className={resetting ? "animate-spin" : ""} /> Reset
                     </button>
                     <button onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                        className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-dark border border-primary-light bg-primary-pale hover:bg-primary-light px-3 py-1.5 rounded-lg transition-colors">
                         <Plus size={13} /> Add Section
                     </button>
                     <button onClick={handleSave} disabled={saving || !isDirty}
-                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed px-4 py-1.5 rounded-lg transition-colors shadow-sm">
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed px-4 py-1.5 rounded-lg transition-colors shadow-sm">
                         {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                         {saving ? "Saving..." : "Save & Publish"}
                     </button>
@@ -1404,9 +1404,9 @@ const HomePageBuilderPage = () => {
                                     onDragEnd={onDragEnd}
                                     onClick={() => setActiveIdx(isActive ? null : idx)}
                                     className={`flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-all select-none group
-                                        ${isActive ? "bg-blue-50 border border-blue-100" : "hover:bg-gray-50 border border-transparent"}
+                                        ${isActive ? "bg-primary-pale border border-blue-100" : "hover:bg-gray-50 border border-transparent"}
                                         ${isDragging ? "opacity-40 scale-95" : ""}
-                                        ${isDragOver && dragIdx !== idx ? "border-t-2 border-blue-400" : ""}`}>
+                                        ${isDragOver && dragIdx !== idx ? "border-t-2 border-primary" : ""}`}>
                                     {/* Drag handle */}
                                     <div className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0">
                                         <GripVertical size={14} />
@@ -1414,7 +1414,7 @@ const HomePageBuilderPage = () => {
                                     {/* Icon */}
                                     <span className="text-base leading-none shrink-0">{meta.icon}</span>
                                     {/* Label */}
-                                    <span className={`text-xs font-semibold flex-1 truncate ${isActive ? "text-blue-700" : "text-gray-700"}`}>
+                                    <span className={`text-xs font-semibold flex-1 truncate ${isActive ? "text-primary-dark" : "text-gray-700"}`}>
                                         {meta.label}
                                     </span>
                                     {/* Visibility toggle */}
@@ -1430,13 +1430,13 @@ const HomePageBuilderPage = () => {
                         {sections.length === 0 && (
                             <div className="text-center py-8 text-xs text-gray-400">
                                 <p>No sections yet.</p>
-                                <button onClick={() => setShowAddModal(true)} className="mt-2 text-blue-500 hover:text-blue-700 font-semibold">+ Add First Section</button>
+                                <button onClick={() => setShowAddModal(true)} className="mt-2 text-primary hover:text-primary-dark font-semibold">+ Add First Section</button>
                             </div>
                         )}
                     </div>
                     <div className="p-2 border-t border-gray-100">
                         <button onClick={() => setShowAddModal(true)}
-                            className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-1">
+                            className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                             <Plus size={13} /> Add Section
                         </button>
                     </div>
@@ -1444,7 +1444,7 @@ const HomePageBuilderPage = () => {
 
                 {/* Left Resizer */}
                 <div 
-                    className="w-1.5 hover:w-2 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
+                    className="w-1.5 hover:w-2 bg-gray-200 hover:bg-primary cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
                     onMouseDown={(e) => {
                         e.preventDefault();
                         isResizingLeft.current = true;
@@ -1494,7 +1494,7 @@ const HomePageBuilderPage = () => {
                     ) : (
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <div className="w-16 h-16 bg-primary-pale rounded-2xl flex items-center justify-center mx-auto mb-4">
                                     <Settings2 size={28} className="text-blue-400" />
                                 </div>
                                 <h3 className="font-semibold text-gray-700 mb-1">Select a Section to Edit</h3>
@@ -1506,7 +1506,7 @@ const HomePageBuilderPage = () => {
 
                 {/* Center Resizer */}
                 <div 
-                    className="w-1.5 hover:w-2 bg-gray-200 hover:bg-blue-400 cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
+                    className="w-1.5 hover:w-2 bg-gray-200 hover:bg-primary cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
                     onMouseDown={(e) => {
                         e.preventDefault();
                         isResizingCenter.current = true;
@@ -1520,7 +1520,7 @@ const HomePageBuilderPage = () => {
                 <div className="flex-1 flex flex-col overflow-hidden bg-gray-100 relative">
                     <div className="px-4 py-2.5 border-b border-gray-200 bg-white flex items-center justify-between shrink-0 shadow-sm z-10">
                         <div className="flex items-center gap-2">
-                            <Eye size={14} className="text-blue-500" />
+                            <Eye size={14} className="text-primary" />
                             <p className="text-[11px] font-bold uppercase tracking-widest text-gray-600">Live Preview</p>
                         </div>
                         <span className="text-[10px] text-gray-400 font-medium">Updates instantly as you edit</span>

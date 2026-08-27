@@ -96,7 +96,7 @@ const PromotionManager = () => {
     if (localLoading && promotions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <Loader2 className="animate-spin text-blue-600" size={32} />
+                <Loader2 className="animate-spin text-primary" size={32} />
                 <p className="text-sm text-gray-500 mt-3">
                     Loading promotions...
                 </p>
@@ -107,13 +107,13 @@ const PromotionManager = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-2 border-transparent shadow-sm rounded-3xl p-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
                         <Zap size={24} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-semibold text-gray-900">
+                        <h1 className="text-3xl font-display text-gray-900">
                             Promotion Manager
                         </h1>
                         <span className="text-sm text-gray-500">
@@ -125,7 +125,7 @@ const PromotionManager = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => navigate("/admin-dashboard/promotions/create")}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
                     >
                         <Plus size={16} />
                         New Campaign
@@ -134,10 +134,10 @@ const PromotionManager = () => {
             </div>
 
             {/* Promotions List */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-white border-2 border-transparent shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 rounded-3xl p-6 md:p-8">
                 <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                        <Calendar size={16} className="text-blue-600" />
+                        <Calendar size={16} className="text-primary" />
                         Active Campaigns
                     </h3>
                     <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded text-sm font-medium">
@@ -157,7 +157,7 @@ const PromotionManager = () => {
                         {promotions.map((promo, index) => (
                             <div
                                 key={promo._id}
-                                className={`group relative bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center gap-4 transition-all hover:border-blue-500 ${promo.status === "ACTIVE"
+                                className={`group relative bg-white border-2 border-gray-100 shadow-sm hover:border-primary-light hover:shadow-md rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center gap-4 transition-all ${promo.status === "ACTIVE"
                                     ? "opacity-100"
                                     : "opacity-60"
                                     }`}
@@ -167,7 +167,7 @@ const PromotionManager = () => {
                                     <button
                                         disabled={index === 0 || updateLoading}
                                         onClick={() => handleMove(index, "up")}
-                                        className="w-6 h-6 rounded bg-white border border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        className="w-6 h-6 rounded bg-white border border-gray-300 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                     >
                                         <ArrowUp size={12} />
                                     </button>
@@ -182,14 +182,14 @@ const PromotionManager = () => {
                                         onClick={() =>
                                             handleMove(index, "down")
                                         }
-                                        className="w-6 h-6 rounded bg-white border border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        className="w-6 h-6 rounded bg-white border border-gray-300 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                     >
                                         <ArrowDown size={12} />
                                     </button>
                                 </div>
 
                                 {/* Icon Type */}
-                                <div className="w-11 h-11 shrink-0 bg-white rounded-lg border border-gray-200 flex items-center justify-center text-gray-900">
+                                <div className="w-12 h-12 shrink-0 bg-primary-pale rounded-2xl flex items-center justify-center text-primary-dark group-hover:bg-primary group-hover:text-white transition-colors">
                                     {promo.type === "FLASH_DEAL" ? (
                                         <Zap size={18} />
                                     ) : (
@@ -200,11 +200,11 @@ const PromotionManager = () => {
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="text-sm font-semibold text-gray-900 truncate">
+                                        <h4 className="text-base font-bold text-gray-900 truncate group-hover:text-primary transition-colors">
                                             {promo.title}
                                         </h4>
                                         <span
-                                            className={`px-2 py-0.5 rounded text-xs font-medium border ${promo.status === "ACTIVE"
+                                            className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${promo.status === "ACTIVE"
                                                 ? "bg-green-50 text-green-700 border-green-200"
                                                 : promo.status === "SCHEDULED"
                                                     ? "bg-amber-50 text-amber-700 border-amber-200"
@@ -246,7 +246,7 @@ const PromotionManager = () => {
                                                 `/admin-dashboard/promotions/create?id=${promo._id}`,
                                             )
                                         }
-                                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-500 flex items-center justify-center transition-colors"
+                                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-primary-pale hover:text-primary hover:border-primary flex items-center justify-center transition-colors"
                                         title="Edit Promotion"
                                     >
                                         <FilePenLine size={14} />
@@ -257,7 +257,7 @@ const PromotionManager = () => {
                                             handleStatusToggle(promo)
                                         }
                                         disabled={updateLoading}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${promo.status === "ACTIVE"
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${promo.status === "ACTIVE"
                                             ? "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
                                             : "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
                                             }`}

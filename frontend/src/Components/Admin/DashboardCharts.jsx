@@ -14,12 +14,12 @@ import {
 } from "recharts";
 
 const COLORS = [
-    "#2563eb",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#6366f1",
+    "#4d8d3a", // primary
+    "#1e4d28", // primary-dark
+    "#a6d56c", // accent
+    "#f59e0b", // amber
+    "#ef4444", // red
+    "#6366f1", // indigo
 ];
 
 const DashboardCharts = ({ stats }) => {
@@ -53,10 +53,10 @@ const DashboardCharts = ({ stats }) => {
         })) || [];
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Area Chart */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+                <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
                     Revenue Trends (Last 30 Days)
                 </h3>
                 <div className="h-[300px] w-full">
@@ -72,12 +72,12 @@ const DashboardCharts = ({ stats }) => {
                                 >
                                     <stop
                                         offset="5%"
-                                        stopColor="#2563eb"
+                                        stopColor="#4d8d3a"
                                         stopOpacity={0.1}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="#2563eb"
+                                        stopColor="#4d8d3a"
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
@@ -131,7 +131,7 @@ const DashboardCharts = ({ stats }) => {
                             <Area
                                 type="monotone"
                                 dataKey="revenue"
-                                stroke="#2563eb"
+                                stroke="#4d8d3a"
                                 strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorRev)"
@@ -142,8 +142,8 @@ const DashboardCharts = ({ stats }) => {
             </div>
 
             {/* Category Performance Bar Chart */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+                <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
                     Category Performance
                 </h3>
                 <div className="h-[300px] w-full">
@@ -191,7 +191,7 @@ const DashboardCharts = ({ stats }) => {
                             />
                             <Bar
                                 dataKey="sales"
-                                fill="#2563eb"
+                                fill="#4d8d3a"
                                 radius={[6, 6, 0, 0]}
                                 barSize={40}
                             />
@@ -201,8 +201,8 @@ const DashboardCharts = ({ stats }) => {
             </div>
 
             {/* Order Status Pie Chart */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+                <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
                     Order Status Breakdown
                 </h3>
                 <div className="h-[300px] w-full">
@@ -265,12 +265,12 @@ const DashboardCharts = ({ stats }) => {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-5">
-                <div className="bg-gray-900 p-6 rounded-lg flex flex-col justify-center">
-                    <span className="text-xs font-medium text-gray-400 mb-2">
+            <div className="grid grid-cols-2 gap-6">
+                <div className="bg-gray-900 p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2">
                         Avg Order Value
                     </span>
-                    <h4 className="text-2xl font-bold text-white">
+                    <h4 className="text-3xl font-black text-white">
                         Rs{" "}
                         {stats?.totalOrders > 0
                             ? (stats?.totalSales / stats?.totalOrders)
@@ -279,11 +279,11 @@ const DashboardCharts = ({ stats }) => {
                             : 0}
                     </h4>
                 </div>
-                <div className="bg-blue-600 p-6 rounded-lg flex flex-col justify-center shadow-sm">
-                    <span className="text-xs font-medium text-blue-100 mb-2">
+                <div className="bg-primary p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 transition-all duration-300">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-primary-light mb-2">
                         Total Inventory
                     </span>
-                    <h4 className="text-2xl font-bold text-white">
+                    <h4 className="text-3xl font-black text-white">
                         {stats?.totalProducts} Units
                     </h4>
                 </div>

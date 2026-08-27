@@ -220,11 +220,11 @@ const TaxShippingSettings = () => {
         <div className="space-y-6">
             {/* Header */}
             <header className="flex items-center gap-3 pb-6 border-b border-gray-200">
-                <div className="p-2.5 bg-blue-600 rounded-lg text-white shadow-sm">
+                <div className="p-2.5 bg-primary rounded-lg text-white shadow-sm">
                     <Receipt size={20} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-display text-gray-900">
                         Tax & Shipping Settings
                     </h2>
                     <p className="text-sm text-gray-500 mt-0.5">
@@ -236,12 +236,12 @@ const TaxShippingSettings = () => {
             {/* Form */}
             <form
                 onSubmit={handleSubmit}
-                className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 space-y-6"
+                className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-6"
             >
                 {/* Charges Section */}
                 <section className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
-                        <Receipt size={16} className="text-blue-600" />
+                        <Receipt size={16} className="text-primary" />
                         Pricing
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -289,7 +289,7 @@ const TaxShippingSettings = () => {
                 {/* Shipping Method Section */}
                 <section className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
-                        <Truck size={16} className="text-blue-600" />
+                        <Truck size={16} className="text-primary" />
                         Shipping Calculation Rules
                     </h3>
                     
@@ -305,7 +305,7 @@ const TaxShippingSettings = () => {
                                 ]}
                                 value={form.advancedShipping.calculationMethod}
                                 onChange={(val) => updateAdv("calculationMethod", val)}
-                                className="w-full max-w-none bg-blue-50/50 border-blue-200"
+                                className="w-full max-w-none bg-primary-pale/50 border-primary-light"
                             />
                         </div>
 
@@ -325,14 +325,14 @@ const TaxShippingSettings = () => {
                                 <div className="space-y-1.5">
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <MapPin size={16} className="text-blue-600" />
+                                            <MapPin size={16} className="text-primary" />
                                             Set Store Location (Origin point)
                                         </label>
                                         <button 
                                             type="button" 
                                             onClick={handleDetectLocation}
                                             disabled={isDetectingLocation}
-                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                                            className="text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale hover:bg-primary-light px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                                         >
                                             {isDetectingLocation ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
                                             Auto-Detect My Location
@@ -351,15 +351,15 @@ const TaxShippingSettings = () => {
                                 <div className="space-y-1.5 pt-2">
                                     <label className="text-sm font-medium text-gray-700 flex items-center justify-between">
                                         <span className="flex items-center gap-2">
-                                            <MapPin size={16} className="text-blue-600" /> Store Physical Address
+                                            <MapPin size={16} className="text-primary" /> Store Physical Address
                                         </span>
-                                        {isFetchingAddress && <Loader2 size={12} className="animate-spin text-blue-600" />}
+                                        {isFetchingAddress && <Loader2 size={12} className="animate-spin text-primary" />}
                                     </label>
                                     <textarea
                                         value={form.advancedShipping.storeLocation?.address || ""}
                                         onChange={(e) => updateAdv("storeLocation", { ...form.advancedShipping.storeLocation, address: e.target.value })}
                                         placeholder="Auto-filled from map or type manually..."
-                                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none h-20 transition-all"
+                                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none h-20 transition-all"
                                     />
                                     <p className="text-[11px] font-bold text-gray-400">
                                         * Automatically filled when you drop the pin on the map above.
@@ -389,7 +389,7 @@ const TaxShippingSettings = () => {
                             <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl space-y-4 animate-in fade-in">
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium text-gray-700">City-Specific Rates</label>
-                                    <button type="button" onClick={addCityRate} className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                                    <button type="button" onClick={addCityRate} className="text-xs text-primary hover:text-primary-dark font-semibold flex items-center gap-1">
                                         <Plus size={14} /> Add City
                                     </button>
                                 </div>
@@ -425,13 +425,13 @@ const TaxShippingSettings = () => {
                         )}
                         
                         {/* Conditional Override Config */}
-                        <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl space-y-4 mt-6">
+                        <div className="bg-primary-pale/50 border border-blue-100 p-4 rounded-xl space-y-4 mt-6">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <label className="text-sm font-semibold text-gray-900">Conditional Override</label>
                                     <p className="text-xs text-gray-500">Apply a special shipping fee based on the total order value.</p>
                                 </div>
-                                <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 border border-blue-200 rounded-lg shadow-sm">
+                                <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 border border-primary-light rounded-lg shadow-sm">
                                     <div className={`w-8 h-4 rounded-full transition-colors relative ${form.advancedShipping.conditionalOverride.enabled ? "bg-blue-500" : "bg-gray-300"}`}>
                                         <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${form.advancedShipping.conditionalOverride.enabled ? "left-4.5" : "left-0.5"}`} style={{ left: form.advancedShipping.conditionalOverride.enabled ? '18px' : '2px' }} />
                                     </div>
@@ -487,13 +487,13 @@ const TaxShippingSettings = () => {
                 <section className="space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                            <CreditCard size={16} className="text-blue-600" />
+                            <CreditCard size={16} className="text-primary" />
                             Payment Methods
                         </h3>
                         <button
                             type="button"
                             onClick={addPaymentMethod}
-                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                            className="text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale hover:bg-primary-light px-3 py-1.5 rounded-lg transition-colors"
                         >
                             <Plus size={14} /> Add Method
                         </button>
@@ -587,7 +587,7 @@ const TaxShippingSettings = () => {
                     <button
                         type="submit"
                         disabled={updateLoading || settingsLoading}
-                        className="w-full bg-blue-600 text-white rounded-lg py-3 font-medium text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-primary text-white rounded-lg py-3 font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {updateLoading ? (
                             <>

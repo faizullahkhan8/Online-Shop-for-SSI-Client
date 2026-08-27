@@ -104,50 +104,87 @@ const StaffTreeBuilderPage = () => {
     const treeData = buildTree(staffList);
 
     const renderTree = (nodes, depth = 0) => {
-        return nodes.map((node) => (
-            <div key={node._id} className="mb-2">
-                <div 
-                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm"
-                    style={{ marginLeft: `${depth * 24}px` }}
-                >
-                    <div className="flex items-center gap-4">
-                        <img 
-                            src={getImageUrl(node.image) || "https://placehold.co/100x100?text=User"} 
-                            alt={node.name}
-                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+        return nodes.map((node, index) => {
+            const isLast = index === nodes.length - 1;
+            return (
+                <div key={node._id} className="mb-3 relative">
+                    {/* Rounded Elbow connecting from spine to this card */}
+                    {depth > 0 && (
+                        <div 
+                            className="absolute border-b-2 border-l-2 border-gray-300 rounded-bl-xl z-[-1]" 
+                            style={{ 
+                                left: `${depth * 48 - 12}px`, 
+                                width: '12px',
+                                top: '24px',
+                                height: '12px'
+                            }} 
                         />
-                        <div>
-                            <p className="font-bold text-gray-900 leading-tight">{node.name}</p>
-                            <p className="text-xs text-gray-500">{node.role}</p>
+                    )}
+                    
+                    {/* Vertical line continuing down to the NEXT sibling */}
+                    {depth > 0 && !isLast && (
+                        <div 
+                            className="absolute bg-gray-300 z-[-1]"
+                            style={{ 
+                                left: `${depth * 48 - 12}px`, 
+                                width: '2px',
+                                top: '36px',
+                                bottom: '-36px'
+                            }}
+                        />
+                    )}
+
+                    <div 
+                        className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-primary-light transition-all relative z-10 w-full max-w-2xl"
+                        style={{ marginLeft: `${depth * 48}px` }}
+                    >
+                        <div className="flex items-center gap-4">
+                            <img 
+                                src={getImageUrl(node.image) || "https://placehold.co/100x100?text=User"} 
+                                alt={node.name}
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0 relative z-10"
+                            />
+                            <div>
+                                <p className="font-bold text-gray-900 leading-tight">{node.name}</p>
+                                <p className="text-xs text-gray-500">{node.role}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => handleOpenModal(node)} className="p-1.5 text-primary hover:bg-primary-pale rounded-md">
+                                <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => handleDelete(node._id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => handleOpenModal(node)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
-                            <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(node._id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
+                    {node.children && node.children.length > 0 && (
+                        <div className="mt-3 relative">
+                            {/* Vertical line dropping from this parent down to its FIRST child's elbow */}
+                            <div 
+                                className="absolute bg-gray-300 z-[-1]" 
+                                style={{ 
+                                    left: `${depth * 48 + 36}px`,
+                                    width: '2px',
+                                    top: '-12px',
+                                    height: '36px'
+                                }} 
+                            />
+                            <div className="relative z-10">
+                                {renderTree(node.children, depth + 1)}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                {node.children && node.children.length > 0 && (
-                    <div className="mt-2 relative">
-                        {/* Connecting line */}
-                        <div className="absolute left-[20px] top-[-8px] bottom-0 w-px bg-gray-300 z-0" style={{ marginLeft: `${depth * 24}px` }} />
-                        <div className="relative z-10">
-                            {renderTree(node.children, depth + 1)}
-                        </div>
-                    </div>
-                )}
-            </div>
-        ));
+            );
+        });
     };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900 tracking-tight">Staff Tree Builder</h1>
+                    <h1 className="text-3xl font-display text-gray-900">Staff Tree Builder</h1>
                     <p className="text-sm text-gray-500 mt-1">Manage your organization's hierarchy</p>
                 </div>
                 <button
@@ -161,7 +198,7 @@ const StaffTreeBuilderPage = () => {
             {getLoading ? (
                 <LoadingSpinner />
             ) : (
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 min-h-[400px]">
+                <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 min-h-[400px]">
                     {treeData.length === 0 ? (
                         <div className="text-center py-12 text-gray-400">
                             No staff nodes found. Click "Add Staff Node" to create the root.
@@ -192,7 +229,7 @@ const StaffTreeBuilderPage = () => {
                                     required
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -203,13 +240,13 @@ const StaffTreeBuilderPage = () => {
                                     required
                                     value={formData.role}
                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
                                     placeholder="CEO"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                <div className="border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-pale transition-all">
                                     <LexicalEditor
                                         initialHtml={formData.description}
                                         onChange={(data) => setFormData({ ...formData, description: data.html })}
@@ -224,7 +261,7 @@ const StaffTreeBuilderPage = () => {
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
-                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-pale file:text-primary hover:file:bg-primary-light transition-colors cursor-pointer"
+                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary-pale file:text-primary hover:file:bg-primary-light transition-colors cursor-pointer"
                                     />
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-gray-400 font-medium">OR provide an existing URL:</span>
@@ -233,7 +270,7 @@ const StaffTreeBuilderPage = () => {
                                         type="text"
                                         value={formData.imageUrl}
                                         onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value, image: null })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                        className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all text-sm"
                                         placeholder="https://..."
                                         disabled={!!formData.image}
                                     />
@@ -245,7 +282,7 @@ const StaffTreeBuilderPage = () => {
                                 <select
                                     value={formData.parentId}
                                     onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
                                 >
                                     <option value="">None (Top Level)</option>
                                     {staffList.filter(s => s._id !== editingNode?._id).map((staff) => (

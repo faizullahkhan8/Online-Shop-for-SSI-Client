@@ -122,7 +122,7 @@ const OrderDetails = () => {
         return (
             <div className="h-[60vh] flex flex-col items-center justify-center">
                 <Loader2
-                    className="animate-spin text-blue-600 mb-3"
+                    className="animate-spin text-primary mb-3"
                     size={32}
                 />
                 <p className="text-sm font-medium text-gray-500">
@@ -144,7 +144,7 @@ const OrderDetails = () => {
             case "delivered":
                 return "bg-green-100 text-green-700 border-green-200";
             case "shipped":
-                return "bg-blue-100 text-blue-700 border-blue-200";
+                return "bg-primary-light text-primary-dark border-primary-light";
             case "pending":
                 return "bg-amber-100 text-amber-700 border-amber-200";
             case "cancelled":
@@ -186,7 +186,7 @@ const OrderDetails = () => {
                     </button>
                     <div>
                         <div className="flex items-center gap-2.5 mb-1">
-                            <h2 className="text-xl font-bold text-gray-900">
+                            <h2 className="text-2xl font-display text-gray-900">
                                 Order #{order._id.slice(-8).toUpperCase()}
                             </h2>
                             <span
@@ -256,7 +256,7 @@ const OrderDetails = () => {
                     <section className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <div className="p-5 border-b border-gray-200 flex items-center justify-between">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                <Package size={16} className="text-blue-600" />
+                                <Package size={16} className="text-primary" />
                                 Order Items
                             </h3>
                             <span className="text-sm font-medium text-gray-600">
@@ -438,7 +438,7 @@ const OrderDetails = () => {
                                                 }
                                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                                                     order.status === status
-                                                        ? "bg-blue-600 text-white"
+                                                        ? "bg-primary text-white"
                                                         : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                                                 }`}
                                             >
@@ -475,7 +475,7 @@ const OrderDetails = () => {
                                         <span className="text-sm font-semibold text-gray-900">
                                             Grand Total
                                         </span>
-                                        <span className="text-lg font-bold text-blue-600">
+                                        <span className="text-lg font-bold text-primary">
                                             Rs{" "}
                                             {order.grandTotal?.toLocaleString()}
                                         </span>
@@ -491,11 +491,11 @@ const OrderDetails = () => {
                     {/* Customer Info */}
                     <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                         <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <User size={16} className="text-blue-600" />
+                            <User size={16} className="text-primary" />
                             Customer
                         </h3>
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                            <div className="w-10 h-10 rounded-lg bg-primary-light flex items-center justify-center text-primary font-semibold text-sm">
                                 {order.recipient?.name?.[0]?.toUpperCase() ||
                                     "G"}
                             </div>
@@ -517,7 +517,7 @@ const OrderDetails = () => {
                             <p className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1.5">
                                 <ShieldCheck
                                     size={12}
-                                    className="text-blue-600"
+                                    className="text-primary"
                                 />
                                 Payment Status
                             </p>
@@ -532,7 +532,7 @@ const OrderDetails = () => {
                     {/* Shipping Info */}
                     <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
                         <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Truck size={16} className="text-blue-600" />
+                            <Truck size={16} className="text-primary" />
                             Shipping
                         </h3>
                         <div className="flex gap-3 mb-4">

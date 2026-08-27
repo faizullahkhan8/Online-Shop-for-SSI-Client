@@ -26,7 +26,7 @@ const AdminLayout = () => {
             toast.info(
                 <div className="flex flex-col gap-1.5 py-0.5">
                     <div className="flex items-center gap-2 font-bold text-gray-900">
-                        <span className="p-1 rounded-md bg-blue-100 text-blue-600">
+                        <span className="p-1 rounded-md bg-primary-pale text-primary">
                             <ShoppingBag size={15} />
                         </span>
                         <span>{orderId} Received!</span>
@@ -36,7 +36,7 @@ const AdminLayout = () => {
                     </p>
                     <button
                         onClick={() => navigate("/admin-dashboard/orders")}
-                        className="mt-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline w-fit cursor-pointer"
+                        className="mt-1 text-[11px] font-bold text-primary hover:text-primary-dark flex items-center gap-1 hover:underline w-fit cursor-pointer"
                     >
                         View Orders <ArrowRight size={12} />
                     </button>
@@ -44,7 +44,7 @@ const AdminLayout = () => {
                 {
                     autoClose: 6000,
                     icon: false,
-                    className: "!rounded-xl !shadow-lg border border-blue-100",
+                    className: "!rounded-xl !shadow-lg border border-primary-light",
                 }
             );
         };
@@ -91,11 +91,11 @@ const AdminLayout = () => {
     }, [socket, navigate, joinAdmin]);
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex h-screen bg-surface overflow-hidden">
             <AdminSidebar />
 
             <div className="flex-1 flex flex-col min-w-0">
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-8 lg:p-12 custom-scrollbar">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-10 custom-scrollbar">
                     <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <Outlet />
                     </div>

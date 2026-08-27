@@ -131,13 +131,13 @@ const ProductSelector = ({
                 <div className="p-5 border-b border-gray-200">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                            <Package size={16} className="text-blue-600" />
+                            <Package size={16} className="text-primary" />
                             Product Selection
                         </h3>
                         <button
                             type="button"
                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                            className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                            className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-primary transition-colors"
                         >
                             <Filter size={14} />
                             {showAdvancedFilters ? "Hide Filters" : "Advanced Filters"}
@@ -151,7 +151,7 @@ const ProductSelector = ({
                                 placeholder="Search products by name..."
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                 {isSearching ? (
@@ -165,7 +165,7 @@ const ProductSelector = ({
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                             <option value="all">All Categories</option>
                             {categories.map((c) => (
@@ -178,7 +178,7 @@ const ProductSelector = ({
                                 type="button"
                                 onClick={handleSelectAll}
                                 disabled={availableProducts.length === 0}
-                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                className="px-4 py-2 bg-primary-pale text-primary rounded-lg text-sm font-medium hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                             >
                                 Select All on Page
                             </button>
@@ -190,7 +190,7 @@ const ProductSelector = ({
                             <select
                                 value={productType}
                                 onChange={(e) => setProductType(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
                             >
                                 <option value="all">All Types</option>
                                 <option value="standard">Standard</option>
@@ -203,7 +203,7 @@ const ProductSelector = ({
                                 placeholder="Vendor Name..."
                                 value={vendor}
                                 onChange={(e) => setVendor(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
 
                             <input
@@ -211,7 +211,7 @@ const ProductSelector = ({
                                 placeholder="Min Price"
                                 value={minPrice}
                                 onChange={(e) => setMinPrice(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
 
                             <div className="flex gap-2">
@@ -220,7 +220,7 @@ const ProductSelector = ({
                                     placeholder="Max Price"
                                     value={maxPrice}
                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                                 <button
                                     type="button"
@@ -237,7 +237,7 @@ const ProductSelector = ({
                 <div className="flex-1 p-5 overflow-y-auto">
                     {isSearching && availableProducts.length === 0 ? (
                         <div className="h-full flex items-center justify-center min-h-[200px]">
-                            <Loader2 className="animate-spin text-blue-600" size={32} />
+                            <Loader2 className="animate-spin text-primary" size={32} />
                         </div>
                     ) : noProductFound ? (
                         <div className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[200px]">
@@ -259,7 +259,7 @@ const ProductSelector = ({
                                         onClick={() => toggleProduct(p)}
                                         className={`relative p-3 rounded-lg border transition-all flex flex-col items-center text-center gap-2 ${
                                             isSelected
-                                                ? "bg-blue-50 border-blue-500"
+                                                ? "bg-primary-pale border-blue-500"
                                                 : "bg-white border-gray-200 hover:border-gray-300"
                                         }`}
                                     >
@@ -279,7 +279,7 @@ const ProductSelector = ({
                                             </p>
                                         </div>
                                         {isSelected && (
-                                            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                                            <div className="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center">
                                                 <Plus size={12} className="rotate-45" />
                                             </div>
                                         )}

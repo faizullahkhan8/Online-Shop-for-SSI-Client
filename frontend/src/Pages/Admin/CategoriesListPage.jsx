@@ -239,7 +239,7 @@ const CategoriesListPage = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-display text-gray-900">
                         Categories
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -256,24 +256,24 @@ const CategoriesListPage = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                            <tr className="bg-gray-50/50">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Image
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Category Name (Hierarchy)
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Parent
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Status
                                 </th>
-                                <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Actions
                                 </th>
                             </tr>
@@ -287,7 +287,7 @@ const CategoriesListPage = () => {
                                         className="py-16 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                                            <div className="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
                                             <p className="text-sm font-medium text-gray-500">
                                                 Loading categories...
                                             </p>
@@ -354,7 +354,7 @@ const CategoriesListPage = () => {
                                             <span
                                                 className={`text-xs font-medium px-2.5 py-1 rounded-md ${cat.parentId
                                                     ? "bg-gray-100 text-gray-600"
-                                                    : "bg-blue-50 text-blue-700 border border-blue-200"
+                                                    : "bg-primary-pale text-primary-dark border border-primary-light"
                                                     }`}
                                             >
                                                 {cat.parentId?.name || "Root"}
@@ -401,7 +401,7 @@ const CategoriesListPage = () => {
                                             >
                                                 <Edit
                                                     size={16}
-                                                    className="text-blue-600"
+                                                    className="text-primary"
                                                 />
                                             </button>
                                             <button
@@ -492,7 +492,7 @@ const CategoriesListPage = () => {
                             {/* Category Name */}
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Tag size={14} className="text-blue-600" />
+                                    <Tag size={14} className="text-primary" />
                                     Category Name
                                     <span className="text-red-500">*</span>
                                 </label>
@@ -518,7 +518,7 @@ const CategoriesListPage = () => {
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <ImageIcon size={14} className="text-blue-600" />
+                                        <ImageIcon size={14} className="text-primary" />
                                         Category Picture
                                     </label>
                                     {categoryModal.imagePreview && (
@@ -560,7 +560,7 @@ const CategoriesListPage = () => {
                                                 )}
                                             </div>
                                             <label className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer shadow-xs transition-colors w-full sm:w-auto">
-                                                <UploadCloud size={14} className="text-blue-600" />
+                                                <UploadCloud size={14} className="text-primary" />
                                                 Change Picture
                                                 <input
                                                     type="file"
@@ -572,8 +572,8 @@ const CategoriesListPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <label className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all bg-gray-50/50 hover:bg-blue-50/30 group">
-                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <label className="border-2 border-dashed border-gray-300 hover:border-primary rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all bg-gray-50/50 hover:bg-primary-pale group">
+                                        <div className="w-10 h-10 rounded-full bg-primary-pale text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                                             <UploadCloud size={20} />
                                         </div>
                                         <p className="text-xs font-semibold text-gray-700">
@@ -595,11 +595,11 @@ const CategoriesListPage = () => {
                             {/* Parent Category */}
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <FolderTree size={14} className="text-blue-600" />
+                                    <FolderTree size={14} className="text-primary" />
                                     Parent Category
                                 </label>
                                 <select
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-700"
                                     value={categoryModal.data.parentId}
                                     onChange={(e) =>
                                         setCategoryModal({
@@ -649,9 +649,9 @@ const CategoriesListPage = () => {
                                             },
                                         })
                                     }
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer ${
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer ${
                                         categoryModal.data.isActive
-                                            ? "bg-blue-600"
+                                            ? "bg-primary"
                                             : "bg-gray-300"
                                     }`}
                                 >

@@ -75,7 +75,7 @@ const DashboardHome = () => {
         return (
             <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
                 <Loader2
-                    className="animate-spin mb-4 text-blue-600"
+                    className="animate-spin mb-4 text-primary"
                     size={32}
                 />
                 <p className="text-sm font-medium text-gray-500">
@@ -101,7 +101,7 @@ const DashboardHome = () => {
                 className={`flex flex-col justify-between gap-4 ${showCustomPicker ? "flex-col" : "flex-row"}`}
             >
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-display text-gray-900">
                         Dashboard Overview
                     </h2>
                     <p className="text-gray-500 text-sm mt-1">
@@ -209,24 +209,24 @@ const DashboardHome = () => {
 };
 
 const StatCard = ({ label, value, icon, trend, color }) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white border-2 border-transparent rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 hover:border-primary-light transition-all duration-300 hover:-translate-y-1 group">
         <div className="flex justify-between items-start mb-5">
             <div
-                className={`p-2.5 rounded-lg ${
+                className={`p-3 rounded-2xl ${
                     color === "primary"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-600 group-hover:bg-primary-pale group-hover:text-primary transition-colors"
                 }`}
             >
                 {icon}
             </div>
-            <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2.5 py-1 rounded-md border border-green-200">
-                <span className="text-xs font-semibold">{trend}</span>
+            <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-200">
+                <span className="text-[10px] font-black uppercase tracking-widest">{trend}</span>
                 <ArrowUpRight size={12} />
             </div>
         </div>
-        <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
-        <h4 className="text-2xl font-bold text-gray-900">{value}</h4>
+        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+        <h4 className="text-3xl font-black text-gray-900">{value}</h4>
     </div>
 );
 

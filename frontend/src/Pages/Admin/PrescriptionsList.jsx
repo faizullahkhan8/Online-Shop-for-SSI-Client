@@ -328,7 +328,7 @@ const PrescriptionsList = () => {
     const getStatusBadge = (status) => {
         switch(status) {
             case "pending": return <span className="px-2.5 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">Pending</span>;
-            case "processing": return <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Processing</span>;
+            case "processing": return <span className="px-2.5 py-1 bg-primary-light text-blue-800 text-xs font-semibold rounded-full">Processing</span>;
             case "completed": return <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Completed</span>;
             case "rejected": return <span className="px-2.5 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">Rejected</span>;
             default: return null;
@@ -337,7 +337,7 @@ const PrescriptionsList = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Prescriptions Management</h1>
+            <h1 className="text-3xl font-display text-gray-900 mb-6">Prescriptions Management</h1>
 
             {loading ? (
                 <div className="flex justify-center py-20">
@@ -386,7 +386,7 @@ const PrescriptionsList = () => {
                                                         href={`https://www.google.com/maps?q=${p.address.lat},${p.address.lng}`}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1 font-medium"
+                                                        className="text-xs text-primary hover:text-blue-800 flex items-center gap-1 mt-1 font-medium"
                                                     >
                                                         <MapPin size={12} /> View on Map
                                                     </a>
@@ -426,7 +426,7 @@ const PrescriptionsList = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleViewImage(p)}
-                                                        className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded relative cursor-pointer transition-colors"
+                                                        className="text-blue-500 hover:text-primary-dark bg-primary-pale p-1.5 rounded relative cursor-pointer transition-colors"
                                                         title="View Image"
                                                     >
                                                         {!p.isViewed && (

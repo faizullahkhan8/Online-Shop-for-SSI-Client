@@ -134,7 +134,7 @@ const PromotionBuilder = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
                         <Zap size={24} />
                     </div>
                     <div>
@@ -158,7 +158,7 @@ const PromotionBuilder = () => {
                         form="promotion-form"
                         type="submit"
                         disabled={loading || selectedProducts.length === 0}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (
                             <Loader2 className="animate-spin" size={16} />
@@ -179,7 +179,7 @@ const PromotionBuilder = () => {
                 <div className="lg:col-span-5 space-y-4">
                     <section className="bg-white border border-gray-200 rounded-lg p-5">
                         <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Settings size={16} className="text-blue-600" />
+                            <Settings size={16} className="text-primary" />
                             Configuration
                         </h3>
 
@@ -236,9 +236,9 @@ const PromotionBuilder = () => {
                                                 Number(e.target.value),
                                             )
                                         }
-                                        className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-lg font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-lg font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                     />
-                                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                                    <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white">
                                         {promotionData.discountType === "PERCENTAGE" ? (
                                             <Percent size={18} />
                                         ) : (
@@ -272,7 +272,7 @@ const PromotionBuilder = () => {
                                     onChange={(e) =>
                                         handleDataChange("startTime", e.target.value)
                                     }
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                                 {errors.startTime && (
                                     <p className="text-xs text-red-400">{errors.startTime}</p>
@@ -289,7 +289,7 @@ const PromotionBuilder = () => {
                                     onChange={(e) =>
                                         handleDataChange("endTime", e.target.value)
                                     }
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                 />
                                 {errors.endTime && (
                                     <p className="text-xs text-red-400">{errors.endTime}</p>
@@ -315,7 +315,7 @@ const PromotionBuilder = () => {
                     <section className="bg-white border border-gray-200 rounded-lg p-5">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                <Plus size={16} className="text-blue-600" />
+                                <Plus size={16} className="text-primary" />
                                 Selected Products
                             </h3>
                             <span className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-medium">
@@ -349,7 +349,7 @@ const PromotionBuilder = () => {
                                                 <p className="text-xs font-medium text-gray-900 truncate">
                                                     {p.name}
                                                 </p>
-                                                <p className="text-xs text-blue-600 mt-0.5">
+                                                <p className="text-xs text-primary mt-0.5">
                                                     Rs{" "}
                                                     {(promotionData.discountType === "PERCENTAGE"
                                                         ? p.price - (p.price * promotionData.discountValue) / 100

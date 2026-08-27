@@ -43,7 +43,7 @@ const OrdersList = () => {
             case "delivered":
                 return "bg-green-50 text-green-700 border-green-200";
             case "shipped":
-                return "bg-blue-50 text-blue-700 border-blue-200";
+                return "bg-primary-pale text-primary-dark border-primary-light";
             case "cancelled":
                 return "bg-red-50 text-red-700 border-red-200";
             case "pending":
@@ -60,7 +60,7 @@ const OrdersList = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Orders</h2>
+                    <h2 className="text-3xl font-display text-gray-900">Orders</h2>
                     <p className="text-sm text-gray-500 mt-1">
                         Manage all customer orders ({orders.length} total)
                     </p>
@@ -68,7 +68,7 @@ const OrdersList = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
@@ -115,7 +115,7 @@ const OrdersList = () => {
                                             {!order.isViewed && (
                                                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-100 shrink-0 animate-pulse" title="New / Unread Order" />
                                             )}
-                                            <span className="text-sm font-mono font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
+                                            <span className="text-sm font-mono font-medium text-gray-600 group-hover:text-primary transition-colors">
                                                 #{order._id.slice(-8).toUpperCase()}
                                             </span>
                                         </div>
@@ -150,7 +150,7 @@ const OrdersList = () => {
                                         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600">
                                             <Truck
                                                 size={14}
-                                                className="text-blue-600"
+                                                className="text-primary"
                                             />
                                             {order.shippingMethod
                                                 ? order.shippingMethod
@@ -184,7 +184,7 @@ const OrdersList = () => {
                                         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600">
                                             <CreditCard
                                                 size={14}
-                                                className="text-blue-600"
+                                                className="text-primary"
                                             />
                                             {order.payment?.method || "COD"}
                                         </div>
@@ -203,7 +203,7 @@ const OrdersList = () => {
                                         <Link
                                             to={`/admin-dashboard/orders/${order._id}`}
                                             onClick={() => handleMarkViewed(order._id)}
-                                            className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 inline-flex items-center justify-center transition-colors relative"
+                                            className="p-1.5 rounded-lg hover:bg-primary-pale text-gray-400 hover:text-primary inline-flex items-center justify-center transition-colors relative"
                                             title="View Order Details"
                                         >
                                             {!order.isViewed && (
@@ -230,7 +230,7 @@ const TableLoadingState = () => (
     <tr>
         <td colSpan="9" className="px-8 py-16 text-center">
             <div className="flex flex-col items-center gap-3">
-                <Loader2 className="animate-spin text-blue-600" size={32} />
+                <Loader2 className="animate-spin text-primary" size={32} />
                 <span className="text-sm font-medium text-gray-500">
                     Loading orders...
                 </span>

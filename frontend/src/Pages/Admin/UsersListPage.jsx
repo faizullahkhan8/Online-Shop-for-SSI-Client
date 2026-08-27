@@ -26,11 +26,11 @@ const UserListPage = () => {
                 </div>
             </header>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50">
+                            <tr className="bg-gray-50/50">
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 border-b border-gray-200">
                                     Name
                                 </th>
@@ -56,7 +56,7 @@ const UserListPage = () => {
                                         className="py-16 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                                            <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
                                             <p className="text-sm text-gray-500">
                                                 Loading users...
                                             </p>
@@ -82,7 +82,7 @@ const UserListPage = () => {
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-primary-pale group-hover:text-primary transition-colors">
                                                     <User size={18} />
                                                 </div>
                                                 <span className="font-medium text-gray-900">
@@ -102,7 +102,7 @@ const UserListPage = () => {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`text-xs font-medium px-2.5 py-1 rounded border ${u.role === "admin"
-                                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                    ? "bg-primary-pale text-primary-dark border-primary-light"
                                                     : "bg-gray-50 text-gray-600 border-gray-200"
                                                     }`}
                                             >

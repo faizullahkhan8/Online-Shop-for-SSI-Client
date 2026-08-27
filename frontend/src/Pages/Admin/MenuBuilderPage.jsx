@@ -167,7 +167,7 @@ const MenuBuilderPage = () => {
                     return (
                         <div key={node._id} className="flex flex-col gap-2">
                             <div 
-                                className={`flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:border-gray-200 transition-colors ml-${depth * 6}`}
+                                className={`flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-primary-light transition-all`}
                                 style={{ marginLeft: `${depth * 24}px` }}
                             >
                                 <div className="flex items-center gap-3">
@@ -193,7 +193,7 @@ const MenuBuilderPage = () => {
                                 <div className="flex items-center gap-2">
                                     <button 
                                         onClick={() => handleOpenForm(null, node._id)}
-                                        className="text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded"
+                                        className="text-xs font-medium text-primary hover:text-blue-800 bg-primary-pale px-2 py-1 rounded"
                                     >
                                         Add Child
                                     </button>
@@ -226,14 +226,14 @@ const MenuBuilderPage = () => {
         <div className="p-6 max-w-5xl mx-auto">
             <div className="flex justify-between items-end mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <ListTree className="text-[#74AA34]" /> Menu Builder
+                    <h1 className="text-3xl font-display text-gray-900 flex items-center gap-2">
+                        <ListTree className="text-primary" /> Menu Builder
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">Design and arrange your header navigation</p>
                 </div>
                 <button 
                     onClick={() => handleOpenForm(null)}
-                    className="bg-[#74AA34] hover:bg-[#629329] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                    className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm hover:shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
                 >
                     <Plus size={18} /> Add Menu Item
                 </button>
@@ -241,10 +241,10 @@ const MenuBuilderPage = () => {
 
             {fetchLoading ? (
                 <div className="flex justify-center py-20">
-                    <Loader size={32} className="animate-spin text-[#74AA34]" />
+                    <Loader size={32} className="animate-spin text-primary" />
                 </div>
             ) : menus.length === 0 ? (
-                <div className="bg-white border border-dashed border-gray-300 rounded-xl p-12 text-center flex flex-col items-center">
+                <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center flex flex-col items-center">
                     <ListTree size={48} className="text-gray-300 mb-4" />
                     <h3 className="text-lg font-bold text-gray-900 mb-1">No Menu Items</h3>
                     <p className="text-gray-500 text-sm mb-4">Start building your navigation menu by adding your first item.</p>
@@ -256,7 +256,7 @@ const MenuBuilderPage = () => {
                     </button>
                 </div>
             ) : (
-                <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                <div className="bg-white shadow-sm border-2 border-transparent hover:border-primary-light hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 rounded-3xl p-6 md:p-8">
                     {renderTree(menus)}
                 </div>
             )}
@@ -288,7 +288,7 @@ const MenuBuilderPage = () => {
                                     value={formData.title}
                                     onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="e.g., Winter Collection"
-                                    className="border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#74AA34] focus:ring-2 focus:ring-[#74AA34]/20 transition-all bg-gray-50/50 focus:bg-white"
+                                    className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all bg-white"
                                 />
                                 <span className="text-[11px] text-gray-500">This is the exact text the user will see in the header.</span>
                             </div>
@@ -304,11 +304,11 @@ const MenuBuilderPage = () => {
                                         onClick={() => setFormData({...formData, type: "CATEGORY", link: ""})}
                                         className={`cursor-pointer rounded-xl border p-4 flex flex-col gap-2 transition-all ${
                                             formData.type === "CATEGORY" 
-                                            ? "border-[#74AA34] bg-[#F4F8EE] ring-1 ring-[#74AA34]" 
+                                            ? "border-primary bg-primary-pale ring-2 ring-primary-light" 
                                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                         }`}
                                     >
-                                        <FolderTree size={20} className={formData.type === "CATEGORY" ? "text-[#74AA34]" : "text-gray-400"} />
+                                        <FolderTree size={20} className={formData.type === "CATEGORY" ? "text-primary-dark" : "text-gray-400"} />
                                         <div>
                                             <div className="font-semibold text-gray-900 text-sm">Product Category</div>
                                             <div className="text-xs text-gray-500 mt-0.5 leading-tight">Link directly to an existing product category.</div>
@@ -320,11 +320,11 @@ const MenuBuilderPage = () => {
                                         onClick={() => setFormData({...formData, type: "CUSTOM_LINK", link: ""})}
                                         className={`cursor-pointer rounded-xl border p-4 flex flex-col gap-2 transition-all ${
                                             formData.type === "CUSTOM_LINK" 
-                                            ? "border-[#74AA34] bg-[#F4F8EE] ring-1 ring-[#74AA34]" 
+                                            ? "border-primary bg-primary-pale ring-2 ring-primary-light" 
                                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                         }`}
                                     >
-                                        <LinkIcon size={20} className={formData.type === "CUSTOM_LINK" ? "text-[#74AA34]" : "text-gray-400"} />
+                                        <LinkIcon size={20} className={formData.type === "CUSTOM_LINK" ? "text-primary-dark" : "text-gray-400"} />
                                         <div>
                                             <div className="font-semibold text-gray-900 text-sm">Custom URL</div>
                                             <div className="text-xs text-gray-500 mt-0.5 leading-tight">Link to specific filters, tags, or external sites.</div>
@@ -336,11 +336,11 @@ const MenuBuilderPage = () => {
                                         onClick={() => setFormData({...formData, type: "PAGE", link: ""})}
                                         className={`cursor-pointer rounded-xl border p-4 flex flex-col gap-2 transition-all ${
                                             formData.type === "PAGE" 
-                                            ? "border-[#74AA34] bg-[#F4F8EE] ring-1 ring-[#74AA34]" 
+                                            ? "border-primary bg-primary-pale ring-2 ring-primary-light" 
                                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                         }`}
                                     >
-                                        <FileText size={20} className={formData.type === "PAGE" ? "text-[#74AA34]" : "text-gray-400"} />
+                                        <FileText size={20} className={formData.type === "PAGE" ? "text-primary-dark" : "text-gray-400"} />
                                         <div>
                                             <div className="font-semibold text-gray-900 text-sm">Static Page</div>
                                             <div className="text-xs text-gray-500 mt-0.5 leading-tight">Link to informational pages like About or Contact.</div>
@@ -357,7 +357,7 @@ const MenuBuilderPage = () => {
                                         <select 
                                             value={formData.link}
                                             onChange={e => setFormData({...formData, link: e.target.value})}
-                                            className="border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#74AA34] bg-white shadow-sm"
+                                            className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white shadow-sm transition-all"
                                             required
                                         >
                                             <option value="">-- Click to choose a category --</option>
@@ -381,7 +381,7 @@ const MenuBuilderPage = () => {
                                                 value={formData.link}
                                                 onChange={e => setFormData({...formData, link: e.target.value})}
                                                 placeholder={formData.type === "PAGE" ? "/about-us" : "/products?tags=sale"}
-                                                className="border border-gray-200 rounded-r-xl p-3 text-sm outline-none focus:border-[#74AA34] bg-white flex-1 min-w-0"
+                                                className="border-2 border-gray-200 rounded-r-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white flex-1 min-w-0 transition-all"
                                             />
                                         </div>
                                         <span className="text-[11px] text-gray-500 mt-1">Always start with a forward slash (/).</span>
@@ -398,7 +398,7 @@ const MenuBuilderPage = () => {
                                     <select 
                                         value={formData.parentId}
                                         onChange={e => setFormData({...formData, parentId: e.target.value})}
-                                        className="border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#74AA34] bg-white transition-all hover:border-gray-300"
+                                        className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white transition-all"
                                     >
                                         <option value="">[ Top Level Menu ]</option>
                                         {parentOptions.map(opt => (
@@ -415,7 +415,7 @@ const MenuBuilderPage = () => {
                                             type="number" 
                                             value={formData.order}
                                             onChange={e => setFormData({...formData, order: Number(e.target.value)})}
-                                            className="border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-[#74AA34] w-full pr-12 transition-all hover:border-gray-300"
+                                            className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale w-full pr-12 transition-all bg-white"
                                         />
                                     </div>
                                     <span className="text-[11px] text-gray-500">Lower numbers (e.g., 0, 1) appear first from left to right.</span>
@@ -434,7 +434,7 @@ const MenuBuilderPage = () => {
                                 <button 
                                     type="submit"
                                     disabled={createLoading || updateLoading}
-                                    className="bg-[#74AA34] hover:bg-[#629329] shadow-lg shadow-[#74AA34]/20 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-70 hover:-translate-y-0.5 active:translate-y-0"
+                                    className="bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-70 hover:-translate-y-0.5 active:translate-y-0"
                                 >
                                     {(createLoading || updateLoading) ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
                                     Save Menu Item

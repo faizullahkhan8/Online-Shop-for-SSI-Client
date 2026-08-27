@@ -67,7 +67,7 @@ const ProductList = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-display text-gray-900">
                         Products
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -77,24 +77,24 @@ const ProductList = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-gray-50">
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                            <tr className="bg-gray-50/50">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Product
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Category
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Price
                                 </th>
-                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Stock
                                 </th>
-                                <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Actions
                                 </th>
                             </tr>
@@ -107,7 +107,7 @@ const ProductList = () => {
                                         className="py-16 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                                            <div className="w-10 h-10 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
                                             <p className="text-sm font-medium text-gray-500">
                                                 Loading products...
                                             </p>
@@ -166,7 +166,7 @@ const ProductList = () => {
                                             >
                                                 <Edit
                                                     size={16}
-                                                    className="text-blue-600"
+                                                    className="text-primary hover:text-primary-dark transition-colors"
                                                 />
                                             </Link>
                                             <button

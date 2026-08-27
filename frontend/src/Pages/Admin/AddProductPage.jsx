@@ -187,7 +187,7 @@ const AddProduct = () => {
             {/* Header */}
             <header className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-display text-gray-900">
                         {isEditing ? "Edit Product" : "Add New Product"}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
@@ -211,11 +211,11 @@ const AddProduct = () => {
             >
                 {/* Left Column - Product Details */}
                 <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-5">
+                    <div className="bg-white p-6 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-5">
                         {/* Product Name */}
                         <div>
                             <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                <Hash size={14} className="text-blue-600" />
+                                <Hash size={14} className="text-primary" />
                                 Product Name
                             </label>
                             <Input
@@ -234,7 +234,7 @@ const AddProduct = () => {
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <Hash size={14} className="text-blue-600" />
+                                        <Hash size={14} className="text-primary" />
                                         Slug (URL)
                                     </label>
                                     <button
@@ -244,7 +244,7 @@ const AddProduct = () => {
                                             const generated = productData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
                                             setProductData(prev => ({ ...prev, slug: generated }));
                                         }}
-                                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded transition-colors"
+                                        className="text-[11px] font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale px-2 py-0.5 rounded transition-colors"
                                     >
                                         <Wand2 size={12} />
                                         Auto-generate
@@ -263,7 +263,7 @@ const AddProduct = () => {
                             {/* Vendor */}
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Box size={14} className="text-blue-600" />
+                                    <Box size={14} className="text-primary" />
                                     Vendor
                                 </label>
                                 <Select
@@ -290,7 +290,7 @@ const AddProduct = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Layers size={14} className="text-blue-600" />
+                                    <Layers size={14} className="text-primary" />
                                     Product Type
                                 </label>
                                 <Input
@@ -310,7 +310,7 @@ const AddProduct = () => {
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign
                                         size={14}
-                                        className="text-blue-600"
+                                        className="text-primary"
                                     />
                                     Price (Rs)
                                 </label>
@@ -327,7 +327,7 @@ const AddProduct = () => {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-blue-600" />
+                                    <DollarSign size={14} className="text-primary" />
                                     Min Price
                                 </label>
                                 <Input
@@ -341,7 +341,7 @@ const AddProduct = () => {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-blue-600" />
+                                    <DollarSign size={14} className="text-primary" />
                                     Max Price
                                 </label>
                                 <Input
@@ -361,7 +361,7 @@ const AddProduct = () => {
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Boxes
                                         size={16}
-                                        className="text-blue-600"
+                                        className="text-primary"
                                     />
                                     Stock Quantity
                                 </label>
@@ -377,7 +377,7 @@ const AddProduct = () => {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Box size={14} className="text-blue-600" />
+                                    <Box size={14} className="text-primary" />
                                     Low Stock
                                 </label>
                                 <Input
@@ -396,7 +396,7 @@ const AddProduct = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-[-10px]">
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <Layers size={14} className="text-blue-600" />
+                                    <Layers size={14} className="text-primary" />
                                     Category
                                 </label>
                                 <Select
@@ -420,7 +420,7 @@ const AddProduct = () => {
                         {/* Badges */}
                         <div className="pt-2 border-t border-gray-100">
                             <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                                <Box size={14} className="text-blue-600" />
+                                <Box size={14} className="text-primary" />
                                 Product Badges & Tags
                             </label>
                             <div className="flex flex-wrap gap-4">
@@ -430,7 +430,7 @@ const AddProduct = () => {
                                             type="checkbox"
                                             checked={(productData?.badges || []).includes(badge)}
                                             onChange={() => handleBadgeToggle(badge)}
-                                            className="rounded text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            className="rounded text-primary border-gray-300 focus:ring-primary"
                                         />
                                         {badge}
                                     </label>
@@ -441,7 +441,7 @@ const AddProduct = () => {
                         {/* Dynamic Description Sections */}
                         <div className="pt-2 border-t border-gray-100">
                             <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                                <Layers size={14} className="text-blue-600" />
+                                <Layers size={14} className="text-primary" />
                                 Details & Sections
                             </label>
                             <ProductDetailsBuilder
@@ -457,7 +457,7 @@ const AddProduct = () => {
                 {/* Right Column - Image Upload & Actions */}
                 <div className="lg:col-span-5 space-y-6">
                     {/* Image Upload */}
-                    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="bg-white p-6 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
                         <div className="flex items-center justify-between mb-3">
                             <label className="text-sm font-medium text-gray-700">
                                 Product Image
@@ -475,20 +475,20 @@ const AddProduct = () => {
                                             isRemoveBg: e.target.checked,
                                         }))
                                     }
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
                             </div>
                         </div>
                         <div className="space-y-4">
                             <label
                                 htmlFor="image"
-                                className="group relative flex flex-col items-center justify-center w-full aspect-[2/1] border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
+                                className="group relative flex flex-col items-center justify-center w-full aspect-[2/1] border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
                             >
                                 <div className="text-center p-6">
-                                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-50 transition-colors">
+                                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-pale transition-colors">
                                         <ImageIcon
                                             size={24}
-                                            className="text-gray-400 group-hover:text-blue-600 transition-colors"
+                                            className="text-gray-400 group-hover:text-primary transition-colors"
                                         />
                                     </div>
                                     <p className="text-sm font-medium text-gray-900 mb-1">
@@ -555,7 +555,7 @@ const AddProduct = () => {
                             disabled={
                                 createProductLoading || updateProductLoading
                             }
-                            className="w-full py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {createProductLoading || updateProductLoading ? (
                                 <>

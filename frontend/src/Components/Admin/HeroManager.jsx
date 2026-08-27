@@ -120,7 +120,7 @@ const HeroManager = () => {
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-24 bg-white border border-gray-200 rounded-lg">
-                    <Loader2 className="animate-spin text-blue-600 mb-3" size={32} />
+                    <Loader2 className="animate-spin text-primary mb-3" size={32} />
                     <p className="text-sm text-gray-500">Loading slides...</p>
                 </div>
             ) : (
@@ -128,7 +128,7 @@ const HeroManager = () => {
                     {slides.map((slide) => (
                         <div
                             key={slide._id}
-                            className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-blue-500 hover:shadow-md transition-all"
+                            className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-primary hover:shadow-md transition-all"
                         >
                             <div className={`h-40 relative overflow-hidden bg-gray-100`}>
                                 <img
@@ -181,7 +181,7 @@ const HeroManager = () => {
 
                         <div className="p-6 overflow-y-auto max-h-[90vh]">
                             <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                                <ImageIcon className="text-blue-600" size={20} />
+                                <ImageIcon className="text-primary" size={20} />
                                 {editingSlide ? "Edit Slide" : "Add New Slide"}
                             </h3>
 
@@ -199,12 +199,12 @@ const HeroManager = () => {
                                             </div>
 
                                             {/* Size Guidance Alert */}
-                                            <div className="bg-blue-50/60 border border-blue-100 rounded-lg p-2.5 text-xs text-blue-800 flex flex-col gap-0.5">
+                                            <div className="bg-primary-pale/60 border border-blue-100 rounded-lg p-2.5 text-xs text-blue-800 flex flex-col gap-0.5">
                                                 <div className="flex items-center justify-between font-semibold">
                                                     <span>📐 Optimal Ratio: ~16:5 (Wide Banner)</span>
-                                                    <span className="text-[10px] text-blue-600">Max: 2MB</span>
+                                                    <span className="text-[10px] text-primary">Max: 2MB</span>
                                                 </div>
-                                                <span className="text-[11px] text-blue-600/90">
+                                                <span className="text-[11px] text-primary/90">
                                                     High-res landscape images (e.g. 1920×600 or 1600×500) fit best on desktop & mobile carousels.
                                                 </span>
                                             </div>
@@ -255,7 +255,7 @@ const HeroManager = () => {
                                                         type="checkbox"
                                                         checked={formData.isActive}
                                                         onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                                                     />
                                                     <span className="text-sm text-gray-700">
                                                         Active
@@ -266,7 +266,7 @@ const HeroManager = () => {
                                                         type="checkbox"
                                                         checked={formData.isRemoveBg}
                                                         onChange={(e) => setFormData({ ...formData, isRemoveBg: e.target.checked })}
-                                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                                                     />
                                                     <span className="text-sm text-gray-700">
                                                         Remove Background
@@ -295,7 +295,7 @@ const HeroManager = () => {
                                 <button
                                     type="submit"
                                     disabled={addLoading || updateLoading}
-                                    className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-primary text-white py-2.5 rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {(addLoading || updateLoading) ? (
                                         <>

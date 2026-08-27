@@ -89,8 +89,8 @@ const AdminSidebar = () => {
     }, [socket, fetchOrdersCount, fetchPrescriptionsCount, SOCKET_EVENTS]);
 
     const colors = {
-        primary: "#2563eb", // blue-600
-        activeBg: "#dbeafe", // blue-100
+        primary: "#4d8d3a", // primary green
+        activeBg: "#ebf7d9", // primary-pale
         textMain: "#111827", // gray-900
         textMuted: "#6b7280", // gray-500
         border: "#e5e7eb", // gray-200
@@ -101,13 +101,14 @@ const AdminSidebar = () => {
             backgroundColor="white"
             collapsed={collapsed}
             rootStyles={{
-                borderColor: colors.border,
-                borderRightWidth: "1px",
+                borderRightWidth: "0px",
                 zIndex: "40",
                 height: "100vh",
                 position: "sticky",
                 top: 0,
-                boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+                boxShadow: "4px 0 24px -4px rgb(0 0 0 / 0.08)",
+                borderTopRightRadius: "24px",
+                borderBottomRightRadius: "24px",
             }}
         >
             {/* Logo Section */}
@@ -128,7 +129,7 @@ const AdminSidebar = () => {
                 )}
 
                 <button
-                    className="absolute right-6 top-6 bg-white border border-gray-200 rounded-lg p-1.5 text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm z-50"
+                    className="absolute right-6 top-6 bg-white border border-gray-200 rounded-lg p-1.5 text-gray-400 hover:text-primary hover:border-primary-light transition-all shadow-sm z-50"
                     onClick={() => setCollapsed(!collapsed)}
                 >
                     {collapsed ? (
@@ -150,9 +151,9 @@ const AdminSidebar = () => {
                             backgroundColor: active
                                 ? colors.activeBg
                                 : "transparent",
-                            borderRadius: "8px",
-                            margin: "2px 8px",
-                            padding: "10px 12px",
+                            borderRadius: "12px",
+                            margin: "4px 12px",
+                            padding: "12px 14px",
                             transition: "all 0.2s ease",
                             "&:hover": {
                                 backgroundColor: colors.activeBg,
@@ -177,7 +178,7 @@ const AdminSidebar = () => {
 
                     {/* Inventory Section */}
                     <div
-                        className={`px-6 py-3 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Inventory
@@ -250,7 +251,7 @@ const AdminSidebar = () => {
 
                     {/* Logistics Section */}
                     <div
-                        className={`px-6 py-3 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Logistics
@@ -328,7 +329,7 @@ const AdminSidebar = () => {
 
                     {/* Marketing Section */}
                     <div
-                        className={`px-6 py-3 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Marketing

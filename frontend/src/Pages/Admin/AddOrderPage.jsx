@@ -178,8 +178,8 @@ const AddOrderPage = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-6 border-b border-gray-200">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-600 rounded-lg text-white">
+                    <h2 className="text-3xl font-display text-gray-900 flex items-center gap-3">
+                        <div className="p-2.5 bg-primary rounded-lg text-white">
                             <ShoppingBag size={20} />
                         </div>
                         Create Manual Order
@@ -189,8 +189,8 @@ const AddOrderPage = () => {
                     </p>
                 </div>
 
-                <div className="bg-blue-600 rounded-lg p-4 min-w-[240px] shadow-sm">
-                    <p className="text-xs font-medium text-blue-100 mb-1">
+                <div className="bg-primary rounded-lg p-4 min-w-[240px] shadow-sm">
+                    <p className="text-xs font-medium text-primary-light mb-1">
                         Grand Total
                     </p>
                     <p className="text-2xl font-bold text-white">
@@ -202,10 +202,10 @@ const AddOrderPage = () => {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                 {/* Left Column - Order Items */}
                 <div className="xl:col-span-8 space-y-6">
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
                         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                <Hash size={16} className="text-blue-600" />
+                                <Hash size={16} className="text-primary" />
                                 Order Items
                             </h3>
                         </div>
@@ -316,7 +316,7 @@ const AddOrderPage = () => {
                         <button
                             type="button"
                             onClick={addItem}
-                            className="w-full mt-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+                            className="w-full mt-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
                         >
                             <Plus size={18} />
                             Add Item
@@ -326,11 +326,11 @@ const AddOrderPage = () => {
 
                 {/* Right Column - Customer & Details */}
                 <div className="xl:col-span-4 space-y-6">
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 space-y-6">
+                    <div className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-6">
                         {/* Customer Section */}
                         <section className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
-                                <User size={16} className="text-blue-600" />
+                                <User size={16} className="text-primary" />
                                 Customer
                             </h3>
                             <Select
@@ -349,7 +349,7 @@ const AddOrderPage = () => {
                         {/* Shipping Address Section */}
                         <section className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
-                                <Truck size={16} className="text-blue-600" />
+                                <Truck size={16} className="text-primary" />
                                 Shipping Address
                             </h3>
                             <Input
@@ -473,7 +473,7 @@ const AddOrderPage = () => {
                         {/* Payment Section */}
                         <section className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
-                                <CreditCard size={16} className="text-blue-600" />
+                                <CreditCard size={16} className="text-primary" />
                                 Payment
                             </h3>
                             <Select
@@ -510,7 +510,7 @@ const AddOrderPage = () => {
                                                 },
                                             })
                                         }
-                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                                     />
                                     <span className="text-sm font-medium text-gray-700">
                                         Payment received
@@ -522,7 +522,7 @@ const AddOrderPage = () => {
                         {/* Shipping & Fees Section */}
                         <section className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
-                                <Receipt size={16} className="text-blue-600" />
+                                <Receipt size={16} className="text-primary" />
                                 Shipping & Fees
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
@@ -602,7 +602,7 @@ const AddOrderPage = () => {
                         <button
                             type="submit"
                             disabled={orderLoading}
-                            className="w-full bg-blue-600 text-white rounded-lg py-3 font-medium text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-primary text-white rounded-lg py-3 font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {orderLoading ? (
                                 <>

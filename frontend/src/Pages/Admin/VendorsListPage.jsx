@@ -267,7 +267,7 @@ const VendorsListPage = () => {
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => openEditModal(vendor)}
-                                                        className="p-1.5 text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100"
+                                                        className="p-1.5 text-blue-500 bg-primary-pale hover:bg-primary-light rounded-lg transition-colors border border-blue-100"
                                                     >
                                                         <Edit size={16} />
                                                     </button>
