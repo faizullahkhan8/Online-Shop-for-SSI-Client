@@ -22,6 +22,16 @@ const userSchema = new Schema(
             type: String,
             required: true,
         },
+        isPhoneVerified: {
+            type: Boolean,
+            default: false,
+        },
+        phoneVerificationOtp: {
+            type: String,
+        },
+        phoneVerificationExpires: {
+            type: Date,
+        },
         role: {
             type: String,
             enum: ["user", "admin"],

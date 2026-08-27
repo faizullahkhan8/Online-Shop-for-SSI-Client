@@ -114,7 +114,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     // gridVariant: for sections that appear multiple times (e.g. products_grid)
     const getSectionConfig = (type, fallback = {}, gridVariant = "") => {
         if (previewSections) {
-            const sec = previewSections.find(s => s.type === type && (gridVariant ? s.gridVariant === gridVariant : true));
+            const sec = previewSections.find(s => s.type === type && (gridVariant ? (s.gridVariant === gridVariant || s.config?.gridVariant === gridVariant) : true));
             return sec ? { ...fallback, ...sec.config } : fallback;
         }
         const key = type + (gridVariant ? `__${gridVariant}` : "");
@@ -124,7 +124,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
 
     const isSectionVisible = (type, gridVariant = "") => {
         if (previewSections) {
-            const sec = previewSections.find(s => s.type === type && (gridVariant ? s.gridVariant === gridVariant : true));
+            const sec = previewSections.find(s => s.type === type && (gridVariant ? (s.gridVariant === gridVariant || s.config?.gridVariant === gridVariant) : true));
             return sec ? sec.isVisible : false;
         }
         const key = type + (gridVariant ? `__${gridVariant}` : "");
@@ -165,32 +165,33 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     };
 
     useEffect(() => {
-        if (previewSections) return; // Don't fetch if in preview mode
-        
-        // Load homepage config from builder (with cache)
-        getHomePage().then(res => {
-            if (res?.sections && res.sections.length > 0) {
-                // Index by "type+gridVariant" to handle multiple products_grid sections
-                const indexed = {};
-                res.sections.forEach(s => {
-                    const key = s.type + (s.config?.gridVariant ? `__${s.config.gridVariant}` : "");
-                    indexed[key] = s;
-                });
-                setPageConfig(indexed);
+        if (!previewSections) {
+            // Load homepage config from builder (with cache)
+            getHomePage().then(res => {
+                if (res?.sections && res.sections.length > 0) {
+                    // Index by "type+gridVariant" to handle multiple products_grid sections
+                    const indexed = {};
+                    res.sections.forEach(s => {
+                        const key = s.type + (s.config?.gridVariant ? `__${s.config.gridVariant}` : "");
+                        indexed[key] = s;
+                    });
+                    setPageConfig(indexed);
 
-                const sorted = [...res.sections].sort((a, b) => a.order - b.order);
-                const orderedKeys = sorted.map(s => ({
-                    type: s.type,
-                    gridVariant: s.config?.gridVariant || ""
-                }));
-                setOrderedSections(orderedKeys);
-            } else {
+                    const sorted = [...res.sections].sort((a, b) => a.order - b.order);
+                    const orderedKeys = sorted.map(s => ({
+                        type: s.type,
+                        gridVariant: s.config?.gridVariant || ""
+                    }));
+                    setOrderedSections(orderedKeys);
+                } else {
+                    setOrderedSections(DEFAULT_LAYOUT);
+                }
+            }).catch(() => {
                 setOrderedSections(DEFAULT_LAYOUT);
-            }
-        }).catch(() => {
-            setOrderedSections(DEFAULT_LAYOUT);
-        });
+            });
+        }
 
+        // Fetch real data (products, categories, deals) regardless of preview mode
         (async () => {
             const response = await getAllProducts({ limit: 24 });
             if (response?.success && Array.isArray(response.products)) {
@@ -317,7 +318,8 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
 
 
     const renderSection = (section, idx) => {
-        const { type, gridVariant } = section;
+        const { type } = section;
+        const gridVariant = section.gridVariant || section.config?.gridVariant;
         if (!isSectionVisible(type, gridVariant)) return null;
 
         const isActive = activePreviewIdx === idx;

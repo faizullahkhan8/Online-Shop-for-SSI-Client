@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import apiClient from "../apiClient.js";
 
 // Cache key and TTL (5 minutes)
-const CACHE_KEY = "homepage_config";
+const CACHE_KEY = "homepage_config_v2";
 const CACHE_TTL = 5 * 60 * 1000;
 
 const getCache = () => {
@@ -136,4 +136,3 @@ export const useUploadHomePageImage = () => {
 
     return { uploadImage, deleteImage, loading };
 };
-

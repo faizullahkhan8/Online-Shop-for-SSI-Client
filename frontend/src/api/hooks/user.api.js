@@ -59,6 +59,34 @@ export const useLoginUser = () => {
     };
 };
 
+export const useVerifyPhone = () => {
+    const [loading, setLoading] = useState(false);
+
+    const verifyPhone = async (data) => {
+        setLoading(true);
+        try {
+            const response = await apiClient.post(USER_ROUTES.VERIFY_PHONE, data);
+
+            if (response.data) {
+                toast.success("Phone verified and logged in successfully");
+                return response.data;
+            }
+        } catch (error) {
+            const ErrorMessage =
+                error.response?.data?.message || "Invalid OTP";
+            toast.error(ErrorMessage);
+            console.log("Error in Verify Phone", error);
+            return;
+        } finally {
+            setLoading(false);
+        }
+    };
+    return {
+        verifyPhone,
+        loading,
+    };
+};
+
 export const useLogoutUser = () => {
     const [loading, setLoading] = useState(false);
 

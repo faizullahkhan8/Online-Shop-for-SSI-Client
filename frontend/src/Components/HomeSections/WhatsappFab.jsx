@@ -19,7 +19,7 @@ const WhatsappFab = ({ config }) => {
             href={whatsappUrl} 
             target="_blank" 
             rel="noopener noreferrer"
-            className={`fixed bottom-6 ${positionClasses} z-[999] flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl hover:scale-110 hover:shadow-2xl hover:bg-[#1EBE57] active:scale-95 transition-all duration-300 group`}
+            className={`fixed max-md:bottom-24 md:bottom-6 ${positionClasses} z-[999] flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl hover:scale-110 hover:shadow-2xl hover:bg-[#1EBE57] active:scale-95 transition-all duration-300 group`}
             aria-label="Contact us on WhatsApp"
         >
             <MessageCircle size={28} className="drop-shadow-sm" />

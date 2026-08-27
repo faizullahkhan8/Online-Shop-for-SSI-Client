@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { removeFromCart, updateQuantity, clearCart } from "../store/slices/cartSlice";
 import { useEffect, useRef } from "react";
 import { getImageUrl } from "../utils/imageHelper";
+import { toast } from "react-toastify";
 
 const CartDrawer = ({ isOpen, onClose }) => {
     const dispatch = useDispatch();
@@ -30,9 +31,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleQuantityChange = (id, currentQty, delta) => {
+    const handleQuantityChange = (id, currentQty, delta, stock) => {
         const newQty = currentQty + delta;
         if (newQty > 0) {
+            if (stock !== undefined && newQty > stock) {
+                toast.warning(`Only ${stock} items available in stock.`);
+                return;
+            }
             dispatch(updateQuantity({ _id: id, quantity: newQty }));
         }
     };
@@ -130,7 +135,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                             <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 h-7 overflow-hidden">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
+                                                    onClick={() => handleQuantityChange(item._id, item.quantity, -1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
                                                     <Minus size={12} />
@@ -140,7 +145,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
+                                                    onClick={() => handleQuantityChange(item._id, item.quantity, 1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
                                                     <Plus size={12} />

@@ -49,10 +49,13 @@ const ProductListItem = ({ product }) => {
         }
     };
 
+    const stock = Number(product?.stock) || 0;
+    const isOutOfStock = stock <= 0;
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!product) return;
+        if (!product || isOutOfStock) return;
         dispatch(addToCart({ ...product, quantity: 1 }));
         toast.success(`${product?.name || "Product"} added to cart!`);
     };
@@ -176,9 +179,15 @@ const ProductListItem = ({ product }) => {
                                 100% Genuine
                             </span>
                         </div>
-                        <span className="text-xs text-gray-500 font-medium">
-                            In Stock
-                        </span>
+                        {isOutOfStock ? (
+                            <span className="text-xs text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-md">
+                                Out of Stock
+                            </span>
+                        ) : (
+                            <span className="text-xs text-gray-500 font-medium">
+                                In Stock
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2.5">
@@ -195,10 +204,15 @@ const ProductListItem = ({ product }) => {
                         <button
                             type="button"
                             onClick={handleAddToCart}
-                            className="flex items-center gap-1.5 bg-[#74AA34] hover:bg-[#629329] active:bg-[#527E23] text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer"
+                            disabled={isOutOfStock}
+                            className={`flex items-center gap-1.5 text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-2xs ${
+                                isOutOfStock
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-[#74AA34] hover:bg-[#629329] active:bg-[#527E23] cursor-pointer"
+                            }`}
                         >
                             <ShoppingCart size={14} />
-                            <span>Add to Cart</span>
+                            <span>{isOutOfStock ? "Out of Stock" : "Add to Cart"}</span>
                         </button>
                     </div>
                 </div>

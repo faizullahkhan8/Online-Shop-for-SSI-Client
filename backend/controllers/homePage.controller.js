@@ -1,5 +1,5 @@
 import expressAsyncHandler from "express-async-handler";
-import { getLocalHomePageModel } from "../config/localDb.js";
+import { getLocalHomePageModel, getLocalProductModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 
 // Default config for all 22 section types
@@ -385,9 +385,10 @@ const DEFAULT_SECTIONS = [
 // @access  Public
 export const getHomePage = expressAsyncHandler(async (req, res, next) => {
     const HomePageModel = getLocalHomePageModel();
+    const ProductModel = getLocalProductModel();
     if (!HomePageModel) return next(new ErrorResponse("HomePage model not found", 500));
 
-    let doc = await HomePageModel.findOne({});
+    let doc = await HomePageModel.findOne({}).lean();
 
     // If no config exists yet, return the default config (don't save it yet)
     if (!doc) {
@@ -396,6 +397,37 @@ export const getHomePage = expressAsyncHandler(async (req, res, next) => {
             sections: DEFAULT_SECTIONS,
             isDefault: true,
         });
+    }
+
+    // Hydrate selectedProducts with fresh data from DB (stock, price, etc.)
+    if (ProductModel && doc.sections) {
+        const productIds = new Set();
+        doc.sections.forEach(section => {
+            if (section.config && section.config.selectedProducts) {
+                section.config.selectedProducts.forEach(p => {
+                    if (p._id) productIds.add(p._id.toString());
+                });
+            }
+        });
+
+        if (productIds.size > 0) {
+            const products = await ProductModel.find({ _id: { $in: Array.from(productIds) } }).lean();
+            const productMap = products.reduce((acc, p) => {
+                acc[p._id.toString()] = p;
+                return acc;
+            }, {});
+
+            doc.sections = doc.sections.map(section => {
+                if (section.config && section.config.selectedProducts) {
+                    section.config.selectedProducts = section.config.selectedProducts
+                        .map(p => {
+                            const latest = productMap[p._id.toString()];
+                            return latest ? { ...p, ...latest } : p;
+                        });
+                }
+                return section;
+            });
+        }
     }
 
     res.status(200).json({

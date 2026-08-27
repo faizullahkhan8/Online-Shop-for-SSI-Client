@@ -19,13 +19,22 @@ import {
     toggleAllSelection,
 } from "../store/slices/cartSlice.js";
 import { getImageUrl } from "../utils/imageHelper";
+import { toast } from "react-toastify";
 
 const CartPage = () => {
     const dispatch = useDispatch();
     const { items, selectedTotalAmount } = useSelector((state) => state.cart);
 
     const handleRemove = (_id) => dispatch(removeFromCart({ _id }));
-    const handleQuantityChange = (_id, qty) => qty >= 1 && dispatch(updateQuantity({ _id, quantity: qty }));
+    const handleQuantityChange = (_id, qty, stock) => {
+        if (qty >= 1) {
+            if (stock !== undefined && qty > stock) {
+                toast.warning(`Only ${stock} items available in stock.`);
+                return;
+            }
+            dispatch(updateQuantity({ _id, quantity: qty }));
+        }
+    };
     const handleClearCart = () => dispatch(clearCart());
     const handleToggleSelection = (_id) => dispatch(toggleItemSelection({ _id }));
     const handleToggleAllSelection = () => {
@@ -167,7 +176,7 @@ const CartPage = () => {
                                             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 h-10 overflow-hidden shadow-inner">
                                                 <button
                                                     disabled={!item.selected}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                                                    onClick={() => handleQuantityChange(item._id, item.quantity - 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
                                                     <Minus size={16} />
@@ -177,7 +186,7 @@ const CartPage = () => {
                                                 </span>
                                                 <button
                                                     disabled={!item.selected}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                                                    onClick={() => handleQuantityChange(item._id, item.quantity + 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
                                                     <Plus size={16} />

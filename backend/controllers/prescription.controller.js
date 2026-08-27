@@ -3,6 +3,7 @@ import { getLocalPrescriptionModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 import { emitNewPrescription, emitPrescriptionStatusUpdate } from "../config/socket.js";
+import { sendSMS } from "../utils/smsService.js";
 
 export const getUnreadPrescriptionsCount = expressAsyncHandler(async (req, res, next) => {
     const PrescriptionModel = getLocalPrescriptionModel();
@@ -65,6 +66,11 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
         emitNewPrescription(prescription);
     } catch (socketErr) {
         console.error("[Socket.io] Failed to emit new prescription:", socketErr);
+    }
+
+    // Send SMS
+    if (phone) {
+        await sendSMS("PRESCRIPTION_UPLOADED", phone, { name: name || "Customer" });
     }
 
     res.status(201).json({
@@ -133,6 +139,11 @@ export const updatePrescriptionStatus = expressAsyncHandler(async (req, res, nex
         emitPrescriptionStatusUpdate(prescription);
     } catch (socketErr) {
         console.error("[Socket.io] Failed to emit prescription status update:", socketErr);
+    }
+
+    // Send SMS
+    if (prescription.phone) {
+        await sendSMS("PRESCRIPTION_UPDATE", prescription.phone, { name: prescription.name || "Customer", status: status });
     }
 
     res.status(200).json({

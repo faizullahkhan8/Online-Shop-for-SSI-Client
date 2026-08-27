@@ -13,8 +13,6 @@ const HomePage = lazy(() => import("./Pages/HomePage"));
 const ProductListPage = lazy(() => import("./Pages/ProductListPage"));
 const ProductDetailPage = lazy(() => import("./Pages/ProductDetailPage"));
 const CartPage = lazy(() => import("./Pages/CartPage"));
-const LoginPage = lazy(() => import("./Pages/LoginPage"));
-const RegisterPage = lazy(() => import("./Pages/RegisterPage"));
 const WishlistPage = lazy(() => import("./Pages/WishlistPage"));
 const CheckoutPage = lazy(() => import("./Pages/CheckoutPage"));
 const OrdersPage = lazy(() => import("./Pages/OrdersPage"));
@@ -24,6 +22,7 @@ const ProtectedRoute = lazy(() => import("./Components/Auth/ProtectedRoute"));
 const ContactUsPage = lazy(() => import("./Pages/ContactUsPage"));
 const PromotionsPage = lazy(() => import("./Pages/PromotionsPage.jsx"));
 const UploadPrescription = lazy(() => import("./Pages/UploadPrescription"));
+const StaffTreePage = lazy(() => import("./Pages/StaffTreePage"));
 
 // Admin Pages
 const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
@@ -42,6 +41,8 @@ const PromotionBuilderPage = lazy(() => import("./Pages/Admin/PromotionBuilderPa
 const PrescriptionsListPage = lazy(() => import("./Pages/Admin/PrescriptionsList"));
 const MenuBuilderPage = lazy(() => import("./Pages/Admin/MenuBuilderPage"));
 const HomePageBuilderPage = lazy(() => import("./Pages/Admin/HomePageBuilderPage"));
+const StaffTreeBuilderPage = lazy(() => import("./Pages/Admin/StaffTreeBuilderPage"));
+const SmsTemplatesPage = lazy(() => import("./Pages/Admin/SmsTemplatesPage"));
 
 
 const App = () => {
@@ -61,6 +62,7 @@ const App = () => {
                         <Route path="products" element={<ProductListPage />} />
                         <Route path="contact-us" element={<ContactUsPage />} />
                         <Route path="about-us" element={<AboutPage />} />
+                        <Route path="our-team" element={<StaffTreePage />} />
                         <Route path="promotions" element={<PromotionsPage />} />
                         <Route path="upload-prescription" element={<UploadPrescription />} />
                         <Route
@@ -120,8 +122,6 @@ const App = () => {
                             }
                         />
                     </Route>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
 
                     {/* Admin Routes */}
                     <Route
@@ -147,6 +147,8 @@ const App = () => {
                         <Route path="promotions/create" element={<PromotionBuilderPage />} />
                         <Route path="menu-builder" element={<MenuBuilderPage />} />
                         <Route path="homepage-builder" element={<HomePageBuilderPage />} />
+                        <Route path="staff-tree" element={<StaffTreeBuilderPage />} />
+                        <Route path="sms-templates" element={<SmsTemplatesPage />} />
                         
                         {/* Prescriptions Management */}
                         <Route path="prescriptions" element={<PrescriptionsListPage />} />

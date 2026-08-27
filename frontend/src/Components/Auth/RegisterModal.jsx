@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { X, User, Phone, Mail, MapPin, Loader2, ChevronRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/slices/authSlice.js";
-import { useRegisterUser } from "../../api/hooks/user.api";
+import { useRegisterUser, useVerifyPhone } from "../../api/hooks/user.api";
 import { toast } from "react-toastify";
 import LocationPicker from "../LocationPicker.jsx";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
-    const [otp, setOtp] = useState(["", "", "", ""]);
+    const [password, setPassword] = useState("");
+    const [otp, setOtp] = useState(["", "", "", "", "", ""]); // 6 digits for OTP
+    const [userId, setUserId] = useState(null);
     
     // Address State
     const [addressText, setAddressText] = useState("");
@@ -34,7 +36,9 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             setName("");
             setPhone("");
             setEmail("");
-            setOtp(["", "", "", ""]);
+            setPassword("");
+            setOtp(["", "", "", "", "", ""]);
+            setUserId(null);
             setAddressText("");
             setMapPosition(null);
         }
@@ -67,61 +71,49 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         return () => clearTimeout(timeoutId);
     }, [mapPosition]);
 
-    const handleSendOTP = (e) => {
+    const { verifyPhone } = useVerifyPhone();
+
+    const handleSendOTP = async (e) => {
         e.preventDefault();
-        if (!name || !phone) {
-            toast.error("Name and Phone Number are required.");
+        if (!name || !phone || !password) {
+            toast.error("Name, Phone, and Password are required.");
             return;
         }
-        setLoading(true);
-        // Simulate API call to send OTP
-        setTimeout(() => {
-            setLoading(false);
-            toast.success(`OTP sent to ${phone}`);
+        
+        const finalEmail = email || `${phone.replace(/\D/g, "")}@user.medicare.com`;
+
+        const response = await registerUser({
+            name,
+            email: finalEmail,
+            password,
+            phone,
+        });
+
+        if (response?.success && response.userId) {
+            setUserId(response.userId);
             setStep(2);
-        }, 1000);
+        }
     };
 
-    const handleVerifyOTP = (e) => {
+    const handleVerifyOTP = async (e) => {
         e.preventDefault();
         const otpCode = otp.join("");
-        if (otpCode.length < 4) {
-            toast.error("Please enter the complete 4-digit OTP.");
+        if (otpCode.length < 6) {
+            toast.error("Please enter the complete 6-digit OTP.");
             return;
         }
-        setLoading(true);
-        // Simulate OTP verification
-        setTimeout(() => {
-            setLoading(false);
-            toast.success("Phone verified successfully!");
+
+        const response = await verifyPhone({ userId, otp: otpCode });
+        
+        if (response?.success) {
+            dispatch(loginSuccess(response.user));
             setStep(3); // Move to address step
-        }, 1000);
+        }
     };
 
     const handleCompleteRegistration = async () => {
-        setLoading(true);
-        try {
-            // Generate dummy email/password if not provided, to satisfy current backend schema
-            const finalEmail = email || `${phone.replace(/\D/g, "")}@user.medicare.com`;
-            const randomPassword = Math.random().toString(36).slice(-8) + "Aa1!";
-
-            const response = await registerUser({
-                name,
-                email: finalEmail,
-                password: randomPassword,
-                phone,
-                // Note: Address would typically be updated via a separate API or included in registration if backend supports it.
-            });
-
-            if (response?.success) {
-                dispatch(loginSuccess(response.user));
-                onClose();
-            }
-        } catch (error) {
-            toast.error("Registration failed.");
-        } finally {
-            setLoading(false);
-        }
+        // Here we could hit a profile update API if we want to save the address immediately
+        onClose();
     };
 
     const handleOtpChange = (index, value) => {
@@ -131,7 +123,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
         setOtp(newOtp);
 
         // Auto-focus next input
-        if (value !== "" && index < 3) {
+        if (value !== "" && index < 5) {
             const nextInput = document.getElementById(`otp-${index + 1}`);
             if (nextInput) nextInput.focus();
         }
@@ -223,9 +215,24 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                                 </div>
                             </div>
 
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password *</label>
+                                <div className="relative">
+                                    <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="password"
+                                        required
+                                        placeholder="Create a password"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={loading || !name || !phone}
+                                disabled={loading || !name || !phone || !password}
                                 className="w-full h-12 mt-6 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : "Continue"} 
@@ -273,7 +280,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
                             <button
                                 type="submit"
-                                disabled={loading || otp.join("").length < 4}
+                                disabled={loading || otp.join("").length < 6}
                                 className="w-full h-12 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : "Verify OTP"}

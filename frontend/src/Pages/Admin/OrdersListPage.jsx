@@ -203,9 +203,12 @@ const OrdersList = () => {
                                         <Link
                                             to={`/admin-dashboard/orders/${order._id}`}
                                             onClick={() => handleMarkViewed(order._id)}
-                                            className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 inline-flex items-center justify-center transition-colors"
+                                            className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 inline-flex items-center justify-center transition-colors relative"
                                             title="View Order Details"
                                         >
+                                            {!order.isViewed && (
+                                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-white"></span>
+                                            )}
                                             <Eye
                                                 size={18}
                                             />

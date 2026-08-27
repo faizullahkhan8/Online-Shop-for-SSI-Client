@@ -7,6 +7,7 @@ import {
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { getEffectivePrice } from "../utils/promotionHelper.js";
 import { emitNewOrder, emitOrderStatusUpdate } from "../config/socket.js";
+import { sendSMS } from "../utils/smsService.js";
 
 export const getUnreadOrdersCount = expressAsyncHandler(async (req, res, next) => {
     const OrderModel = getLocalOrderModel();
@@ -98,6 +99,13 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                     );
                 }
 
+                if (tempProd.stock < quantity) {
+                    throw new ErrorResponse(
+                        `Product ${tempProd.name} is out of stock or requested quantity exceeds available stock`,
+                        400,
+                    );
+                }
+
                 return {
                     product: item.product,
                     quantity,
@@ -164,6 +172,15 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
         emitNewOrder(populatedOrder || order);
     } catch (socketErr) {
         console.error("[Socket.io] Failed to emit new order:", socketErr);
+    }
+
+    // Send SMS
+    if (recipient && recipient.phone) {
+        await sendSMS("ORDER_PLACED", recipient.phone, {
+            name: recipient.name || "Customer",
+            orderId: order._id.toString(),
+            amount: computedGrandTotal
+        });
     }
 
     return res.status(201).json({
@@ -262,6 +279,15 @@ export const updateOrderStatus = expressAsyncHandler(async (req, res, next) => {
         emitOrderStatusUpdate(populatedOrder);
     } catch (socketErr) {
         console.error("[Socket.io] Failed to emit order status update:", socketErr);
+    }
+
+    // Send SMS
+    if (populatedOrder.recipient && populatedOrder.recipient.phone) {
+        await sendSMS("ORDER_UPDATE", populatedOrder.recipient.phone, {
+            name: populatedOrder.recipient.name || "Customer",
+            orderId: populatedOrder._id.toString(),
+            status: status
+        });
     }
 
     return res.status(200).json({

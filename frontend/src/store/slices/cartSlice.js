@@ -21,6 +21,7 @@ const cartSlice = createSlice({
                 (item) => item._id === newItem._id,
             );
             if (!existingItem) {
+                const finalQty = newItem.stock !== undefined && qty > newItem.stock ? newItem.stock : qty;
                 state.items.push({
                     _id: newItem._id,
                     name: newItem.name,
@@ -28,12 +29,15 @@ const cartSlice = createSlice({
                     originalPrice: newItem.price,
                     stock: newItem.stock,
                     image: newItem.image,
-                    quantity: qty,
-                    totalPrice: priceToUse * qty,
+                    quantity: finalQty,
+                    totalPrice: priceToUse * finalQty,
                     selected: true, // New items are selected by default
                 });
             } else {
-                existingItem.quantity += qty;
+                const potentialQty = existingItem.quantity + qty;
+                existingItem.quantity = existingItem.stock !== undefined && potentialQty > existingItem.stock
+                    ? existingItem.stock
+                    : potentialQty;
                 existingItem.totalPrice =
                     existingItem.price * existingItem.quantity;
             }
@@ -66,8 +70,11 @@ const cartSlice = createSlice({
             const { _id, quantity } = action.payload;
             const existingItem = state.items.find((item) => item._id === _id);
             if (existingItem && quantity > 0) {
-                existingItem.quantity = quantity;
-                existingItem.totalPrice = existingItem.price * quantity;
+                const finalQty = existingItem.stock !== undefined && quantity > existingItem.stock
+                    ? existingItem.stock
+                    : quantity;
+                existingItem.quantity = finalQty;
+                existingItem.totalPrice = existingItem.price * finalQty;
                 state.totalAmount = state.items.reduce(
                     (total, item) => total + item.totalPrice,
                     0,

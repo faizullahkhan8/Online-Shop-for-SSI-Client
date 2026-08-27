@@ -24,10 +24,13 @@ const ProductCard = ({ product }) => {
 
     const isInWishlist = !!wishlistItems.find((item) => matchId(item, product));
 
+    const stock = Number(product?.stock) || 0;
+    const isOutOfStock = stock <= 0;
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!product) return;
+        if (!product || isOutOfStock) return;
         dispatch(addToCart({ ...product, quantity: 1 }));
         toast.success(`${product?.name || "Product"} added to cart!`);
     };
@@ -86,7 +89,15 @@ const ProductCard = ({ product }) => {
     return (
         <div className="group relative flex flex-col h-full bg-white rounded-3xl border-2 border-transparent hover:border-primary-light p-3 shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
             {/* Top Image Box */}
-            <div className="relative aspect-square w-full bg-gray-50/80 rounded-2xl overflow-hidden mb-4 flex items-center justify-center group-hover:bg-primary-pale/30 transition-colors duration-300">
+            <div className={`relative aspect-square w-full bg-gray-50/80 rounded-2xl overflow-hidden mb-4 flex items-center justify-center transition-colors duration-300 ${!isOutOfStock ? "group-hover:bg-primary-pale/30" : "opacity-80"}`}>
+                {/* Out of Stock Overlay */}
+                {isOutOfStock && (
+                    <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
+                        <span className="bg-red-500 text-white font-black text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm border border-white">
+                            Out of Stock
+                        </span>
+                    </div>
+                )}
                 {/* Discount Badge */}
                 {isDiscounted && (
                     <div className="absolute top-3 left-3 z-10 bg-amber-400 text-amber-900 font-black text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg shadow-sm">
@@ -97,7 +108,7 @@ const ProductCard = ({ product }) => {
                 {/* Wishlist Button */}
                 <button
                     onClick={handleWishlist}
-                    className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                    className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer"
                 >
                     <Heart
                         size={16}
@@ -159,11 +170,17 @@ const ProductCard = ({ product }) => {
                     </div>
 
                     <button
+                        type="button"
                         onClick={handleAddToCart}
-                        className="w-10 h-10 bg-primary-pale text-primary-dark hover:bg-primary hover:text-white rounded-xl flex items-center justify-center transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                        title="Add to Cart"
+                        disabled={isOutOfStock}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${
+                            isOutOfStock 
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none" 
+                            : "bg-primary-pale text-primary-dark hover:bg-primary hover:text-white hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                        }`}
+                        title={isOutOfStock ? "Out of Stock" : "Add to Cart"}
                     >
-                        <Plus size={20} strokeWidth={2.5} />
+                        <Plus size={20} strokeWidth={2.5} className={isOutOfStock ? "pointer-events-none" : ""} />
                     </button>
                 </div>
             </div>

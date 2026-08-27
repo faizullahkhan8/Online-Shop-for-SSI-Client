@@ -20,6 +20,7 @@ import {
     ListTree,
     LayoutTemplate,
     Building2,
+    MessageSquare,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -102,7 +103,7 @@ const AdminSidebar = () => {
             rootStyles={{
                 borderColor: colors.border,
                 borderRightWidth: "1px",
-                zIndex: "99",
+                zIndex: "40",
                 height: "100vh",
                 position: "sticky",
                 top: 0,
@@ -354,6 +355,20 @@ const AdminSidebar = () => {
                         icon={<LayoutTemplate size={18} />}
                     >
                         Page Builder
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/staff-tree" />}
+                        icon={<Users size={18} />}
+                    >
+                        Staff Tree Builder
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/sms-templates" />}
+                        icon={<MessageSquare size={18} />}
+                    >
+                        SMS Templates
                     </MenuItem>
 
                     {/* Bottom Actions */}

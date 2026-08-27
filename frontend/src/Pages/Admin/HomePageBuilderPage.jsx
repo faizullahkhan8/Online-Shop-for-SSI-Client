@@ -63,7 +63,7 @@ const SECTION_DEFAULTS = {
     featured_category: { config: { badge: "Featured", title: "Category Title", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgColor: "#1E3A5F", image: "" } },
     conditions: { config: { title: "Care By Condition", subtitle: "Health Concerns", conditions: [{ name: "Condition Name", desc: "Description", icon: "Activity" }] } },
     testimonials: { config: { title: "What Our Customers Say", subtitle: "Reviews", testimonials: [{ name: "Customer Name", rating: 5, comment: "Great service!", city: "Karachi" }] } },
-    app_download: { config: { title: "Download & Get\n10% Off", subtitle: "Track orders, set reminders.", appStoreLink: "#", playStoreLink: "#", rating: "4.9", reviewCount: "50K+" } },
+    app_download: { config: { title: "Download & Get\n10% Off", subtitle: "Track orders, set reminders.", appStoreLink: "#", playStoreLink: "#", qrCodeLink: "", rating: "4.9", reviewCount: "50K+" } },
     newsletter: { config: { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#ebf7d9" } },
     blogs: { config: { title: "Health Advice & Blogs", subtitle: "Expert Insights", ctaText: "All Articles", ctaLink: "/about-us", blogs: [{ title: "Blog Title", readTime: "3 min read", category: "Health", author: "Dr. Author", icon: "Apple", accentColor: "#4d8d3a" }] } },
     brands: { config: { title: "Trusted Partner Brands", subtitle: "Our Manufacturers", brands: [{ name: "Brand Name", abbr: "BRD" }] } },
@@ -636,6 +636,7 @@ const EditForm = ({ section, onChange }) => {
                     <TextField label="Review Count" value={cfg.reviewCount} onChange={v => set("reviewCount", v)} placeholder="50K+" />
                     <TextField label="App Store Link" value={cfg.appStoreLink} onChange={v => set("appStoreLink", v)} placeholder="#" />
                     <TextField label="Google Play Link" value={cfg.playStoreLink} onChange={v => set("playStoreLink", v)} placeholder="#" />
+                    <TextField label="QR Code Link" value={cfg.qrCodeLink} onChange={v => set("qrCodeLink", v)} placeholder="https://..." />
                 </div>
             );
 

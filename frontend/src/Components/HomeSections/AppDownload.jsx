@@ -1,4 +1,5 @@
 import { Smartphone, QrCode, Star } from "lucide-react";
+import QRCode from "react-qr-code";
 
 const AppDownload = ({ config }) => {
     const titleLines = (config.title || "").split("\n");
@@ -43,7 +44,11 @@ const AppDownload = ({ config }) => {
 
                     <div className="flex flex-col items-center gap-5 shrink-0 bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-primary-dark/5 transform hover:scale-105 transition-transform duration-500">
                         <div className="w-32 h-32 bg-gray-50 rounded-2xl p-3 flex items-center justify-center border border-gray-100">
-                            <QrCode size={100} strokeWidth={1} className="text-gray-900" />
+                            {config.qrCodeLink ? (
+                                <QRCode value={config.qrCodeLink} size={104} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+                            ) : (
+                                <QrCode size={100} strokeWidth={1} className="text-gray-900" />
+                            )}
                         </div>
                         <div className="text-center">
                             <p className="text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Scan to Download</p>

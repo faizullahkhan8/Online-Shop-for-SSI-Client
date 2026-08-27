@@ -16,6 +16,8 @@ import prescriptionRouter from "./routers/prescription.router.js";
 import menuRouter from "./routers/menu.router.js";
 import homePageRouter from "./routers/homePage.router.js";
 import vendorRouter from "./routers/vendor.router.js";
+import staffRouter from "./routers/staff.router.js";
+import smsTemplateRouter from "./routers/smsTemplate.router.js";
 
 import { errorHandler } from "./middlewares/ErrorHandler.js";
 import cookieParser from "cookie-parser";
@@ -65,6 +67,8 @@ app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/menus", menuRouter);
 app.use("/api/homepage", homePageRouter);
 app.use("/api/vendors", vendorRouter);
+app.use("/api/staff", staffRouter);
+app.use("/api/sms-templates", smsTemplateRouter);
 
 app.use(errorHandler);
 

@@ -12,6 +12,8 @@ import prescriptionSchema from "../models/prescription.model.js";
 import menuSchema from "../models/menu.model.js";
 import homePageSchema from "../models/homePage.model.js";
 import vendorSchema from "../models/vendor.model.js";
+import staffSchema from "../models/staff.model.js";
+import smsTemplateSchema from "../models/smsTemplate.model.js";
 
 let connectionPromise = null;
 let localDbConnection = null;
@@ -28,6 +30,8 @@ let localPrescriptionModel;
 let localMenuModel;
 let localHomePageModel;
 let localVendorModel;
+let localStaffModel;
+let localSmsTemplateModel;
 
 export const connectToDB = async () => {
     if (connectionPromise) return connectionPromise;
@@ -75,6 +79,8 @@ export const connectToDB = async () => {
             localMenuModel = localDbConnection.model("Menu", menuSchema);
             localHomePageModel = localDbConnection.model("HomePage", homePageSchema);
             localVendorModel = localDbConnection.model("Vendor", vendorSchema);
+            localStaffModel = localDbConnection.model("Staff", staffSchema);
+            localSmsTemplateModel = localDbConnection.model("SmsTemplate", smsTemplateSchema);
 
             return localDbConnection;
         } catch (error) {
@@ -100,3 +106,5 @@ export const getLocalPrescriptionModel = () => localPrescriptionModel || null;
 export const getLocalMenuModel = () => localMenuModel || null;
 export const getLocalHomePageModel = () => localHomePageModel || null;
 export const getLocalVendorModel = () => localVendorModel || null;
+export const getLocalStaffModel = () => localStaffModel || null;
+export const getLocalSmsTemplateModel = () => localSmsTemplateModel || null;

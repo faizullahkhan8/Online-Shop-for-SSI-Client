@@ -6,6 +6,7 @@ export const USER_ROUTES = {
     UPDATE_USER: "/users/update",
     GET_ACCESS_TOKEN: "/users/getAccessToken",
     ADD_USER_FROM_ADMIN: "/users/add",
+    VERIFY_PHONE: "/users/verify-phone",
 };
 
 export const PRODUCT_ROUTES = {
@@ -56,4 +57,10 @@ export const PROMOTION_ROUTES = {
 export const REVIEW_ROUTES = {
     ADD: "/reviews",
     GET_BY_PRODUCT: "/reviews", // GET /reviews/:productId
+};
+
+export const SMS_TEMPLATE_ROUTES = {
+    GET_ALL: "/sms-templates",
+    SEED: "/sms-templates/seed",
+    UPDATE: "/sms-templates", // PUT /sms-templates/:id
 };

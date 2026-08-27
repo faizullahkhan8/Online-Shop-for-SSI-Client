@@ -7,6 +7,9 @@ import {
 import { generateToken, setCookie, verifyToken } from "../utils/jwt.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
+import { sendSMS } from "../utils/smsService.js";
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 export const registerUser = asyncHandler(async (req, res, next) => {
     const UserModel = getLocalUserModel();
@@ -15,18 +18,19 @@ export const registerUser = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("User model not initiated.", 404));
     }
 
-    const { name, email, password } = req.body;
+    const { name, email, phone, password } = req.body;
 
-    if (!name || !email || !password) {
-        return next(new ErrorResponse("All fields are required", 400));
+    if (!name || !email || !password || !phone) {
+        return next(new ErrorResponse("All fields are required including phone", 400));
     }
 
     const isEmailExists = await UserModel.findOne({ email });
+    if (isEmailExists) return next(new ErrorResponse("Email already exists", 400));
 
-    if (isEmailExists) {
-        return next(new ErrorResponse("Email already exists", 400));
-    }
+    const isPhoneExists = await UserModel.findOne({ phone });
+    if (isPhoneExists) return next(new ErrorResponse("Phone number already exists", 400));
 
+    const otp = generateOTP();
     let user;
 
     try {
@@ -34,30 +38,59 @@ export const registerUser = asyncHandler(async (req, res, next) => {
             name,
             email,
             password,
-            phone: "0331234567",
+            phone,
+            isPhoneVerified: false,
+            phoneVerificationOtp: otp,
+            phoneVerificationExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 mins
         });
     } catch (error) {
         console.error("CREATE USER ERROR:", error);
         return next(error);
     }
 
-    const refreshToken = generateToken(
-        user,
-        "7d",
-        process.env.JWT_REFRESH_SECRET,
-    );
-    const accessToken = generateToken(
-        user,
-        "1d",
-        process.env.JWT_ACCESS_SECRET,
-    );
+    // Send OTP SMS
+    await sendSMS("REGISTRATION_OTP", phone, { otp });
+
+    return res.status(201).json({
+        success: true,
+        message: "OTP sent to phone for verification",
+        userId: user._id,
+    });
+});
+
+export const verifyPhone = asyncHandler(async (req, res, next) => {
+    const UserModel = getLocalUserModel();
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) return next(new ErrorResponse("User ID and OTP are required", 400));
+
+    const user = await UserModel.findById(userId);
+    if (!user) return next(new ErrorResponse("User not found", 404));
+
+    if (user.isPhoneVerified) return next(new ErrorResponse("Phone already verified", 400));
+
+    if (user.phoneVerificationOtp !== otp) {
+        return next(new ErrorResponse("Invalid OTP", 400));
+    }
+
+    if (new Date() > new Date(user.phoneVerificationExpires)) {
+        return next(new ErrorResponse("OTP expired", 400));
+    }
+
+    user.isPhoneVerified = true;
+    user.phoneVerificationOtp = undefined;
+    user.phoneVerificationExpires = undefined;
+    await user.save({ validateModifiedOnly: true });
+
+    const refreshToken = generateToken(user, "7d", process.env.JWT_REFRESH_SECRET);
+    const accessToken = generateToken(user, "1d", process.env.JWT_ACCESS_SECRET);
 
     setCookie(res, refreshToken, 1000 * 60 * 60 * 24 * 7, "refreshToken");
     setCookie(res, accessToken, 1000 * 60 * 60 * 24, "accessToken");
 
-    return res.status(201).json({
+    return res.status(200).json({
         success: true,
-        message: "User registered successfully",
+        message: "Phone verified successfully and logged in",
         user: user,
     });
 });
@@ -69,22 +102,26 @@ export const loginUser = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("User model not initiated.", 404));
     }
 
-    const { email, password } = req.body;
+    const { email, phone, password } = req.body;
 
-    if (!email || !password) {
-        return next(new ErrorResponse("All fields are required", 400));
+    if ((!email && !phone) || !password) {
+        return next(new ErrorResponse("Email/Phone and password are required", 400));
     }
 
-    const user = await UserModel.findOne({ email });
+    const query = email ? { email } : { phone };
+    const user = await UserModel.findOne(query);
 
     if (!user) {
         return next(new ErrorResponse("Invalid credentials", 400));
     }
 
     const isPasswordMatched = await user.comparePassword(password);
-
     if (!isPasswordMatched) {
         return next(new ErrorResponse("Invalid credentials", 400));
+    }
+
+    if (user.role === 'user' && !user.isPhoneVerified) {
+        return next(new ErrorResponse("Please verify your phone number first", 403));
     }
 
     const refreshToken = generateToken(

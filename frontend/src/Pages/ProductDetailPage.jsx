@@ -207,8 +207,11 @@ const ProductDetailPage = () => {
         return (sum / combinedReviews.length).toFixed(1);
     }, [combinedReviews]);
 
+    const stockValue = Number(product?.stock) || 0;
+    const isOutOfStock = stockValue <= 0;
+
     const handleAddToCart = (itemToAdd = product, qty = quantity) => {
-        if (!itemToAdd) return;
+        if (!itemToAdd || (itemToAdd === product && isOutOfStock)) return;
         dispatch(addToCart({ ...itemToAdd, quantity: qty }));
         toast.success(`Added ${itemToAdd.name} to cart!`);
     };
@@ -413,10 +416,17 @@ const ProductDetailPage = () => {
                                 </div>
                             )}
 
-                            {/* Product Title */}
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-2.5">
-                                {product?.name || "Panadol Tablets 500mg (1 Strip = 10 Tablets)"}
-                            </h1>
+                            {/* Product Title & Status */}
+                            <div className="flex items-start justify-between gap-4 mb-2.5">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
+                                    {product?.name || "Panadol Tablets 500mg (1 Strip = 10 Tablets)"}
+                                </h1>
+                                {isOutOfStock && (
+                                    <span className="shrink-0 bg-red-100 text-red-600 font-bold text-xs px-2.5 py-1 rounded-md border border-red-200 mt-1">
+                                        Out of Stock
+                                    </span>
+                                )}
+                            </div>
 
                             {/* Ratings & Reviews Link */}
                             <div className="flex items-center gap-2 mb-3.5">
@@ -516,30 +526,44 @@ const ProductDetailPage = () => {
                                 <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200 p-1">
                                     <button
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
+                                        disabled={isOutOfStock}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${isOutOfStock ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 hover:bg-white'}`}
                                         aria-label="Decrease quantity"
                                     >
                                         <Minus size={14} />
                                     </button>
                                     <span className="w-10 text-center font-bold text-sm text-gray-900">
-                                        {quantity}
+                                        {isOutOfStock ? 0 : quantity}
                                     </span>
                                     <button
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-all"
+                                        onClick={() => {
+                                            const maxStock = product?.stock || 1;
+                                            if (quantity < maxStock) {
+                                                setQuantity(quantity + 1);
+                                            } else {
+                                                toast.warning(`Only ${maxStock} items available in stock.`);
+                                            }
+                                        }}
+                                        disabled={isOutOfStock}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${isOutOfStock ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 hover:bg-white'}`}
                                         aria-label="Increase quantity"
                                     >
                                         <Plus size={14} />
                                     </button>
                                 </div>
 
-                                {/* Add to Cart Button (Pistachio Green) */}
+                                {/* Add to Cart Button */}
                                 <button
                                     onClick={() => handleAddToCart(product, quantity)}
-                                    className="flex-1 bg-[#74AA34] hover:bg-[#629329] active:bg-[#537E22] text-white h-11 px-5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer"
+                                    disabled={isOutOfStock}
+                                    className={`flex-1 h-11 px-5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all ${
+                                        isOutOfStock
+                                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                            : "bg-[#74AA34] hover:bg-[#629329] active:bg-[#537E22] text-white hover:shadow cursor-pointer"
+                                    }`}
                                 >
                                     <ShoppingCart size={16} />
-                                    ADD TO CART
+                                    {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
                                 </button>
                             </div>
 
