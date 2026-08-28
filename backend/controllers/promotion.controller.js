@@ -91,6 +91,20 @@ export const getAllPromotions = expressAsyncHandler(
         if (!PromotionModel)
             return next(new ErrorResponse("Promotion model not found", 500));
 
+        const now = new Date();
+
+        // Dynamically update expired promotions
+        await PromotionModel.updateMany(
+            { endTime: { $lt: now }, status: { $ne: "EXPIRED" } },
+            { $set: { status: "EXPIRED" } }
+        );
+
+        // Dynamically activate scheduled promotions
+        await PromotionModel.updateMany(
+            { startTime: { $lte: now }, endTime: { $gt: now }, status: "SCHEDULED" },
+            { $set: { status: "ACTIVE" } }
+        );
+
         const promotions = await PromotionModel.find()
             .sort({ order: 1 })
             .populate("products");

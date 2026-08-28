@@ -208,7 +208,9 @@ const PromotionManager = () => {
                                                 ? "bg-green-50 text-green-700 border-green-200"
                                                 : promo.status === "SCHEDULED"
                                                     ? "bg-amber-50 text-amber-700 border-amber-200"
-                                                    : "bg-gray-100 text-gray-600 border-gray-200"
+                                                    : promo.status === "EXPIRED"
+                                                        ? "bg-red-50 text-red-700 border-red-200"
+                                                        : "bg-gray-100 text-gray-600 border-gray-200"
                                                 }`}
                                         >
                                             {promo.status}
@@ -252,28 +254,30 @@ const PromotionManager = () => {
                                         <FilePenLine size={14} />
                                     </button>
 
-                                    <button
-                                        onClick={() =>
-                                            handleStatusToggle(promo)
-                                        }
-                                        disabled={updateLoading}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${promo.status === "ACTIVE"
-                                            ? "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-                                            : "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                                            }`}
-                                    >
-                                        {promo.status === "ACTIVE" ? (
-                                            <>
-                                                <ToggleRight size={14} />
-                                                Deactivate
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ToggleLeft size={14} />
-                                                Activate
-                                            </>
-                                        )}
-                                    </button>
+                                    {promo.status !== "EXPIRED" && (
+                                        <button
+                                            onClick={() =>
+                                                handleStatusToggle(promo)
+                                            }
+                                            disabled={updateLoading}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${promo.status === "ACTIVE"
+                                                ? "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                                                : "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                                }`}
+                                        >
+                                            {promo.status === "ACTIVE" ? (
+                                                <>
+                                                    <ToggleRight size={14} />
+                                                    Deactivate
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ToggleLeft size={14} />
+                                                    Activate
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
 
                                     <button
                                         onClick={() => handleDelete(promo._id)}

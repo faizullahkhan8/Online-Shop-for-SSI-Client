@@ -52,18 +52,10 @@ const AdminSidebar = () => {
     const { getUnreadCount: fetchPrescriptionsCount, count: unreadPrescriptions } = useGetUnreadPrescriptionsCount();
     const { socket, SOCKET_EVENTS } = useSocket();
 
-    // Fetch counts periodically or on load
+    // Fetch counts on load
     useEffect(() => {
         fetchOrdersCount();
         fetchPrescriptionsCount();
-        
-        // Set up polling every 30 seconds as background fallback
-        const interval = setInterval(() => {
-            fetchOrdersCount();
-            fetchPrescriptionsCount();
-        }, 30000);
-        
-        return () => clearInterval(interval);
     }, [fetchOrdersCount, fetchPrescriptionsCount]);
 
     // Instant real-time updates when new orders or prescriptions arrive
