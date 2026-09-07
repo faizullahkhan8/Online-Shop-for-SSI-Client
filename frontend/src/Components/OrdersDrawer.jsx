@@ -6,21 +6,8 @@ import { useGetUserOrders } from "../api/hooks/orders.api";
 const OrdersDrawer = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const drawerRef = useRef(null);
-    const { getUserOrders, loading } = useGetUserOrders();
-    const [orders, setOrders] = useState([]);
-    const [hasFetched, setHasFetched] = useState(false);
-
-    useEffect(() => {
-        if (isOpen && !hasFetched) {
-            (async () => {
-                const resp = await getUserOrders();
-                if (resp?.orders) {
-                    setOrders(resp.orders.slice(0, 5)); // show latest 5
-                }
-                setHasFetched(true);
-            })();
-        }
-    }, [isOpen, hasFetched, getUserOrders]);
+    const { data, isLoading: loading } = useGetUserOrders();
+    const orders = data?.orders?.slice(0, 5) || [];
 
     // Close on escape key
     useEffect(() => {

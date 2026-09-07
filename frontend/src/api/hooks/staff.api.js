@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient";
 import { toast } from "react-toastify";
 
@@ -10,95 +10,132 @@ const STAFF_ROUTES = {
 };
 
 export const useGetStaff = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const getStaff = useCallback(async () => {
-        setLoading(true);
-        try {
+    const { data, isLoading: loading, refetch } = useQuery({
+        queryKey: ["staff"],
+        queryFn: async () => {
             const response = await apiClient.get(STAFF_ROUTES.GET_ALL);
             if (response.data && response.data.success) {
                 return response.data.data;
             }
             return [];
+        },
+        onError: (error) => {
+            console.error("Error fetching staff:", error);
+            toast.error(error.response?.data?.message || "Failed to fetch staff.");
+        }
+    });
+
+    const getStaff = async () => {
+        try {
+            const response = await queryClient.fetchQuery({
+                queryKey: ["staff"],
+                queryFn: async () => {
+                    const res = await apiClient.get(STAFF_ROUTES.GET_ALL);
+                    if (res.data && res.data.success) {
+                        return res.data.data;
+                    }
+                    return [];
+                }
+            });
+            return response;
         } catch (error) {
             console.error("Error fetching staff:", error);
             toast.error(error.response?.data?.message || "Failed to fetch staff.");
             return [];
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    };
 
-    return { getStaff, loading };
+    return { getStaff, data: data || [], loading };
 };
 
 export const useCreateStaff = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const createStaff = async (staffData) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (staffData) => {
             const config = staffData instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
             const response = await apiClient.post(STAFF_ROUTES.CREATE, staffData, config);
-            if (response.data && response.data.success) {
-                toast.success("Staff node created successfully");
-                return response.data.data;
-            }
-        } catch (error) {
+            return response.data.data;
+        },
+        onSuccess: () => {
+            toast.success("Staff node created successfully");
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+        },
+        onError: (error) => {
             console.error("Error creating staff:", error);
             toast.error(error.response?.data?.message || "Failed to create staff node.");
+        }
+    });
+
+    const createStaff = async (staffData) => {
+        try {
+            return await mutation.mutateAsync(staffData);
+        } catch {
             return null;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { createStaff, loading };
+    return { createStaff, loading: mutation.isPending };
 };
 
 export const useUpdateStaff = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const updateStaff = async (id, staffData) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async ({ id, staffData }) => {
             const config = staffData instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {};
             const response = await apiClient.put(STAFF_ROUTES.UPDATE(id), staffData, config);
-            if (response.data && response.data.success) {
-                toast.success("Staff node updated successfully");
-                return response.data.data;
-            }
-        } catch (error) {
+            return response.data.data;
+        },
+        onSuccess: () => {
+            toast.success("Staff node updated successfully");
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+        },
+        onError: (error) => {
             console.error("Error updating staff:", error);
             toast.error(error.response?.data?.message || "Failed to update staff node.");
+        }
+    });
+
+    const updateStaff = async (id, staffData) => {
+        try {
+            return await mutation.mutateAsync({ id, staffData });
+        } catch {
             return null;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { updateStaff, loading };
+    return { updateStaff, loading: mutation.isPending };
 };
 
 export const useDeleteStaff = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const deleteStaff = async (id) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (id) => {
             const response = await apiClient.delete(STAFF_ROUTES.DELETE(id));
-            if (response.data && response.data.success) {
-                toast.success("Staff node deleted successfully");
-                return true;
-            }
-        } catch (error) {
+            return response.data.success;
+        },
+        onSuccess: () => {
+            toast.success("Staff node deleted successfully");
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+        },
+        onError: (error) => {
             console.error("Error deleting staff:", error);
             toast.error(error.response?.data?.message || "Failed to delete staff node.");
+        }
+    });
+
+    const deleteStaff = async (id) => {
+        try {
+            await mutation.mutateAsync(id);
+            return true;
+        } catch {
             return false;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { deleteStaff, loading };
+    return { deleteStaff, loading: mutation.isPending };
 };

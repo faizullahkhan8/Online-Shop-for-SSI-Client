@@ -62,28 +62,22 @@ const AddProduct = () => {
     const [productData, setProductData] = useState(parseProductFromParams);
     const isEditing = Boolean(productData?._id);
 
-    const [categories, setCategories] = useState([]);
+    const { data: categoriesData } = useGetAllCategories();
+    const categories = categoriesData?.categories || [];
     const [vendors, setVendors] = useState([]);
     const [previewUrl, setPreviewUrl] = useState("");
 
     const { createProduct, loading: createProductLoading } =
         useCreateProuduct();
     const { updateProduct, loading: updateProductLoading } = useUpdateProduct();
-    const { getAllCategories } = useGetAllCategories();
-    const { getAllVendors } = useGetAllVendors();
 
+    const { data: vendorsData } = useGetAllVendors();
+    
     useEffect(() => {
-        (async () => {
-            const response = await getAllCategories();
-            if (response.success) {
-                setCategories(response.categories);
-            }
-        })();
-        (async () => {
-            const res = await getAllVendors();
-            if (res?.success) setVendors(res.vendors);
-        })();
-    }, []);
+        if (vendorsData?.success) {
+            setVendors(vendorsData.vendors);
+        }
+    }, [vendorsData]);
 
     useEffect(() => {
         if (!productData.image) {

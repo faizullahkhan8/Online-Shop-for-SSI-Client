@@ -19,13 +19,12 @@ import { useGetAllUsers } from "../../api/hooks/user.api.js";
 import { useNavigate } from "react-router-dom";
 
 const AddOrderPage = () => {
-    const { getAllProducts, loading: productsLoading } = useGetAllProducts();
+    const { data: productsData, isLoading: productsLoading } = useGetAllProducts();
+    const products = productsData?.products || [];
     const { placeOrder, loading: orderLoading } = usePlaceOrder();
-    const { getAllUsers, loading: usersLoading } = useGetAllUsers();
+    const { data: usersData, isLoading: usersLoading } = useGetAllUsers();
+    const users = usersData?.users || [];
     const navigate = useNavigate();
-
-    const [products, setProducts] = useState([]);
-    const [users, setUsers] = useState([]);
     const [orderData, setOrderData] = useState({
         userId: "",
         items: [
@@ -136,12 +135,6 @@ const AddOrderPage = () => {
     };
 
     useEffect(() => {
-        getAllProducts().then((res) => {
-            setProducts(res.products);
-        });
-        getAllUsers().then((res) => {
-            setUsers(res.users || []);
-        });
     }, []);
 
     const handleUserSelect = (value) => {

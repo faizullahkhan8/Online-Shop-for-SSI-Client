@@ -26,6 +26,7 @@ import {
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useLogoutUser } from "../../api/hooks/user.api";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetUnreadOrdersCount } from "../../api/hooks/orders.api";
 import { useGetUnreadPrescriptionsCount } from "../../api/hooks/prescription.api";
 import { useDispatch } from "react-redux";
@@ -48,23 +49,18 @@ const AdminSidebar = () => {
         }
     };
 
-    const { getUnreadCount: fetchOrdersCount, count: unreadOrders } = useGetUnreadOrdersCount();
-    const { getUnreadCount: fetchPrescriptionsCount, count: unreadPrescriptions } = useGetUnreadPrescriptionsCount();
+    const { count: unreadOrders } = useGetUnreadOrdersCount();
+    const { count: unreadPrescriptions } = useGetUnreadPrescriptionsCount();
     const { socket, SOCKET_EVENTS } = useSocket();
-
-    // Fetch counts on load
-    useEffect(() => {
-        fetchOrdersCount();
-        fetchPrescriptionsCount();
-    }, [fetchOrdersCount, fetchPrescriptionsCount]);
+    const queryClient = useQueryClient();
 
     // Instant real-time updates when new orders or prescriptions arrive
     useEffect(() => {
         if (!socket) return;
 
         const handleRefresh = () => {
-            fetchOrdersCount();
-            fetchPrescriptionsCount();
+            queryClient.invalidateQueries({ queryKey: ["unread-orders-count"] });
+            queryClient.invalidateQueries({ queryKey: ["unread-prescriptions-count"] });
         };
 
         socket.on(SOCKET_EVENTS.ORDER_NEW, handleRefresh);
@@ -78,7 +74,7 @@ const AdminSidebar = () => {
             socket.off(SOCKET_EVENTS.PRESCRIPTION_NEW, handleRefresh);
             socket.off(SOCKET_EVENTS.PRESCRIPTION_STATUS_UPDATED, handleRefresh);
         };
-    }, [socket, fetchOrdersCount, fetchPrescriptionsCount, SOCKET_EVENTS]);
+    }, [socket, queryClient, SOCKET_EVENTS]);
 
     const colors = {
         primary: "#4d8d3a", // primary green

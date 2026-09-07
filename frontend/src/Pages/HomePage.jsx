@@ -70,7 +70,7 @@ import WhatsappFab from "../Components/HomeSections/WhatsappFab";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
-import { useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
+import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
 import { useGetHomePage } from "../api/hooks/homePage.api.js";
 
@@ -83,12 +83,11 @@ import CategoriesSection from "../Components/HomeSections/CategoriesSection";
 /* ─── HomePage ────────────────────────────────────────────────────── */
 const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     const { getAllProducts } = useGetAllProducts();
-    const { getActiveDeals } = useGetActiveDeals();
     const [products, setProducts] = useState([]);
     const [seoExpanded, setSeoExpanded] = useState(false);
-    const { getAllCategories } = useGetAllCategories();
+    const { data: categoriesData } = useGetAllCategories();
     const [dbCategories, setDbCategories] = useState([]);
-    const { getHomePage } = useGetHomePage();
+    const { data: homePageData, isLoading: homePageLoading } = useGetHomePage();
     const [pageConfig, setPageConfig] = useState({});
     const [orderedSections, setOrderedSections] = useState([]);
 
@@ -134,7 +133,8 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     };
 
     const dispatch = useDispatch();
-    const wishlistItems = useSelector((state) => state.wishlist.items || []);
+    const { data } = useGetWishlist();
+    const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
 
@@ -147,13 +147,12 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         e.preventDefault();
         e.stopPropagation();
         const isIn = !!wishlistItems.find((w) => matchId(w, prod));
-        dispatch(toggleWishlist(prod));
         try {
             const id = prod._id || prod.id;
             if (isIn) await removeFromWishlist(id);
             else await addToWishlist(id);
         } catch {
-            dispatch(toggleWishlist(prod));
+            // Error handled by mutation
         }
     };
 
@@ -165,48 +164,43 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
     };
 
     useEffect(() => {
-        if (!previewSections) {
-            // Load homepage config from builder (with cache)
-            getHomePage().then(res => {
-                if (res?.sections && res.sections.length > 0) {
-                    // Index by "type+gridVariant" to handle multiple products_grid sections
-                    const indexed = {};
-                    res.sections.forEach(s => {
-                        const key = s.type + (s.config?.gridVariant ? `__${s.config.gridVariant}` : "");
-                        indexed[key] = s;
-                    });
-                    setPageConfig(indexed);
+        if (!previewSections && !homePageLoading) {
+            if (homePageData?.sections && homePageData.sections.length > 0) {
+                const indexed = {};
+                homePageData.sections.forEach(s => {
+                    const key = s.type + (s.config?.gridVariant ? `__${s.config.gridVariant}` : "");
+                    indexed[key] = s;
+                });
+                setPageConfig(indexed);
 
-                    const sorted = [...res.sections].sort((a, b) => a.order - b.order);
-                    const orderedKeys = sorted.map(s => ({
-                        type: s.type,
-                        gridVariant: s.config?.gridVariant || ""
-                    }));
-                    setOrderedSections(orderedKeys);
-                } else {
-                    setOrderedSections(DEFAULT_LAYOUT);
-                }
-            }).catch(() => {
+                const sorted = [...homePageData.sections].sort((a, b) => a.order - b.order);
+                const orderedKeys = sorted.map(s => ({
+                    type: s.type,
+                    gridVariant: s.config?.gridVariant || ""
+                }));
+                setOrderedSections(orderedKeys);
+            } else {
                 setOrderedSections(DEFAULT_LAYOUT);
-            });
+            }
         }
+    }, [homePageData, previewSections, homePageLoading]);
 
-        // Fetch real data (products, categories, deals) regardless of preview mode
+    useEffect(() => {
+        if (categoriesData?.success) {
+            const roots = categoriesData.categories.filter(c => !c.parentId && c.isActive);
+            setDbCategories(roots.slice(0, 7));
+        }
+    }, [categoriesData]);
+
+    useEffect(() => {
+        // Fetch real data (products, deals) regardless of preview mode
         (async () => {
             const response = await getAllProducts({ limit: 24 });
             if (response?.success && Array.isArray(response.products)) {
                 setProducts(response.products);
             }
         })();
-        (async () => {
-            const res = await getAllCategories();
-            if (res?.success) {
-                const roots = res.categories.filter(c => !c.parentId && c.isActive);
-                setDbCategories(roots.slice(0, 7));
-            }
-        })();
-        getActiveDeals().catch(() => { });
-    }, []);
+    }, [getAllProducts]);
 
     const fallbackProducts = useMemo(() => [
         { _id: "p-1", name: "Panadol Tablets 500mg (1 Strip = 10 Tablets)", price: 40, effectivePrice: 35, rating: 5 },

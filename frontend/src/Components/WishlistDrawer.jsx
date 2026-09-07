@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
 import { addToCart } from "../store/slices/cartSlice";
-import { useRemoveFromWishlist } from "../api/hooks/user.api";
+import { useGetWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { useEffect, useRef } from "react";
 import { getImageUrl } from "../utils/imageHelper";
 import { toast } from "react-toastify";
@@ -11,7 +11,8 @@ import { toast } from "react-toastify";
 const WishlistDrawer = ({ isOpen, onClose }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const wishlistItems = useSelector((state) => state.wishlist.items || []);
+    const { data } = useGetWishlist();
+    const wishlistItems = data?.wishlist || [];
     const drawerRef = useRef(null);
     const { removeFromWishlist } = useRemoveFromWishlist();
 
@@ -32,13 +33,11 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
     };
 
     const handleRemoveItem = async (item) => {
-        dispatch(toggleWishlist(item)); // Optimistic UI update
         try {
             const id = item._id || item.id;
             await removeFromWishlist(id);
             toast.info("Removed from wishlist");
         } catch {
-            dispatch(toggleWishlist(item)); // Revert on failure
             toast.error("Failed to remove item");
         }
     };

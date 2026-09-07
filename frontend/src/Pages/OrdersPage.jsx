@@ -14,15 +14,8 @@ import { useCancelOrder } from "../api/hooks/orders.api.js";
 import { getImageUrl } from "../utils/imageHelper";
 
 const OrdersPage = () => {
-    const [orders, setOrders] = useState([]);
-    const { getUserOrders, loading } = useGetUserOrders();
-
-    useEffect(() => {
-        (async () => {
-            const resp = await getUserOrders();
-            if (resp?.orders) setOrders(resp.orders);
-        })();
-    }, []);
+    const { data, isLoading: loading } = useGetUserOrders();
+    const orders = data?.orders || [];
 
     const getStatusStyles = (status) => {
         switch (status?.toLowerCase()) {
@@ -58,16 +51,12 @@ const OrdersPage = () => {
     const handleConfirmCancel = async (reason) => {
         if (!cancelModal.orderId) return;
 
-        const res = await cancelOrder({ orderId: cancelModal.orderId, reason });
-        if (res?.success) {
-            // Update local state
-            setOrders(orders.map(order =>
-                order.id === cancelModal.orderId
-                    ? { ...order, status: 'cancelled' }
-                    : order
-            ));
-            handleCloseCancelModal();
-        }
+        await cancelOrder({
+            orderId: cancelModal.orderId,
+            reason,
+        });
+
+        handleCloseCancelModal();
     };
 
     return (

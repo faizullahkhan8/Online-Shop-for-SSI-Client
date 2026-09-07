@@ -1,138 +1,203 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient.js";
-export const useGetUnreadPrescriptionsCount = () => {
-    const [count, setCount] = useState(0);
-    const [loading, setLoading] = useState(false);
 
-    const getUnreadCount = useCallback(async () => {
-        setLoading(true);
-        try {
+export const useGetUnreadPrescriptionsCount = () => {
+    const queryClient = useQueryClient();
+
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["unread-prescriptions-count"],
+        queryFn: async () => {
             const res = await apiClient.get("/prescriptions/unread-count");
-            if (res.data?.success) setCount(res.data.count);
+            return res.data;
+        }
+    });
+
+    const getUnreadCount = async () => {
+        try {
+            return await queryClient.fetchQuery({
+                queryKey: ["unread-prescriptions-count"],
+                queryFn: async () => {
+                    const res = await apiClient.get("/prescriptions/unread-count");
+                    return res.data;
+                }
+            });
         } catch (error) {
             console.error("Error fetching unread prescriptions count:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    return { getUnreadCount, count, loading };
-};
-
-export const useMarkPrescriptionViewed = () => {
-    const [loading, setLoading] = useState(false);
-
-    const markAsViewed = async (id) => {
-        setLoading(true);
-        try {
-            const res = await apiClient.put(`/prescriptions/${id}/mark-viewed`);
-            return res.data;
-        } catch (error) {
-            console.error("Error marking prescription viewed:", error);
-            return null;
-        } finally {
-            setLoading(false);
+            return undefined;
         }
     };
 
-    return { markAsViewed, loading };
+    return { getUnreadCount, count: data?.count || 0, loading };
+};
+
+export const useMarkPrescriptionViewed = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async (id) => {
+            const res = await apiClient.put(`/prescriptions/${id}/mark-viewed`);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["unread-prescriptions-count"] });
+            queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+        },
+        onError: (error) => {
+            console.error("Error marking prescription viewed:", error);
+        }
+    });
+
+    const markAsViewed = async (id) => {
+        try {
+            return await mutation.mutateAsync(id);
+        } catch {
+            return null;
+        }
+    };
+
+    return { markAsViewed, loading: mutation.isPending };
 };
 
 export const useUploadPrescription = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const uploadPrescription = async (formData) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (formData) => {
             const response = await apiClient.post("/prescriptions", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+            queryClient.invalidateQueries({ queryKey: ["unread-prescriptions-count"] });
+        },
+        onError: (error) => {
             console.error("Error uploading prescription:", error);
+        }
+    });
+
+    const uploadPrescription = async (formData) => {
+        try {
+            return await mutation.mutateAsync(formData);
+        } catch (error) {
             throw error;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { uploadPrescription, loading };
+    return { uploadPrescription, loading: mutation.isPending };
 };
 
 export const useGetAllPrescriptions = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const getAllPrescriptions = useCallback(async () => {
-        setLoading(true);
-        try {
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["prescriptions", "all"],
+        queryFn: async () => {
             const response = await apiClient.get("/prescriptions");
             return response.data;
+        }
+    });
+
+    const getAllPrescriptions = async () => {
+        try {
+            return await queryClient.fetchQuery({
+                queryKey: ["prescriptions", "all"],
+                queryFn: async () => {
+                    const response = await apiClient.get("/prescriptions");
+                    return response.data;
+                }
+            });
         } catch (error) {
             console.error("Error fetching all prescriptions:", error);
             throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    };
 
-    return { getAllPrescriptions, loading };
+    return { getAllPrescriptions, loading, data, error };
 };
 
 export const useGetUserPrescriptions = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const getUserPrescriptions = useCallback(async () => {
-        setLoading(true);
-        try {
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["prescriptions", "my"],
+        queryFn: async () => {
             const response = await apiClient.get("/prescriptions/my");
             return response.data;
+        }
+    });
+
+    const getUserPrescriptions = async () => {
+        try {
+            return await queryClient.fetchQuery({
+                queryKey: ["prescriptions", "my"],
+                queryFn: async () => {
+                    const response = await apiClient.get("/prescriptions/my");
+                    return response.data;
+                }
+            });
         } catch (error) {
             console.error("Error fetching user prescriptions:", error);
             throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    };
 
-    return { getUserPrescriptions, loading };
+    return { getUserPrescriptions, loading, data, error };
 };
 
 export const useUpdatePrescriptionStatus = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const updatePrescriptionStatus = async (id, status) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async ({ id, status }) => {
             const response = await apiClient.put(`/prescriptions/${id}/status`, { status });
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+        },
+        onError: (error) => {
             console.error("Error updating prescription status:", error);
+        }
+    });
+
+    const updatePrescriptionStatus = async (id, status) => {
+        try {
+            return await mutation.mutateAsync({ id, status });
+        } catch (error) {
             throw error;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { updatePrescriptionStatus, loading };
+    return { updatePrescriptionStatus, loading: mutation.isPending };
 };
 
 export const useDeletePrescription = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const deletePrescription = async (id) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (id) => {
             const response = await apiClient.delete(`/prescriptions/${id}`);
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
+        },
+        onError: (error) => {
             console.error("Error deleting prescription:", error);
+        }
+    });
+
+    const deletePrescription = async (id) => {
+        try {
+            return await mutation.mutateAsync(id);
+        } catch (error) {
             throw error;
-        } finally {
-            setLoading(false);
         }
     };
 
-    return { deletePrescription, loading };
+    return { deletePrescription, loading: mutation.isPending };
 };

@@ -3,22 +3,11 @@ import { useGetHomePage } from "../../api/hooks/homePage.api";
 import WhatsappFab from "./WhatsappFab";
 
 const GlobalWhatsappFab = () => {
-    const { getHomePage } = useGetHomePage();
-    const [config, setConfig] = useState(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const { data: homePageData } = useGetHomePage();
 
-    useEffect(() => {
-        (async () => {
-            const res = await getHomePage();
-            if (res?.success && res?.sections) {
-                const fabSection = res.sections.find(s => s.type === "whatsapp_fab");
-                if (fabSection && fabSection.isVisible) {
-                    setConfig(fabSection.config);
-                    setIsVisible(true);
-                }
-            }
-        })();
-    }, []);
+    const fabSection = homePageData?.sections?.find(s => s.type === "whatsapp_fab");
+    const isVisible = fabSection?.isVisible;
+    const config = fabSection?.config;
 
     if (!isVisible || !config) return null;
 

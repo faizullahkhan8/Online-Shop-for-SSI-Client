@@ -7,6 +7,7 @@ export const USER_ROUTES = {
     GET_ACCESS_TOKEN: "/users/getAccessToken",
     ADD_USER_FROM_ADMIN: "/users/add",
     VERIFY_PHONE: "/users/verify-phone",
+    RESEND_OTP: "/users/resend-otp",
 };
 
 export const PRODUCT_ROUTES = {

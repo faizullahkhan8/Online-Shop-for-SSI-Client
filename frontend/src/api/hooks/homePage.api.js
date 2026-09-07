@@ -1,103 +1,69 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient.js";
-
-// Cache key and TTL (5 minutes)
-const CACHE_KEY = "homepage_config_v2";
-const CACHE_TTL = 5 * 60 * 1000;
-
-const getCache = () => {
-    try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) return null;
-        const { data, timestamp } = JSON.parse(raw);
-        if (Date.now() - timestamp > CACHE_TTL) {
-            localStorage.removeItem(CACHE_KEY);
-            return null;
-        }
-        return data;
-    } catch {
-        return null;
-    }
-};
-
-const setCache = (data) => {
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-    } catch { /* ignore */ }
-};
-
-export const clearHomePageCache = () => {
-    try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
-};
 
 // ─── Get Home Page Config (public) ───────────────────────────────────────────
 export const useGetHomePage = () => {
-    const [loading, setLoading] = useState(false);
-
-    const getHomePage = useCallback(async ({ forceRefresh = false } = {}) => {
-        // Return from cache unless forced refresh
-        if (!forceRefresh) {
-            const cached = getCache();
-            if (cached) return { success: true, sections: cached, fromCache: true };
-        }
-        setLoading(true);
-        try {
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ["homepage"],
+        queryFn: async () => {
             const res = await apiClient.get("/homepage");
-            setCache(res.data.sections);
-            return res.data;
-        } catch (err) {
-            console.error("Error fetching homepage config:", err);
-            throw err;
-        } finally {
-            setLoading(false);
+            return res.data; // Return the entire response
         }
-    }, []);
+    });
 
-    return { getHomePage, loading };
+    // Provide a backwards-compatible getHomePage function for existing calls 
+    // that expect a promise resolving to { sections: [] }
+    const getHomePage = async () => {
+        const result = await refetch();
+        if (result.isError) throw result.error;
+        return result.data;
+    };
+
+    return { getHomePage, loading, data, error };
 };
 
 // ─── Update Home Page Config (admin) ─────────────────────────────────────────
 export const useUpdateHomePage = () => {
-    const [loading, setLoading] = useState(false);
-
-    const updateHomePage = useCallback(async (sections) => {
-        setLoading(true);
-        try {
+    const queryClient = useQueryClient();
+    
+    const mutation = useMutation({
+        mutationFn: async (sections) => {
             const res = await apiClient.put("/homepage", { sections });
-            clearHomePageCache(); // Bust cache after save
             return res.data;
-        } catch (err) {
-            console.error("Error updating homepage config:", err);
-            throw err;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["homepage"] });
         }
-    }, []);
+    });
 
-    return { updateHomePage, loading };
+    const updateHomePage = async (sections) => {
+        return await mutation.mutateAsync(sections);
+    };
+
+    return { updateHomePage, loading: mutation.isPending };
 };
 
 // ─── Reset Home Page to Defaults (admin) ─────────────────────────────────────
 export const useResetHomePage = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const resetHomePage = useCallback(async () => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async () => {
             const res = await apiClient.delete("/homepage/reset");
-            clearHomePageCache();
             return res.data;
-        } catch (err) {
-            console.error("Error resetting homepage config:", err);
-            throw err;
-        } finally {
-            setLoading(false);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["homepage"] });
         }
-    }, []);
+    });
 
-    return { resetHomePage, loading };
+    const resetHomePage = async () => {
+        return await mutation.mutateAsync();
+    };
+
+    return { resetHomePage, loading: mutation.isPending };
 };
-
 
 export const useUploadHomePageImage = () => {
     const [loading, setLoading] = useState(false);

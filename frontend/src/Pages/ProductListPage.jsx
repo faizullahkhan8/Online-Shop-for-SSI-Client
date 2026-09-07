@@ -17,12 +17,13 @@ import { useGetAllProducts } from "../api/hooks/product.api";
 const ProductListPage = () => {
     const [viewMode, setViewMode] = useState("grid");
     const [searchParams, setSearchParams] = useSearchParams();
-    const [products, setProducts] = useState([]);
-    const [totalPages, setTotalPages] = useState(1);
-    const { getAllProducts, loading: productLoading } = useGetAllProducts();
 
     const page = parseInt(searchParams.get("page") || "1");
     const searchQuery = searchParams.get("search");
+
+    const { data: productsData, isLoading: productLoading } = useGetAllProducts({ page, search: searchQuery });
+    const products = productsData?.products || [];
+    const totalPages = productsData?.totalPages || 1;
 
     const handlePageChange = (newPage) => {
         setSearchParams((prev) => {
@@ -32,18 +33,7 @@ const ProductListPage = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    useEffect(() => {
-        (async () => {
-            const response = await getAllProducts({
-                page,
-                search: searchQuery
-            });
-            if (response?.success) {
-                setProducts(response.products);
-                setTotalPages(response.totalPages || 1);
-            }
-        })();
-    }, [page, searchQuery]);
+
 
     // Searching is now handled on the server side
     const displayProducts = products;

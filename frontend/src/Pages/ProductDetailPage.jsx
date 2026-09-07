@@ -25,14 +25,16 @@ import { useGetProductReviews, useAddReview } from "../api/hooks/review.api";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
-import { useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
+import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import StarRating from "../Components/UI/StarRating";
 import ProductCard from "../Components/ProductCard";
 import { toast } from "react-toastify";
 
 const ProductDetailPage = () => {
     const { id } = useParams();
-    const [product, setProduct] = useState(null);
+    const { data: productData, isLoading: productLoading } = useGetProductById(id);
+    const product = productData?.product || null;
+
     const [quantity, setQuantity] = useState(1);
     const [selectedPack, setSelectedPack] = useState("1 Strip (10 Tablets)");
     const [activeTab, setActiveTab] = useState("SPECIFICATION");
@@ -43,18 +45,17 @@ const ProductDetailPage = () => {
     const [fbtIndex, setFbtIndex] = useState(0);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-    const [allProducts, setAllProducts] = useState([]);
-
-    const { getProductById, loading: productLoading } = useGetProductById();
-    const { getAllProducts } = useGetAllProducts();
-    const { getReviews, reviews, loading: reviewsLoading } = useGetProductReviews();
+    const { data: allProductsData } = useGetAllProducts({ limit: 12 });
+    const allProducts = allProductsData?.products || [];
+    const { reviews, loading: reviewsLoading } = useGetProductReviews(id);
     const { addReview, loading: submittingReview } = useAddReview();
 
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
-    const wishlistItems = useSelector((state) => state.wishlist.items || []);
+    const { data } = useGetWishlist();
+    const wishlistItems = data?.wishlist || [];
 
     const reviewsSectionRef = useRef(null);
 
@@ -66,29 +67,6 @@ const ProductDetailPage = () => {
     };
 
     const isInWishlist = !!wishlistItems.find((item) => matchId(item, product));
-
-    // Fetch Product details & reviews
-    useEffect(() => {
-        if (id) {
-            (async () => {
-                const response = await getProductById(id);
-                if (response?.success && response.product) {
-                    setProduct(response.product);
-                }
-            })();
-            getReviews(id);
-        }
-    }, [id]);
-
-    // Fetch related products for "Frequently Bought Together" & "Related Products"
-    useEffect(() => {
-        (async () => {
-            const response = await getAllProducts({ limit: 12 });
-            if (response?.success && Array.isArray(response.products)) {
-                setAllProducts(response.products);
-            }
-        })();
-    }, []);
 
     // Frequently bought together items
     const fbtItems = useMemo(() => {
@@ -221,7 +199,6 @@ const ProductDetailPage = () => {
         const targetId = targetProduct._id || targetProduct.id;
         const isTargetInWishlist = !!wishlistItems.find((item) => matchId(item, targetProduct));
 
-        dispatch(toggleWishlist(targetProduct));
         try {
             if (isTargetInWishlist) {
                 await removeFromWishlist(targetId);
@@ -229,7 +206,7 @@ const ProductDetailPage = () => {
                 await addToWishlist(targetId);
             }
         } catch {
-            dispatch(toggleWishlist(targetProduct));
+            // Error is handled by mutation
         }
     };
 

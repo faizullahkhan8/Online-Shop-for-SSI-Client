@@ -36,7 +36,6 @@ const INITIAL_STATE = {
 };
 
 const CategoriesListPage = () => {
-    const [categories, setCategories] = useState([]);
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
         categoryId: null,
@@ -56,25 +55,17 @@ const CategoriesListPage = () => {
         }));
     };
 
-    const { getAllCategories, loading: getAllCategoriesLoading } =
-        useGetAllCategories();
-    const { deleteCategory, loading: deleteCategoryLoading } =
-        useDeleteCategory();
+    const { data: categoriesData, isLoading: getAllCategoriesLoading } = useGetAllCategories();
+    const categories = categoriesData?.categories || [];
+
+    const { deleteCategory, loading: deleteCategoryLoading } = useDeleteCategory();
     const { createCategory, loading: creating } = useCreateCategory();
     const { updateCategory, loading: updating } = useUpdateCategory();
-
-    useEffect(() => {
-        (async () => {
-            const response = await getAllCategories();
-            if (response?.success) setCategories(response.categories);
-        })();
-    }, []);
 
     const handleDelete = async () => {
         const { categoryId } = deleteModal;
         const response = await deleteCategory(categoryId);
         if (response?.success) {
-            setCategories((prev) => prev.filter((c) => c._id !== categoryId));
             setDeleteModal({ isOpen: false, categoryId: null });
         }
     };
@@ -218,17 +209,11 @@ const CategoriesListPage = () => {
             });
 
             if (response?.success) {
-                setCategories((prev) =>
-                    prev.map((cat) =>
-                        cat._id === response.category._id ? response.category : cat
-                    )
-                );
                 handleCloseModal();
             }
         } else {
             response = await createCategory(formData);
             if (response?.success) {
-                setCategories((prev) => [...prev, response.category]);
                 handleCloseModal();
             }
         }

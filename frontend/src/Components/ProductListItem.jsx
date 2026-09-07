@@ -9,13 +9,14 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { toggleWishlist } from "../store/slices/wishlistSlice";
-import { useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
+import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
 import { handleImageError } from "../utils/imageHelper";
 
 const ProductListItem = ({ product }) => {
     const dispatch = useDispatch();
-    const wishlistItems = useSelector((state) => state.wishlist.items || []);
+    const { data } = useGetWishlist();
+    const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
 
@@ -35,7 +36,6 @@ const ProductListItem = ({ product }) => {
         e.stopPropagation();
         if (!productId) return;
 
-        dispatch(toggleWishlist(product));
         try {
             if (isInWishlist) {
                 await removeFromWishlist(productId);
@@ -45,7 +45,7 @@ const ProductListItem = ({ product }) => {
                 toast.success("Added to wishlist");
             }
         } catch {
-            dispatch(toggleWishlist(product));
+            // Error is handled by mutation
         }
     };
 

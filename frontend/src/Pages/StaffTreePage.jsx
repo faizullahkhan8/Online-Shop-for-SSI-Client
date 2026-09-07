@@ -5,20 +5,11 @@ import { getImageUrl } from "../utils/imageHelper";
 import { Users, X } from "lucide-react";
 
 const StaffTreePage = () => {
-    const { getStaff, loading } = useGetStaff();
-    const [staffList, setStaffList] = useState([]);
+    const { data: staffList, loading } = useGetStaff();
     
     // Modal state
     const [selectedNode, setSelectedNode] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    useEffect(() => {
-        const fetchStaff = async () => {
-            const data = await getStaff();
-            setStaffList(data);
-        };
-        fetchStaff();
-    }, [getStaff]);
 
     const buildTree = (nodes, parentId = null) => {
         return nodes

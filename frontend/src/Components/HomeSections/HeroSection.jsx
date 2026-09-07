@@ -5,12 +5,8 @@ import { handleImageError } from "../../utils/imageHelper";
 import { useGetHeroSlides } from "../../api/hooks/hero.api.js";
 
 const HeroSection = () => {
-    const { getSlides, slides, loading } = useGetHeroSlides();
+    const { slides, loading } = useGetHeroSlides();
     const [heroSlide, setHeroSlide] = useState(0);
-
-    useEffect(() => {
-        getSlides().catch(() => {});
-    }, [getSlides]);
 
     useEffect(() => {
         if (!slides || slides.length === 0) return;

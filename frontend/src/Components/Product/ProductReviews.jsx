@@ -4,16 +4,10 @@ import StarRating from "../UI/StarRating.jsx";
 import { MessageSquare, User, Calendar, Loader2 } from "lucide-react";
 
 const ProductReviews = ({ productId }) => {
-    const { getReviews, reviews, loading: reviewsLoading } = useGetProductReviews();
+    const { reviews, loading: reviewsLoading } = useGetProductReviews(productId);
     const { addReview, loading: addLoading } = useAddReview();
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState("");
-
-    useEffect(() => {
-        if (productId) {
-            getReviews(productId);
-        }
-    }, [productId, getReviews]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,7 +18,6 @@ const ProductReviews = ({ productId }) => {
         if (res?.success) {
             setRating(0);
             setComment("");
-            getReviews(productId);
         }
     };
 

@@ -27,8 +27,9 @@ const OrderDetails = () => {
     const orderId = id;
     const navigate = useNavigate();
 
-    const [order, setOrder] = useState(null);
-    const { getOrderById, loading } = useGetOrderById();
+    const { data: orderData, isLoading: loading } = useGetOrderById(orderId);
+    const order = orderData?.order || null;
+
     const { cancelOrder, loading: cancelOrderLoading } = useCancelOrder();
     const { updateOrderStatus } = useUpdateOrderStatus();
     const { updatePaymentStatus, loading: paymentLoading } =
@@ -43,24 +44,14 @@ const OrderDetails = () => {
         itemId: null,
     });
 
-    useEffect(() => {
-        if (orderId) {
-            getOrderById(orderId).then((res) => {
-                if (res?.success) setOrder(res.order);
-            });
-        }
-    }, [orderId]);
-
     const handleStatusUpdate = async (newStatus) => {
         if (!orderId) return;
-        const res = await updateOrderStatus({ orderId, status: newStatus });
-        if (res?.order) setOrder(res.order);
+        await updateOrderStatus({ orderId, status: newStatus });
     };
 
     const handlePaymentVerify = async () => {
         if (!orderId) return;
-        const res = await updatePaymentStatus({ orderId, ispaid: true });
-        if (res?.order) setOrder(res.order);
+        await updatePaymentStatus({ orderId, ispaid: true });
     };
 
     const handleDelete = async () => {
@@ -73,50 +64,21 @@ const OrderDetails = () => {
         setCancelModal({ isOpen: true, itemId });
     };
 
-    // cancel item
-    const handleCloseItemCancelModal = () => {
-        setCancelModal({ isOpen: false, itemId: null });
+    const handleCancelOrder = async (reason) => {
+        await cancelOrder({ orderId, reason });
+        setOrderCancelModal(false);
     };
 
-    // cancel item
-    const handleConfirmItemCancel = async (reason) => {
-        if (!cancelModal.itemId || !orderId) return;
-
-        const res = await cancelOrderItem({
+    const handleCancelItemConfirm = async (reason) => {
+        await cancelOrderItem({
             orderId,
             itemId: cancelModal.itemId,
             reason,
         });
-        if (res?.success) {
-            if (res.order) setOrder(res.order);
-            handleCloseItemCancelModal();
-        }
+        setCancelModal({ isOpen: false, itemId: null });
     };
 
-    // cancel order itself
-    const handleOpenOrderCancelModal = () => {
-        setOrderCancelModal(true);
-    };
 
-    // cancel order itself
-    const handleCloseOrderCancelModal = () => {
-        setOrderCancelModal(false);
-    };
-
-    // cancel order itself
-    const handleConfirmOrderCancel = async (reason) => {
-        if (!orderId) return;
-
-        const res = await cancelOrder({
-            orderId,
-            reason,
-        });
-
-        if (res?.success && res.order) {
-            setOrder(res.order);
-            handleCloseOrderCancelModal();
-        }
-    };
 
     if (!order || loading) {
         return (
@@ -168,8 +130,8 @@ const OrderDetails = () => {
             {/* cancel order itself */}
             <CancellationModal
                 isOpen={orderCancelModal}
-                onClose={handleCloseOrderCancelModal}
-                onConfirm={handleConfirmOrderCancel}
+                onClose={() => setOrderCancelModal(false)}
+                onConfirm={handleCancelOrder}
                 loading={cancelOrderLoading}
                 title="Cancel Order"
                 description="Are you sure you want to cancel the entire order? All non-cancelled items will be cancelled and stock will be restored."
@@ -232,7 +194,7 @@ const OrderDetails = () => {
 
                     {order.status === "pending" && (
                         <button
-                            onClick={handleOpenOrderCancelModal}
+                            onClick={() => setOrderCancelModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors border border-red-200"
                         >
                             <XCircle size={16} />

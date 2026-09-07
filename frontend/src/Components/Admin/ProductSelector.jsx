@@ -11,7 +11,7 @@ const ProductSelector = ({
     multiple = true,
 }) => {
     const { getAllProducts } = useGetAllProducts();
-    const { getAllCategories } = useGetAllCategories();
+    const { data: categoriesData } = useGetAllCategories();
 
     const [productSearch, setProductSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
@@ -20,7 +20,7 @@ const ProductSelector = ({
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
 
-    const [categories, setCategories] = useState([]);
+    const categories = categoriesData?.categories || [];
     const [availableProducts, setAvailableProducts] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [noProductFound, setNoProductFound] = useState(false);
@@ -29,14 +29,6 @@ const ProductSelector = ({
 
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-    // Fetch categories
-    useEffect(() => {
-        const fetchCategories = async () => {
-            const res = await getAllCategories();
-            if (res && res.categories) setCategories(res.categories);
-        };
-        fetchCategories();
-    }, [getAllCategories]);
 
     // Fetch products based on search or page changes
     const fetchProducts = useCallback(async () => {

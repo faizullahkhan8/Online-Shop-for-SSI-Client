@@ -4,20 +4,20 @@ import { Eye, Package, Loader2, CreditCard, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSocket, SOCKET_EVENTS } from "../../context/SocketContext";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 const OrdersList = () => {
+    const queryClient = useQueryClient();
     const [orders, setOrders] = useState([]);
-    const { getAllOrder, loading } = useGetAllOrder();
+    const { data, isLoading: loading } = useGetAllOrder();
     const { markOrderViewed } = useMarkOrderViewed();
     const { socket } = useSocket();
 
     useEffect(() => {
-        (async () => {
-            const response = await getAllOrder();
-            if (response?.orders) {
-                setOrders(response.orders);
-            }
-        })();
-    }, []);
+        if (data?.orders) {
+            setOrders(data.orders);
+        }
+    }, [data?.orders]);
 
     const handleMarkViewed = async (orderId) => {
         setOrders(prev => prev.map(o => o._id === orderId ? { ...o, isViewed: true } : o));

@@ -9,30 +9,13 @@ import DeleteDialog from "../../UI/DialogBox.jsx";
 import Pagination from "../../Components/Pagination.jsx";
 
 const ProductList = () => {
-    const [products, setProducts] = useState([]);
-    const [totalPages, setTotalPages] = useState(1);
     const [searchParams, setSearchParams] = useSearchParams();
-
     const page = parseInt(searchParams.get("page") || "1");
 
-    const { getAllProducts, loading: getAllProductsLoading } =
-        useGetAllProducts();
-    const { deleteProduct, loading: deleteProductLoading } = useDeleteProduct();
+    const { data: productsData, isLoading: getAllProductsLoading } = useGetAllProducts({ page, limit: 10 });
+    const products = productsData?.products || [];
+    const totalPages = productsData?.totalPages || 1;
 
-    const [productState, setProductState] = useState({
-        type: "",
-        data: null,
-    });
-
-    useEffect(() => {
-        (async () => {
-            const response = await getAllProducts({ page, limit: 10 });
-            if (response?.success) {
-                setProducts(response.products);
-                setTotalPages(response.totalPages || 1);
-            }
-        })();
-    }, [page]);
 
     const handlePageChange = (newPage) => {
         setSearchParams((prev) => {
@@ -41,14 +24,16 @@ const ProductList = () => {
         });
     };
 
+    const { deleteProduct, loading: deleteProductLoading } = useDeleteProduct();
+
+    const [productState, setProductState] = useState({
+        type: "",
+        data: null,
+    });
+
     const handleDelete = async () => {
         const response = await deleteProduct(productState.data._id);
         if (response?.success) {
-            setProducts(
-                products.filter(
-                    (product) => product._id !== productState.data._id,
-                ),
-            );
             setProductState({ type: "", data: null });
         }
     };

@@ -36,16 +36,8 @@ const CompactTimer = memo(({ endTime }) => {
 });
 
 const PromotionSection = () => {
-    const { getActiveDeals, loading } = useGetActiveDeals();
-    const [deals, setDeals] = useState([]);
-
-    useEffect(() => {
-        getActiveDeals().then((res) => {
-            if (res && res.data) {
-                setDeals(res.data);
-            }
-        });
-    }, [getActiveDeals]);
+    const { data: dealsData, loading } = useGetActiveDeals();
+    const deals = dealsData?.data || [];
 
     if (loading || deals.length === 0) return null;
 

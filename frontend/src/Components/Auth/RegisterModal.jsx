@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { X, User, Phone, Mail, MapPin, Loader2, ChevronRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/slices/authSlice.js";
-import { useRegisterUser, useVerifyPhone } from "../../api/hooks/user.api";
+import { useRegisterUser, useVerifyPhone, useResendOTP } from "../../api/hooks/user.api";
 import { toast } from "react-toastify";
 import LocationPicker from "../LocationPicker.jsx";
 import { useNavigate } from "react-router-dom";
 
-const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
+const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { registerUser } = useRegisterUser();
@@ -21,6 +21,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [otp, setOtp] = useState(["", "", "", "", "", ""]); // 6 digits for OTP
     const [userId, setUserId] = useState(null);
     
@@ -32,17 +33,23 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     // Reset state when modal opens/closes
     useEffect(() => {
         if (isOpen) {
-            setStep(1);
+            if (initialUserId) {
+                setUserId(initialUserId);
+                setStep(2); // Jump directly to OTP if we have a pending unverified user
+            } else {
+                setStep(1);
+                setUserId(null);
+            }
             setName("");
             setPhone("");
             setEmail("");
             setPassword("");
+            setConfirmPassword("");
             setOtp(["", "", "", "", "", ""]);
-            setUserId(null);
             setAddressText("");
             setMapPosition(null);
         }
-    }, [isOpen]);
+    }, [isOpen, initialUserId]);
 
     // Reverse Geocoding for Address Step
     useEffect(() => {
@@ -72,11 +79,17 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     }, [mapPosition]);
 
     const { verifyPhone } = useVerifyPhone();
+    const { resendOTP } = useResendOTP();
 
     const handleSendOTP = async (e) => {
         e.preventDefault();
-        if (!name || !phone || !password) {
-            toast.error("Name, Phone, and Password are required.");
+        if (!name || !phone || !password || !confirmPassword) {
+            toast.error("All fields are required.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            toast.error("Passwords do not match.");
             return;
         }
         
@@ -93,6 +106,11 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             setUserId(response.userId);
             setStep(2);
         }
+    };
+
+    const handleResendOTP = async () => {
+        if (!userId) return;
+        await resendOTP({ userId });
     };
 
     const handleVerifyOTP = async (e) => {
@@ -230,9 +248,24 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                                 </div>
                             </div>
 
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm Password *</label>
+                                <div className="relative">
+                                    <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="password"
+                                        required
+                                        placeholder="Confirm your password"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={loading || !name || !phone || !password}
+                                disabled={loading || !name || !phone || !password || !confirmPassword}
                                 className="w-full h-12 mt-6 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : "Continue"} 
@@ -273,7 +306,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                             </div>
                             
                             <div className="text-center">
-                                <button type="button" className="text-xs font-bold text-primary hover:text-primary-dark transition-colors">
+                                <button type="button" onClick={handleResendOTP} className="text-xs font-bold text-primary hover:text-primary-dark transition-colors">
                                     Resend Code
                                 </button>
                             </div>

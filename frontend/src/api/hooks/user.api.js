@@ -1,310 +1,372 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { USER_ROUTES, WISHLIST_ROUTES } from "../routes";
 import apiClient from "../apiClient";
 import { toast } from "react-toastify";
-import { useState } from "react";
 
 export const useRegisterUser = () => {
-    const [loading, setLoading] = useState(false);
-
-    const registerUser = async (user) => {
-        setLoading(true);
-        try {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (user) => {
             const response = await apiClient.post(USER_ROUTES.REGISTER, user);
-
-            if (response.data) {
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
                 toast.success("User registered successfully");
-                return response.data;
+                queryClient.invalidateQueries({ queryKey: ["users"] });
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Register User", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const registerUser = async (user) => {
+        try {
+            return await mutation.mutateAsync(user);
+        } catch {
+            return undefined;
         }
     };
-    return {
-        registerUser,
-        loading,
-    };
+    return { registerUser, loading: mutation.isPending };
 };
 
 export const useLoginUser = () => {
-    const [loading, setLoading] = useState(false);
-
-    const loginUser = async (user) => {
-        setLoading(true);
-        try {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (user) => {
             const response = await apiClient.post(USER_ROUTES.LOGIN, user);
-
-            if (response.data) {
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
                 toast.success("User logged in successfully");
-                return response.data;
+                // On login, invalidate everything related to user
+                queryClient.invalidateQueries();
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Login User", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const loginUser = async (user) => {
+        try {
+            return await mutation.mutateAsync(user);
+        } catch (error) {
+            return { success: false, error: error.response?.data };
         }
     };
-    return {
-        loginUser,
-        loading,
-    };
+    return { loginUser, loading: mutation.isPending };
 };
 
 export const useVerifyPhone = () => {
-    const [loading, setLoading] = useState(false);
-
-    const verifyPhone = async (data) => {
-        setLoading(true);
-        try {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (data) => {
             const response = await apiClient.post(USER_ROUTES.VERIFY_PHONE, data);
-
-            if (response.data) {
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
                 toast.success("Phone verified and logged in successfully");
-                return response.data;
+                queryClient.invalidateQueries();
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Invalid OTP";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Invalid OTP";
             toast.error(ErrorMessage);
             console.log("Error in Verify Phone", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const verifyPhone = async (data) => {
+        try {
+            return await mutation.mutateAsync(data);
+        } catch {
+            return undefined;
         }
     };
-    return {
-        verifyPhone,
-        loading,
+    return { verifyPhone, loading: mutation.isPending };
+};
+
+export const useResendOTP = () => {
+    const mutation = useMutation({
+        mutationFn: async (data) => {
+            const response = await apiClient.post(USER_ROUTES.RESEND_OTP, data);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
+                toast.success("OTP resent successfully");
+            }
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Failed to resend OTP";
+            toast.error(ErrorMessage);
+            console.log("Error in Resend OTP", error);
+        }
+    });
+
+    const resendOTP = async (data) => {
+        try {
+            return await mutation.mutateAsync(data);
+        } catch {
+            return undefined;
+        }
     };
+    return { resendOTP, loading: mutation.isPending };
 };
 
 export const useLogoutUser = () => {
-    const [loading, setLoading] = useState(false);
-
-    const logoutUser = async () => {
-        setLoading(true);
-        try {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async () => {
             const response = await apiClient.post(USER_ROUTES.LOGOUT);
-
-            if (response.data) {
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
                 toast.success("User logged out successfully");
-                return response.data;
+                // Clear all queries on logout
+                queryClient.clear();
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Logout User", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const logoutUser = async () => {
+        try {
+            return await mutation.mutateAsync();
+        } catch {
+            return undefined;
         }
     };
-    return {
-        logoutUser,
-        loading,
-    };
+    return { logoutUser, loading: mutation.isPending };
 };
 
-export const useGetUser = () => {
-    const [loading, setLoading] = useState(false);
+export const useGetUser = (defaultUserId = null) => {
+    const queryClient = useQueryClient();
+
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["user", defaultUserId],
+        queryFn: async () => {
+            const response = await apiClient.get(`${USER_ROUTES.GET_USER}/${defaultUserId}`);
+            return response.data;
+        },
+        enabled: defaultUserId !== null
+    });
 
     const getUser = async ({ userId }) => {
-        setLoading(true);
         try {
-            const response = await apiClient.get(
-                `${USER_ROUTES.GET_USER}/${userId}`,
-            );
-
-            if (response.data) {
-                return response.data;
-            }
+            return await queryClient.fetchQuery({
+                queryKey: ["user", userId],
+                queryFn: async () => {
+                    const response = await apiClient.get(`${USER_ROUTES.GET_USER}/${userId}`);
+                    return response.data;
+                }
+            });
         } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Get User", error);
-            return;
-        } finally {
-            setLoading(false);
+            return undefined;
         }
     };
-    return {
-        getUser,
-        loading,
-    };
+    return { getUser, loading, data, error };
 };
 
 export const useAddUserFromAdmin = () => {
-    const [loading, setLoading] = useState(false);
-
-    const addUserFromAdmin = async (userData) => {
-        setLoading(true);
-        try {
-            const response = await apiClient.post(
-                USER_ROUTES.ADD_USER_FROM_ADMIN || "/users/add",
-                userData,
-            );
-
-            if (response.data) {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (userData) => {
+            const response = await apiClient.post(USER_ROUTES.ADD_USER_FROM_ADMIN || "/users/add", userData);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
                 toast.success("User created successfully by admin");
-                return response.data;
+                queryClient.invalidateQueries({ queryKey: ["users"] });
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Failed to create user";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Failed to create user";
             toast.error(ErrorMessage);
             console.log("Error in Admin User Creation", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const addUserFromAdmin = async (userData) => {
+        try {
+            return await mutation.mutateAsync(userData);
+        } catch {
+            return undefined;
         }
     };
 
-    return {
-        addUserFromAdmin,
-        loading,
-    };
+    return { addUserFromAdmin, loading: mutation.isPending };
 };
 
 export const useUpdateUser = () => {
-    const [loading, setLoading] = useState(false);
-
-    const updateUser = async ({ userId, user }) => {
-        setLoading(true);
-        try {
-            const response = await apiClient.put(
-                `${USER_ROUTES.UPDATE_USER}/${userId}`,
-                user,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                },
-            );
-
-            if (response.data) {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async ({ userId, user }) => {
+            const response = await apiClient.put(`${USER_ROUTES.UPDATE_USER}/${userId}`, user, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            return response.data;
+        },
+        onSuccess: (data, variables) => {
+            if (data) {
                 toast.success("User updated successfully");
-                return response.data;
+                queryClient.invalidateQueries({ queryKey: ["users"] });
+                queryClient.invalidateQueries({ queryKey: ["user", variables.userId] });
             }
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Update User", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const updateUser = async (variables) => {
+        try {
+            return await mutation.mutateAsync(variables);
+        } catch {
+            return undefined;
         }
     };
-    return {
-        updateUser,
-        loading,
-    };
+    return { updateUser, loading: mutation.isPending };
 };
 
 export const useGetWishlist = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
+
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["wishlist"],
+        queryFn: async () => {
+            const response = await apiClient.get(WISHLIST_ROUTES.GET);
+            return response.data;
+        }
+    });
 
     const getWishlist = async () => {
-        setLoading(true);
         try {
-            const response = await apiClient.get(WISHLIST_ROUTES.GET);
-
-            if (response.data) return response.data;
+            return await queryClient.fetchQuery({
+                queryKey: ["wishlist"],
+                queryFn: async () => {
+                    const response = await apiClient.get(WISHLIST_ROUTES.GET);
+                    return response.data;
+                }
+            });
         } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Get Wishlist", error);
-            return;
-        } finally {
-            setLoading(false);
+            return undefined;
         }
     };
 
-    return { getWishlist, loading };
+    return { getWishlist, loading, data, error };
 };
 
 export const useAddToWishlist = () => {
-    const [loading, setLoading] = useState(false);
-
-    const addToWishlist = async (productId) => {
-        setLoading(true);
-        try {
-            const response = await apiClient.post(WISHLIST_ROUTES.ADD, {
-                productId,
-            });
-
-            if (response.data) return response.data;
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (productId) => {
+            const response = await apiClient.post(WISHLIST_ROUTES.ADD, { productId });
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
+                queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+            }
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Add Wishlist", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const addToWishlist = async (productId) => {
+        try {
+            return await mutation.mutateAsync(productId);
+        } catch {
+            return undefined;
         }
     };
 
-    return { addToWishlist, loading };
+    return { addToWishlist, loading: mutation.isPending };
 };
 
 export const useRemoveFromWishlist = () => {
-    const [loading, setLoading] = useState(false);
-
-    const removeFromWishlist = async (productId) => {
-        setLoading(true);
-        try {
-            const response = await apiClient.delete(
-                `${WISHLIST_ROUTES.REMOVE}/${productId}`,
-            );
-
-            if (response.data) return response.data;
-        } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async (productId) => {
+            const response = await apiClient.delete(`${WISHLIST_ROUTES.REMOVE}/${productId}`);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            if (data) {
+                queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+            }
+        },
+        onError: (error) => {
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Remove Wishlist", error);
-            return;
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const removeFromWishlist = async (productId) => {
+        try {
+            return await mutation.mutateAsync(productId);
+        } catch {
+            return undefined;
         }
     };
 
-    return { removeFromWishlist, loading };
+    return { removeFromWishlist, loading: mutation.isPending };
 };
 
 export const useGetAllUsers = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
+
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["users"],
+        queryFn: async () => {
+            const response = await apiClient.get(USER_ROUTES.GET_ALL || "/users/all");
+            return response.data;
+        }
+    });
 
     const getAllUsers = async () => {
-        setLoading(true);
         try {
-            const response = await apiClient.get(
-                USER_ROUTES.GET_ALL || "/users/all",
-            );
-            if (response.data) return response.data;
+            return await queryClient.fetchQuery({
+                queryKey: ["users"],
+                queryFn: async () => {
+                    const response = await apiClient.get(USER_ROUTES.GET_ALL || "/users/all");
+                    return response.data;
+                }
+            });
         } catch (error) {
-            const ErrorMessage =
-                error.response?.data?.message || "Something went wrong";
+            const ErrorMessage = error.response?.data?.message || "Something went wrong";
             toast.error(ErrorMessage);
             console.log("Error in Get All Users", error);
-            return;
-        } finally {
-            setLoading(false);
+            return undefined;
         }
     };
 
-    return { getAllUsers, loading };
+    return { getAllUsers, loading, data, error };
 };

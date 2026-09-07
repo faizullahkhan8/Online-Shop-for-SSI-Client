@@ -3,15 +3,8 @@ import { useGetAllUsers } from "../../api/hooks/user.api";
 import { User } from "lucide-react";
 
 const UserListPage = () => {
-    const { getAllUsers, loading } = useGetAllUsers();
-    const [users, setUsers] = useState([]);
-
-    useEffect(() => {
-        (async () => {
-            const res = await getAllUsers();
-            if (res?.users) setUsers(res.users);
-        })();
-    }, []);
+    const { data, isLoading: loading } = useGetAllUsers();
+    const users = data?.users || [];
 
     return (
         <div className="space-y-6">

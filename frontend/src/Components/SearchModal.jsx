@@ -38,14 +38,12 @@ const SearchModal = ({ isOpen, onClose }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [recentSearches, setRecentSearches] = useState([]);
-    
     const [searchResults, setSearchResults] = useState([]);
     const [trendingProducts, setTrendingProducts] = useState([]);
-    const [allCategories, setAllCategories] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-
     const { getAllProducts } = useGetAllProducts();
-    const { getAllCategories } = useGetAllCategories();
+    const { data: categoriesData } = useGetAllCategories();
+    const allCategories = categoriesData?.categories || [];
 
     // 1. Load Recent Searches from LocalStorage
     useEffect(() => {
@@ -106,12 +104,6 @@ const SearchModal = ({ isOpen, onClose }) => {
                 }
             });
 
-            // Fetch categories
-            getAllCategories().then((res) => {
-                if (res?.categories) {
-                    setAllCategories(res.categories);
-                }
-            });
 
             // Auto-focus input
             setTimeout(() => {

@@ -255,18 +255,18 @@ const EditForm = ({ section, onChange }) => {
     const cfg = section.config || {};
     const set = (key, val) => onChange({ ...section, config: { ...cfg, [key]: val } });
 
-    const { getAllVendors } = useGetAllVendors();
+    const { data: vendorsData } = useGetAllVendors();
     const [dbVendors, setDbVendors] = useState([]);
     const [brandUI, setBrandUI] = useState({ isOpen: false, tab: "manual", editingManualIdx: null });
     const [showRibbonPicker, setShowRibbonPicker] = useState(false);
 
     useEffect(() => {
         if (section.type === "brands") {
-            getAllVendors().then(res => {
-                if (res?.success) setDbVendors(res.vendors || []);
-            });
+            if (vendorsData?.success) {
+                setDbVendors(vendorsData.vendors || []);
+            }
         }
-    }, [section.type]);
+    }, [section.type, vendorsData]);
 
     switch (section.type) {
         case "hero":
@@ -1169,6 +1169,10 @@ const AddSectionModal = ({ onAdd, onClose, existingTypes }) => {
 /* ─── Main Builder Page ──────────────────────────────────────────────── */
 const HomePageBuilderPage = () => {
     const navigate = useNavigate();
+    const { data: homePageData, isLoading: homePageLoading } = useGetHomePage();
+    const { updateHomePage, loading: saving } = useUpdateHomePage();
+    const { resetHomePage, loading: resetting } = useResetHomePage();
+
     const [sections, setSections] = useState([]);
     const [activeIdx, setActiveIdx] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -1207,33 +1211,50 @@ const HomePageBuilderPage = () => {
             document.removeEventListener('mouseup', handleMouseUp);
         };
     }, [leftWidth]);
+
+    useEffect(() => {
+        if (!homePageLoading && homePageData) {
+            const sections = homePageData.sections || [];
+            if (sections.length > 0) {
+                const sorted = [...sections].sort((a, b) => a.order - b.order);
+                const completeLayout = [...DEFAULT_LAYOUT];
+
+                sorted.forEach(savedSec => {
+                    const idx = completeLayout.findIndex(ds =>
+                        ds.type === savedSec.type &&
+                        (ds.gridVariant ? ds.gridVariant === savedSec.config?.gridVariant : true)
+                    );
+                    if (idx !== -1) {
+                        completeLayout[idx] = { ...completeLayout[idx], ...savedSec };
+                    }
+                });
+                
+                const safeLayout = completeLayout.map(sec => ({
+                    ...sec,
+                    _id: sec._id || `temp-${Math.random()}`,
+                    isVisible: sec.isVisible ?? true,
+                    config: sec.config || {}
+                }));
+
+                setSections(safeLayout);
+                if (safeLayout.length > 0) {
+                    setActiveIdx(0);
+                }
+            }
+        }
+    }, [homePageData, homePageLoading]);
+
     const [isDirty, setIsDirty] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
     const [dragIdx, setDragIdx] = useState(null);
     const [dragOverIdx, setDragOverIdx] = useState(null);
 
-    const { getHomePage } = useGetHomePage();
-    const { updateHomePage, loading: saving } = useUpdateHomePage();
-    const { resetHomePage, loading: resetting } = useResetHomePage();
-
-    // Load config
+    // Initial load handling
     useEffect(() => {
-        const load = async () => {
-            setPageLoading(true);
-            try {
-                const res = await getHomePage({ forceRefresh: true });
-                if (res?.sections) {
-                    const sorted = [...res.sections].sort((a, b) => a.order - b.order);
-                    setSections(sorted);
-                }
-            } catch {
-                toast.error("Failed to load page config");
-            } finally {
-                setPageLoading(false);
-            }
-        };
-        load();
-    }, []);
+        if (!homePageLoading) {
+            setPageLoading(false);
+        }
+    }, [homePageLoading]);
 
     const updateSection = useCallback((idx, updated) => {
         setSections(prev => prev.map((s, i) => i === idx ? updated : s));

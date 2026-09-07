@@ -1,192 +1,155 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient";
 import { PROMOTION_ROUTES } from "../routes";
 import { toast } from "react-toastify";
 
 export const useAddPromotion = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
 
-    const addPromotion = async (promotionData) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await apiClient.post(
-                PROMOTION_ROUTES.CREATE,
-                promotionData,
-            );
-            if (response.data?.success) {
-                toast.success(
-                    response.data.message || "Promotion created successfully",
-                );
-                return response.data;
-            } else {
-                toast.error(response.data?.message || "Failed to create promotion");
-                return null;
+    const mutation = useMutation({
+        mutationFn: async (promotionData) => {
+            const response = await apiClient.post(PROMOTION_ROUTES.CREATE, promotionData);
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to create promotion");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            toast.success(data.message || "Promotion created successfully");
+            queryClient.invalidateQueries({ queryKey: ["promotions"] });
+            queryClient.invalidateQueries({ queryKey: ["active-deals"] });
+        },
+        onError: (error) => {
+            const msg = error.response?.data?.message || error.message || "Something went wrong";
             toast.error(msg);
-            return null;
-        } finally {
-            setLoading(false);
         }
-    };
+    });
 
-    return { addPromotion, loading, error };
+    return {
+        addPromotion: mutation.mutateAsync,
+        loading: mutation.isPending,
+        error: mutation.error?.message
+    };
 };
 
 export const useGetActiveDeals = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const getActiveDeals = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ["active-deals"],
+        queryFn: async () => {
             const response = await apiClient.get(PROMOTION_ROUTES.GET_ACTIVE);
-            if (response.data?.success) {
-                return response.data;
-            } else {
-                setError(response.data?.message || "Failed to fetch active deals");
-                return null;
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to fetch active deals");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
-            return null;
-        } finally {
-            setLoading(false);
+            return response.data;
         }
-    }, []);
+    });
 
-    return { getActiveDeals, loading, error };
+    return {
+        getActiveDeals: refetch,
+        data,
+        loading,
+        error: error?.message
+    };
 };
 
 export const useGetAllPromotions = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const getAllPromotions = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ["promotions"],
+        queryFn: async () => {
             const response = await apiClient.get(PROMOTION_ROUTES.GET_ALL);
-            if (response.data?.success) {
-                return response.data;
-            } else {
-                setError(response.data?.message || "Failed to fetch promotions");
-                return null;
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to fetch promotions");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
-            return null;
-        } finally {
-            setLoading(false);
+            return response.data;
         }
-    }, []);
+    });
 
-    return { getAllPromotions, loading, error };
+    return {
+        getAllPromotions: refetch,
+        data,
+        loading,
+        error: error?.message
+    };
 };
 
-export const useGetPromotionById = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const getPromotionById = useCallback(async (id) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await apiClient.get(
-                `${PROMOTION_ROUTES.GET_ALL}/${id}`,
-            );
-            if (response.data?.success) {
-                return response.data;
-            } else {
-                setError(response.data?.message || "Failed to fetch promotion");
-                return null;
+export const useGetPromotionById = (id) => {
+    const { data, isLoading: loading, error, refetch } = useQuery({
+        queryKey: ["promotions", id],
+        queryFn: async () => {
+            if (!id) return null;
+            const response = await apiClient.get(`${PROMOTION_ROUTES.GET_ALL}/${id}`);
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to fetch promotion");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+            return response.data;
+        },
+        enabled: !!id
+    });
 
-    return { getPromotionById, loading, error };
+    return {
+        getPromotionById: refetch,
+        data,
+        loading,
+        error: error?.message
+    };
 };
 
 export const useUpdatePromotion = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
 
-    const updatePromotion = async (id, data) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await apiClient.put(
-                `${PROMOTION_ROUTES.UPDATE}/${id}`,
-                data,
-            );
-            if (response.data?.success) {
-                toast.success(
-                    response.data.message || "Promotion updated successfully",
-                );
-                return response.data;
-            } else {
-                toast.error(
-                    response.data?.message || "Failed to update promotion",
-                );
-                return null;
+    const mutation = useMutation({
+        mutationFn: async ({ id, data }) => {
+            const response = await apiClient.put(`${PROMOTION_ROUTES.UPDATE}/${id}`, data);
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to update promotion");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
+            return response.data;
+        },
+        onSuccess: (data, variables) => {
+            toast.success(data.message || "Promotion updated successfully");
+            queryClient.invalidateQueries({ queryKey: ["promotions"] });
+            queryClient.invalidateQueries({ queryKey: ["active-deals"] });
+        },
+        onError: (error) => {
+            const msg = error.response?.data?.message || error.message || "Something went wrong";
             toast.error(msg);
-            return null;
-        } finally {
-            setLoading(false);
         }
-    };
+    });
 
-    return { updatePromotion, loading, error };
+    const updatePromotion = (id, data) => mutation.mutateAsync({ id, data });
+
+    return {
+        updatePromotion,
+        loading: mutation.isPending,
+        error: mutation.error?.message
+    };
 };
 
 export const useDeletePromotion = () => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
 
-    const deletePromotion = async (id) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await apiClient.delete(
-                `${PROMOTION_ROUTES.DELETE}/${id}`,
-            );
-            if (response.data?.success) {
-                toast.success(
-                    response.data.message || "Promotion deleted successfully",
-                );
-                return response.data;
-            } else {
-                toast.error(
-                    response.data?.message || "Failed to delete promotion",
-                );
-                return null;
+    const mutation = useMutation({
+        mutationFn: async (id) => {
+            const response = await apiClient.delete(`${PROMOTION_ROUTES.DELETE}/${id}`);
+            if (!response.data?.success) {
+                throw new Error(response.data?.message || "Failed to delete promotion");
             }
-        } catch (err) {
-            const msg = err.response?.data?.message || "Something went wrong";
-            setError(msg);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            toast.success(data.message || "Promotion deleted successfully");
+            queryClient.invalidateQueries({ queryKey: ["promotions"] });
+            queryClient.invalidateQueries({ queryKey: ["active-deals"] });
+        },
+        onError: (error) => {
+            const msg = error.response?.data?.message || error.message || "Something went wrong";
             toast.error(msg);
-            return null;
-        } finally {
-            setLoading(false);
         }
-    };
+    });
 
-    return { deletePromotion, loading, error };
+    return {
+        deletePromotion: mutation.mutateAsync,
+        loading: mutation.isPending,
+        error: mutation.error?.message
+    };
 };

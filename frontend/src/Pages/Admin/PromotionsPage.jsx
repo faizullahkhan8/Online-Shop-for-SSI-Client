@@ -23,46 +23,22 @@ import { format } from "date-fns";
 
 const PromotionManager = () => {
     const navigate = useNavigate();
-    const { getAllPromotions, loading: fetchLoading } = useGetAllPromotions();
+    const { data: promotionsData, isLoading: fetchLoading } = useGetAllPromotions();
     const { updatePromotion, loading: updateLoading } = useUpdatePromotion();
     const { deletePromotion, loading: deleteLoading } = useDeletePromotion();
 
-    const [promotions, setPromotions] = useState([]);
-    const [localLoading, setLocalLoading] = useState(true);
-
-    const fetchPromotions = useCallback(async () => {
-        setLocalLoading(true);
-        const data = await getAllPromotions();
-        if (data && data.promotions) {
-            setPromotions(data.promotions);
-        }
-        setLocalLoading(false);
-    }, [getAllPromotions]);
-
-    useEffect(() => {
-        fetchPromotions();
-    }, [fetchPromotions]);
+    const promotions = promotionsData?.promotions || [];
 
     const handleStatusToggle = async (promotion) => {
         const newStatus = promotion.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-        const result = await updatePromotion(promotion._id, {
+        await updatePromotion(promotion._id, {
             status: newStatus,
         });
-        if (result) {
-            setPromotions((prev) =>
-                prev.map((p) =>
-                    p._id === promotion._id ? { ...p, status: newStatus } : p,
-                ),
-            );
-        }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this promotion?")) {
-            const result = await deletePromotion(id);
-            if (result) {
-                setPromotions((prev) => prev.filter((p) => p._id !== id));
-            }
+            await deletePromotion(id);
         }
     };
 
@@ -80,7 +56,6 @@ const PromotionManager = () => {
 
         // Update orders locally
         newPromotions.forEach((p, i) => (p.order = i));
-        setPromotions(newPromotions);
 
         // Ideally, sending a bulk update or updating the two swapped items
         // For simplicity, updating both items with their new order
@@ -93,7 +68,7 @@ const PromotionManager = () => {
         ]);
     };
 
-    if (localLoading && promotions.length === 0) {
+    if (fetchLoading && promotions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <Loader2 className="animate-spin text-primary" size={32} />

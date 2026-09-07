@@ -3,12 +3,8 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useGetHeroSlides } from "../../api/hooks/hero.api.js";
 
 const HeroSection = () => {
-    const { getSlides, slides, loading } = useGetHeroSlides();
+    const { slides, loading } = useGetHeroSlides();
     const [currentSlide, setCurrentSlide] = useState(0);
-
-    useEffect(() => {
-        getSlides();
-    }, [getSlides]);
 
     useEffect(() => {
         if (slides.length > 0) {

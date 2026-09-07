@@ -12,6 +12,7 @@ import {
     getAllUsers,
     addUserFromAdmin,
     verifyPhone,
+    resendOTP,
 } from "../controllers/user.controller.js";
 import { isAuth, authorize } from "../middlewares/auth.middleware.js";
 import { upload, imagekitUpload } from "../middlewares/multer.middleware.js";
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/verify-phone", verifyPhone);
+router.post("/resend-otp", resendOTP);
 router.post("/login", loginUser);
 router.post("/logout", isAuth, logoutUser);
 router.get("/get/:id", isAuth, getUser);

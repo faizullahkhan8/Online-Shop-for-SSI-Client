@@ -6,12 +6,11 @@ import { getImageUrl } from "../../utils/imageHelper";
 import LexicalEditor from "../../Components/LexicalEditor";
 
 const StaffTreeBuilderPage = () => {
-    const { getStaff, loading: getLoading } = useGetStaff();
+    const { data: staffList, loading: getLoading } = useGetStaff();
     const { createStaff, loading: createLoading } = useCreateStaff();
     const { updateStaff, loading: updateLoading } = useUpdateStaff();
     const { deleteStaff, loading: deleteLoading } = useDeleteStaff();
 
-    const [staffList, setStaffList] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNode, setEditingNode] = useState(null);
 
@@ -23,15 +22,6 @@ const StaffTreeBuilderPage = () => {
         imageUrl: "",
         parentId: "",
     });
-
-    const fetchStaff = async () => {
-        const data = await getStaff();
-        setStaffList(data);
-    };
-
-    useEffect(() => {
-        fetchStaff();
-    }, []);
 
     const handleOpenModal = (node = null) => {
         if (node) {
@@ -80,14 +70,12 @@ const StaffTreeBuilderPage = () => {
         } else {
             await createStaff(formDataPayload);
         }
-        fetchStaff();
         handleCloseModal();
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this staff member? Any children will be moved to the top level.")) {
             await deleteStaff(id);
-            fetchStaff();
         }
     };
 

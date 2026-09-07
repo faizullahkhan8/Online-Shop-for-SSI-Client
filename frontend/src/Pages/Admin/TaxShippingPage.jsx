@@ -23,7 +23,7 @@ const DEFAULT_ADV_SHIPPING = {
 };
 
 const TaxShippingSettings = () => {
-    const { getSettings, loading: settingsLoading } = useGetSettings();
+    const { data: settingsData, isLoading: settingsLoading } = useGetSettings();
     const { updateSettings, loading: updateLoading } = useUpdateSettings();
     const { uploadImage, loading: uploadingImage } = useUploadHomePageImage();
 
@@ -98,29 +98,27 @@ const TaxShippingSettings = () => {
     }, [form.advancedShipping?.storeLocation?.lat, form.advancedShipping?.storeLocation?.lng]);
 
     useEffect(() => {
-        getSettings().then((res) => {
-            if (res?.settings) {
-                setForm({
-                    taxAmount: Number(res.settings.taxAmount) || 0,
-                    shippingFee: Number(res.settings.shippingFee) || 0,
-                    shippingMethod: res.settings.shippingMethod || "standard",
-                    paymentMethods: res.settings.paymentMethods || [],
-                    advancedShipping: {
-                        ...DEFAULT_ADV_SHIPPING,
-                        ...(res.settings.advancedShipping || {}),
-                        storeLocation: {
-                            ...DEFAULT_ADV_SHIPPING.storeLocation,
-                            ...(res.settings.advancedShipping?.storeLocation || {})
-                        },
-                        conditionalOverride: {
-                            ...DEFAULT_ADV_SHIPPING.conditionalOverride,
-                            ...(res.settings.advancedShipping?.conditionalOverride || {})
-                        }
+        if (settingsData?.settings) {
+            setForm({
+                taxAmount: Number(settingsData.settings.taxAmount) || 0,
+                shippingFee: Number(settingsData.settings.shippingFee) || 0,
+                shippingMethod: settingsData.settings.shippingMethod || "standard",
+                paymentMethods: settingsData.settings.paymentMethods || [],
+                advancedShipping: {
+                    ...DEFAULT_ADV_SHIPPING,
+                    ...(settingsData.settings.advancedShipping || {}),
+                    storeLocation: {
+                        ...DEFAULT_ADV_SHIPPING.storeLocation,
+                        ...(settingsData.settings.advancedShipping?.storeLocation || {})
                     },
-                });
-            }
-        });
-    }, []);
+                    conditionalOverride: {
+                        ...DEFAULT_ADV_SHIPPING.conditionalOverride,
+                        ...(settingsData.settings.advancedShipping?.conditionalOverride || {})
+                    }
+                },
+            });
+        }
+    }, [settingsData]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

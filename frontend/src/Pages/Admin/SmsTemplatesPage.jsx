@@ -5,13 +5,8 @@ import AdminLayout from "../../Layout/AdminLayout";
 import { toast } from "react-toastify";
 
 const SmsTemplatesPage = () => {
-    const { loading, templates, fetchTemplates, updateTemplate, seedTemplates } = useSmsTemplates();
+    const { loading, templates, updateTemplate, seedTemplates } = useSmsTemplates();
     const [editingTemplate, setEditingTemplate] = useState(null);
-
-    useEffect(() => {
-        fetchTemplates();
-        // eslint-disable-next-line
-    }, []);
 
     const handleSave = async (id, isActive, messageTemplate) => {
         await updateTemplate(id, { isActive, messageTemplate });

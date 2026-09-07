@@ -20,7 +20,7 @@ import Input from "../../UI/Input.jsx";
 import { handleImageError } from "../../utils/imageHelper";
 
 const HeroManager = () => {
-    const { getSlides, slides, loading } = useGetHeroSlides();
+    const { slides, loading } = useGetHeroSlides();
     const { addSlide, loading: addLoading } = useAddHeroSlide();
     const { updateSlide, loading: updateLoading } = useUpdateHeroSlide();
     const { deleteSlide } = useDeleteHeroSlide();
@@ -34,10 +34,6 @@ const HeroManager = () => {
     });
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
-
-    useEffect(() => {
-        getSlides();
-    }, [getSlides]);
 
     const handleEdit = (slide) => {
         setEditingSlide(slide);

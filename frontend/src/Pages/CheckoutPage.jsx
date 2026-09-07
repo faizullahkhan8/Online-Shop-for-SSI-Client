@@ -32,8 +32,8 @@ const CheckoutPage = () => {
     const items = allItems.filter((item) => item.selected);
     const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
-    const { placeOrder, isLoading } = usePlaceOrder();
-    const { getSettings } = useGetSettings();
+    const { placeOrder, loading: isLoading } = usePlaceOrder();
+    const { data: settingsData } = useGetSettings();
 
     const [formData, setFormData] = useState({
         recipient: {
@@ -160,36 +160,32 @@ const CheckoutPage = () => {
     };
 
     useEffect(() => {
-        if (!settingsLoaded) {
-            getSettings().then((res) => {
-                if (res?.settings) {
-                    const defaultFee = Number(res.settings.shippingFee) || 0;
-                    setBaseShippingFee(defaultFee);
-                    setAdvShippingConfig(res.settings.advancedShipping || null);
+        if (!settingsLoaded && settingsData?.settings) {
+            const res = settingsData;
+            const defaultFee = Number(res.settings.shippingFee) || 0;
+            setBaseShippingFee(defaultFee);
+            setAdvShippingConfig(res.settings.advancedShipping || null);
 
-                    setFormData((prev) => ({
+            setFormData((prev) => ({
+                ...prev,
+                taxAmount: Number(res.settings.taxAmount) || 0,
+                shippingFee: defaultFee,
+                shippingMethod: res.settings.shippingMethod || "standard",
+            }));
+            if (res.settings.paymentMethods && res.settings.paymentMethods.length > 0) {
+                const activeMethods = res.settings.paymentMethods.filter(m => m.isActive);
+                setAvailablePaymentMethods(activeMethods);
+                // Auto-select first available method if COD is not explicitly kept
+                if (activeMethods.length > 0) {
+                    setFormData(prev => ({
                         ...prev,
-                        taxAmount: Number(res.settings.taxAmount) || 0,
-                        shippingFee: defaultFee,
-                        shippingMethod:
-                            res.settings.shippingMethod || "standard",
+                        payment: { ...prev.payment, method: activeMethods[0].title }
                     }));
-                    if (res.settings.paymentMethods && res.settings.paymentMethods.length > 0) {
-                        const activeMethods = res.settings.paymentMethods.filter(m => m.isActive);
-                        setAvailablePaymentMethods(activeMethods);
-                        // Auto-select first available method if COD is not explicitly kept
-                        if (activeMethods.length > 0) {
-                            setFormData(prev => ({
-                                ...prev,
-                                payment: { ...prev.payment, method: activeMethods[0].title }
-                            }));
-                        }
-                    }
                 }
-                setSettingsLoaded(true);
-            });
+            }
+            setSettingsLoaded(true);
         }
-    }, [settingsLoaded, getSettings]);
+    }, [settingsLoaded, settingsData]);
 
     // Calculate distance between two coordinates in km using Haversine formula
     const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {

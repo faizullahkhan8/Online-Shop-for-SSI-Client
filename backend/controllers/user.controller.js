@@ -58,6 +58,30 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     });
 });
 
+export const resendOTP = asyncHandler(async (req, res, next) => {
+    const UserModel = getLocalUserModel();
+    const { userId } = req.body;
+
+    if (!userId) return next(new ErrorResponse("User ID is required", 400));
+
+    const user = await UserModel.findById(userId);
+    if (!user) return next(new ErrorResponse("User not found", 404));
+
+    if (user.isPhoneVerified) return next(new ErrorResponse("Phone already verified", 400));
+
+    const otp = generateOTP();
+    user.phoneVerificationOtp = otp;
+    user.phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    await user.save({ validateModifiedOnly: true });
+
+    await sendSMS("REGISTRATION_OTP", user.phone, { otp });
+
+    return res.status(200).json({
+        success: true,
+        message: "OTP resent successfully",
+    });
+});
+
 export const verifyPhone = asyncHandler(async (req, res, next) => {
     const UserModel = getLocalUserModel();
     const { userId, otp } = req.body;
@@ -121,7 +145,11 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     }
 
     if (user.role === 'user' && !user.isPhoneVerified) {
-        return next(new ErrorResponse("Please verify your phone number first", 403));
+        return res.status(403).json({
+            success: false,
+            message: "Please verify your phone number first",
+            userId: user._id,
+        });
     }
 
     const refreshToken = generateToken(

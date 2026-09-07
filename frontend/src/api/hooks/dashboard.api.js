@@ -1,16 +1,11 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "../apiClient";
 import { ORDER_ROUTES } from "../routes";
 
 export const useDashboardStats = ({ startDate, endDate } = {}) => {
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const fetchStats = async () => {
-        setLoading(true);
-        setError(null);
-        try {
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["dashboardStats", startDate, endDate],
+        queryFn: async () => {
             const params = {};
             if (startDate) params.startDate = startDate.toISOString();
             if (endDate) params.endDate = endDate.toISOString();
@@ -19,20 +14,15 @@ export const useDashboardStats = ({ startDate, endDate } = {}) => {
                 params,
             });
             if (response.data && response.data.stats) {
-                setStats(response.data.stats);
-            } else {
-                setError("No stats found");
+                return response.data.stats;
             }
-        } catch (err) {
-            setError(err.response?.data?.message || "Failed to fetch stats");
-        } finally {
-            setLoading(false);
-        }
+            throw new Error("No stats found");
+        },
+    });
+
+    return {
+        stats: data || null,
+        loading,
+        error: error ? error.message || "Failed to fetch stats" : null,
     };
-
-    useEffect(() => {
-        fetchStats();
-    }, [startDate, endDate]);
-
-    return { stats, loading, error };
 };

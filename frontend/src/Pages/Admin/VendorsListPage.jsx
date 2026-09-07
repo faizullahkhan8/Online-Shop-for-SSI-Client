@@ -33,7 +33,6 @@ const INITIAL_STATE = {
 };
 
 const VendorsListPage = () => {
-    const [vendors, setVendors] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [deleteModal, setDeleteModal] = useState({
         isOpen: false,
@@ -46,27 +45,18 @@ const VendorsListPage = () => {
         imagePreview: null,
     });
 
-    const { getAllVendors, loading: getAllVendorsLoading } = useGetAllVendors();
-    const { deleteVendor, loading: deleteVendorLoading } = useDeleteVendor();
+    const { data: vendorsData, loading: getAllVendorsLoading } = useGetAllVendors();
+    const vendors = vendorsData?.vendors || [];
     const { createVendor, loading: creating } = useCreateVendor();
+    const { deleteVendor, loading: deleteVendorLoading } = useDeleteVendor();
     const { updateVendor, loading: updating } = useUpdateVendor();
     const { uploadImage, loading: uploadingImg } = useUploadVendorImage();
     const { deleteImage, loading: deletingImg } = useDeleteVendorImage();
-
-    const fetchVendors = async () => {
-        const response = await getAllVendors();
-        if (response?.success) setVendors(response.vendors);
-    };
-
-    useEffect(() => {
-        fetchVendors();
-    }, []);
 
     const handleDelete = async () => {
         const { vendorId } = deleteModal;
         const response = await deleteVendor(vendorId);
         if (response?.success) {
-            setVendors((prev) => prev.filter((v) => v._id !== vendorId));
             setDeleteModal({ isOpen: false, vendorId: null });
         }
     };
@@ -89,7 +79,6 @@ const VendorsListPage = () => {
                 data: INITIAL_STATE,
                 imagePreview: null,
             });
-            fetchVendors();
         }
     };
 

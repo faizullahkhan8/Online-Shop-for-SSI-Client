@@ -15,20 +15,11 @@ const DEFAULT_BRANDS = [
 ];
 
 const BrandsSection = ({ config }) => {
-    const { getAllVendors, loading } = useGetAllVendors();
-    const [vendors, setVendors] = useState([]);
-
-    // Determine sources array (fallback for older configs that used string `source` or nothing)
     const sources = config.sources || (config.source ? [config.source] : ["manual"]);
     const fetchVendors = sources.includes("vendors");
-
-    useEffect(() => {
-        if (fetchVendors) {
-            getAllVendors().then(res => {
-                if (res?.success) setVendors(res.vendors || []);
-            }).catch(() => {});
-        }
-    }, [fetchVendors, getAllVendors]);
+    
+    const { data: vendorsData, loading } = useGetAllVendors();
+    const vendors = fetchVendors && vendorsData?.success ? (vendorsData.vendors || []) : [];
 
     // Combine sources
     let displayBrands = [];

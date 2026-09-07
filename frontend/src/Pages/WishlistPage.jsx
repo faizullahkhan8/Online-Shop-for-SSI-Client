@@ -7,22 +7,8 @@ import { setWishlist } from "../store/slices/wishlistSlice";
 import { Heart, ArrowLeft, ShoppingBag } from "lucide-react";
 
 const WishlistPage = () => {
-    const items = useSelector((state) => state.wishlist.items || []);
-    const dispatch = useDispatch();
-    const { getWishlist } = useGetWishlist();
-
-    useEffect(() => {
-        (async () => {
-            const resp = await getWishlist();
-            if (resp?.wishlist) {
-                dispatch(
-                    setWishlist(
-                        resp.wishlist.map((p) => ({ ...p, id: p._id })),
-                    ),
-                );
-            }
-        })();
-    }, []);
+    const { data, isLoading: loading } = useGetWishlist();
+    const items = data?.wishlist || [];
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">

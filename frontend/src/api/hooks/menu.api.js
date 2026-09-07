@@ -1,78 +1,112 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient.js";
 
 export const useGetMenus = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const getMenus = useCallback(async () => {
-        setLoading(true);
-        try {
+    const { data, isLoading: loading, error } = useQuery({
+        queryKey: ["menus"],
+        queryFn: async () => {
             const response = await apiClient.get("/menus");
             return response.data;
+        }
+    });
+
+    const getMenus = async () => {
+        try {
+            return await queryClient.fetchQuery({
+                queryKey: ["menus"],
+                queryFn: async () => {
+                    const response = await apiClient.get("/menus");
+                    return response.data;
+                }
+            });
         } catch (error) {
             console.error("Error fetching menus:", error);
             throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    };
 
-    return { getMenus, loading };
+    return { getMenus, loading, data, error };
 };
 
 export const useCreateMenu = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const createMenu = useCallback(async (menuData) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (menuData) => {
             const response = await apiClient.post("/menus", menuData);
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["menus"] });
+        },
+        onError: (error) => {
             console.error("Error creating menu:", error);
-            throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    });
 
-    return { createMenu, loading };
+    const createMenu = async (menuData) => {
+        try {
+            return await mutation.mutateAsync(menuData);
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    return { createMenu, loading: mutation.isPending };
 };
 
 export const useUpdateMenu = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const updateMenu = useCallback(async (id, menuData) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async ({ id, menuData }) => {
             const response = await apiClient.put(`/menus/${id}`, menuData);
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["menus"] });
+        },
+        onError: (error) => {
             console.error("Error updating menu:", error);
-            throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    });
 
-    return { updateMenu, loading };
+    const updateMenu = async (id, menuData) => {
+        try {
+            return await mutation.mutateAsync({ id, menuData });
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    return { updateMenu, loading: mutation.isPending };
 };
 
 export const useDeleteMenu = () => {
-    const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
-    const deleteMenu = useCallback(async (id) => {
-        setLoading(true);
-        try {
+    const mutation = useMutation({
+        mutationFn: async (id) => {
             const response = await apiClient.delete(`/menus/${id}`);
             return response.data;
-        } catch (error) {
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["menus"] });
+        },
+        onError: (error) => {
             console.error("Error deleting menu:", error);
-            throw error;
-        } finally {
-            setLoading(false);
         }
-    }, []);
+    });
 
-    return { deleteMenu, loading };
+    const deleteMenu = async (id) => {
+        try {
+            return await mutation.mutateAsync(id);
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    return { deleteMenu, loading: mutation.isPending };
 };

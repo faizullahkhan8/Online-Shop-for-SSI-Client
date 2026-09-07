@@ -1,62 +1,74 @@
-import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import apiClient from "../apiClient";
 import { SMS_TEMPLATE_ROUTES } from "../routes";
 
 export const useSmsTemplates = () => {
-    const [loading, setLoading] = useState(false);
-    const [templates, setTemplates] = useState([]);
+    const queryClient = useQueryClient();
 
-    const fetchTemplates = async () => {
-        setLoading(true);
-        try {
+    const { data: templates = [], isLoading: fetchLoading, refetch: fetchTemplates } = useQuery({
+        queryKey: ["sms-templates"],
+        queryFn: async () => {
             const response = await apiClient.get(SMS_TEMPLATE_ROUTES.GET_ALL);
             if (response.data && response.data.templates) {
-                setTemplates(response.data.templates);
+                return response.data.templates;
             }
-        } catch (error) {
+            return [];
+        },
+        onError: (error) => {
             console.error("Error fetching SMS templates:", error);
             toast.error("Failed to fetch SMS templates");
-        } finally {
-            setLoading(false);
         }
-    };
+    });
 
-    const updateTemplate = async (id, data) => {
-        setLoading(true);
-        try {
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, data }) => {
             const response = await apiClient.put(`${SMS_TEMPLATE_ROUTES.UPDATE}/${id}`, data);
-            if (response.data && response.data.template) {
-                toast.success("SMS template updated successfully");
-                setTemplates(prev => prev.map(t => t._id === id ? response.data.template : t));
-                return response.data.template;
-            }
-        } catch (error) {
+            return response.data.template;
+        },
+        onSuccess: () => {
+            toast.success("SMS template updated successfully");
+            queryClient.invalidateQueries({ queryKey: ["sms-templates"] });
+        },
+        onError: (error) => {
             console.error("Error updating SMS template:", error);
             toast.error("Failed to update SMS template");
-        } finally {
-            setLoading(false);
+        }
+    });
+
+    const seedMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiClient.post(SMS_TEMPLATE_ROUTES.SEED);
+            return response.data.templates;
+        },
+        onSuccess: () => {
+            toast.success("SMS templates seeded successfully");
+            queryClient.invalidateQueries({ queryKey: ["sms-templates"] });
+        },
+        onError: (error) => {
+            console.error("Error seeding SMS templates:", error);
+            toast.error("Failed to seed SMS templates");
+        }
+    });
+
+    const updateTemplate = async (id, data) => {
+        try {
+            return await updateMutation.mutateAsync({ id, data });
+        } catch {
+            return null;
         }
     };
 
     const seedTemplates = async () => {
-        setLoading(true);
         try {
-            const response = await apiClient.post(SMS_TEMPLATE_ROUTES.SEED);
-            if (response.data && response.data.templates) {
-                toast.success("SMS templates seeded successfully");
-                setTemplates(response.data.templates);
-            }
-        } catch (error) {
-            console.error("Error seeding SMS templates:", error);
-            toast.error("Failed to seed SMS templates");
-        } finally {
-            setLoading(false);
+            return await seedMutation.mutateAsync();
+        } catch {
+            return null;
         }
     };
 
     return {
-        loading,
+        loading: fetchLoading || updateMutation.isPending || seedMutation.isPending,
         templates,
         fetchTemplates,
         updateTemplate,

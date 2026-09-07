@@ -23,14 +23,14 @@ import {
 import { useGetAllCategories } from "../../api/hooks/category.api";
 
 const MenuBuilderPage = () => {
-    const { getMenus, loading: fetchLoading } = useGetMenus();
+    const { data: menuData, isLoading: fetchLoading } = useGetMenus();
     const { createMenu, loading: createLoading } = useCreateMenu();
     const { updateMenu, loading: updateLoading } = useUpdateMenu();
     const { deleteMenu } = useDeleteMenu();
-    const { getAllCategories } = useGetAllCategories();
+    const { data: categoriesData } = useGetAllCategories();
 
-    const [menus, setMenus] = useState([]);
-    const [categories, setCategories] = useState([]);
+    const menus = menuData?.menus || [];
+    const categories = categoriesData?.categories || [];
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [expandedNodes, setExpandedNodes] = useState(new Set());
@@ -43,32 +43,7 @@ const MenuBuilderPage = () => {
         order: 0,
     });
 
-    useEffect(() => {
-        fetchData();
-        fetchCategories();
-    }, []);
-
-    const fetchData = async () => {
-        try {
-            const data = await getMenus();
-            if (data.success) {
-                setMenus(data.menus);
-            }
-        } catch (error) {
-            toast.error("Failed to load menus");
-        }
-    };
-
-    const fetchCategories = async () => {
-        try {
-            const data = await getAllCategories();
-            if (data.success) {
-                setCategories(data.categories);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    // Categories are loaded automatically via React Query
 
     const handleOpenForm = (item = null, parentId = "") => {
         if (item) {
@@ -104,7 +79,6 @@ const MenuBuilderPage = () => {
                 toast.success("Menu item created");
             }
             setIsFormOpen(false);
-            fetchData();
         } catch (error) {
             toast.error(error.response?.data?.message || "Operation failed");
         }
@@ -115,7 +89,6 @@ const MenuBuilderPage = () => {
         try {
             await deleteMenu(id);
             toast.success("Menu deleted");
-            fetchData();
         } catch (error) {
             toast.error("Failed to delete menu");
         }

@@ -8,14 +8,16 @@ import {
 } from "../../api/hooks/prescription.api.js";
 import { Eye, Trash2, X, Check, Loader, Printer, Download, MapPin } from "lucide-react";
 import { useSocket, SOCKET_EVENTS } from "../../context/SocketContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const PrescriptionsList = () => {
-    const { getAllPrescriptions, loading } = useGetAllPrescriptions();
+    const { data: prescriptionsData, isLoading: loading } = useGetAllPrescriptions();
     const { updatePrescriptionStatus } = useUpdatePrescriptionStatus();
     const { deletePrescription } = useDeletePrescription();
     const { socket } = useSocket();
+    const queryClient = useQueryClient();
     
-    const [prescriptions, setPrescriptions] = useState([]);
+    const prescriptions = prescriptionsData?.prescriptions || [];
     const [selectedImage, setSelectedImage] = useState(null);
 
     const getImageUrl = (img) => {
@@ -28,43 +30,23 @@ const PrescriptionsList = () => {
         return img;
     };
 
-    const fetchPrescriptions = async () => {
-        try {
-            const data = await getAllPrescriptions();
-            if (data.success) {
-                setPrescriptions(data.prescriptions);
-            }
-        } catch (error) {
-            toast.error("Failed to fetch prescriptions");
-        }
-    };
-
-    useEffect(() => {
-        fetchPrescriptions();
-    }, [getAllPrescriptions]);
-
     // Live socket listener for instant prescription uploads
     useEffect(() => {
         if (!socket) return;
 
-        const handleNewPrescription = (data) => {
-            if (data?.prescription) {
-                setPrescriptions(prev => [data.prescription, ...prev.filter(p => p._id !== data.prescription._id)]);
-            }
+        const handleNewPrescription = () => {
+            queryClient.invalidateQueries({ queryKey: ["prescriptions"] });
         };
 
         socket.on(SOCKET_EVENTS.PRESCRIPTION_NEW, handleNewPrescription);
         return () => socket.off(SOCKET_EVENTS.PRESCRIPTION_NEW, handleNewPrescription);
-    }, [socket]);
+    }, [socket, queryClient]);
 
     const handleStatusChange = async (id, newStatus) => {
         try {
             const data = await updatePrescriptionStatus(id, newStatus);
             if (data.success) {
-                toast.success(`Prescription marked as ${newStatus}`);
-                setPrescriptions(prescriptions.map(p => 
-                    p._id === id ? { ...p, status: newStatus, isViewed: true } : p
-                ));
+                toast.success("Status updated successfully");
             }
         } catch (error) {
             toast.error("Failed to update status");
@@ -78,7 +60,6 @@ const PrescriptionsList = () => {
             const data = await deletePrescription(id);
             if (data.success) {
                 toast.success("Prescription deleted successfully");
-                setPrescriptions(prescriptions.filter(p => p._id !== id));
             }
         } catch (error) {
             toast.error("Failed to delete prescription");
@@ -90,12 +71,7 @@ const PrescriptionsList = () => {
     const handleViewImage = async (p) => {
         setSelectedImage(p.image);
         if (!p.isViewed) {
-            const res = await markAsViewed(p._id);
-            if (res?.success) {
-                setPrescriptions(prescriptions.map(presc => 
-                    presc._id === p._id ? { ...presc, isViewed: true } : presc
-                ));
-            }
+            await markAsViewed(p._id);
         }
     };
 

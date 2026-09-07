@@ -6,59 +6,63 @@ import { useLoginUser } from "../../api/hooks/user.api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { loginUser } = useLoginUser();
+    const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onRequireVerification }) => {
+        const dispatch = useDispatch();
+        const navigate = useNavigate();
+        const { loginUser } = useLoginUser();
 
-    const [loading, setLoading] = useState(false);
+        const [loading, setLoading] = useState(false);
 
-    // Form State
-    const [identifier, setIdentifier] = useState("");
-    const [password, setPassword] = useState("");
+        // Form State
+        const [identifier, setIdentifier] = useState("");
+        const [password, setPassword] = useState("");
 
-    // Reset state when modal opens/closes
-    useEffect(() => {
-        if (isOpen) {
-            setIdentifier("");
-            setPassword("");
-        }
-    }, [isOpen]);
-
-    const handleCompleteLogin = async (e) => {
-        e.preventDefault();
-        if (!identifier || !password) {
-            toast.error("Please enter both email/phone and password.");
-            return;
-        }
-        
-        setLoading(true);
-        try {
-            // We pass both as identifier, backend checks if it's email or phone
-            const isEmail = identifier.includes("@");
-            const payload = {
-                password,
-            };
-            if (isEmail) {
-                payload.email = identifier;
-            } else {
-                payload.phone = identifier;
+        // Reset state when modal opens/closes
+        useEffect(() => {
+            if (isOpen) {
+                setIdentifier("");
+                setPassword("");
             }
+        }, [isOpen]);
 
-            const response = await loginUser(payload);
+        const handleCompleteLogin = async (e) => {
+            e.preventDefault();
+            if (!identifier || !password) {
+                toast.error("Please enter both email/phone and password.");
+                return;
+            }
             
-            if (response?.success) {
-                dispatch(loginSuccess(response.user));
-                onClose();
-            }
-        } catch (error) {
-            toast.error("Login failed.");
-        } finally {
-            setLoading(false);
-        }
-    };
+            setLoading(true);
+            try {
+                // We pass both as identifier, backend checks if it's email or phone
+                const isEmail = identifier.includes("@");
+                const payload = {
+                    password,
+                };
+                if (isEmail) {
+                    payload.email = identifier;
+                } else {
+                    payload.phone = identifier;
+                }
 
-    if (!isOpen) return null;
+                const response = await loginUser(payload);
+                
+                if (response?.success) {
+                    dispatch(loginSuccess(response.user));
+                    onClose();
+                } else if (response?.error?.userId) {
+                    if (onRequireVerification) {
+                        onRequireVerification(response.error.userId);
+                    }
+                }
+            } catch (error) {
+                toast.error("Login failed.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">

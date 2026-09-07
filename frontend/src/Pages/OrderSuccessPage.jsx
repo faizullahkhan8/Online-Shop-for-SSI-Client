@@ -19,22 +19,17 @@ import { getImageUrl, handleImageError } from "../utils/imageHelper";
 const OrderSuccessPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { getOrderById, loading } = useGetOrderById();
     const orderId = location.state?.orderId;
-    const [order, setOrder] = useState(null);
+    const { data, isLoading: loading } = useGetOrderById(orderId);
+    const order = data?.order || null;
 
     useEffect(() => {
         if (!orderId) {
             navigate("/orders");
-            return;
         }
-        (async () => {
-            const resp = await getOrderById(orderId);
-            if (resp?.order) setOrder(resp.order);
-        })();
     }, [orderId, navigate]);
 
-    if (loading || !order) {
+    if (loading || (!order && orderId)) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
                 <Loader2 className="animate-spin text-primary mb-4" size={48} />

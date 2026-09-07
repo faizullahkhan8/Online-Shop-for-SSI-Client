@@ -92,6 +92,7 @@ const Header = () => {
     const [isOrdersOpen, setIsOrdersOpen] = useState(false);
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [unverifiedUserId, setUnverifiedUserId] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [userDropDownOpen, setUserDropDownOpen] = useState(false);
@@ -99,9 +100,9 @@ const Header = () => {
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [activeMegaMenu, setActiveMegaMenu] = useState(null);
     const leaveTimer = useRef(null);
-    const { getAllCategories } = useGetAllCategories();
-    const { getMenus } = useGetMenus();
-    const { getHomePage } = useGetHomePage();
+    const { data: categoriesData } = useGetAllCategories();
+    const { data: menuData } = useGetMenus();
+    const { data: homePageData } = useGetHomePage();
     const [dbCategories, setDbCategories] = useState([]);
     const [megaMenuData, setMegaMenuData] = useState([]);
     const [topBarConfig, setTopBarConfig] = useState(null);
@@ -115,46 +116,45 @@ const Header = () => {
     const role = user?.role;
 
     useEffect(() => {
-        (async () => {
-            const homeRes = await getHomePage().catch(() => null);
-            if (homeRes?.sections) {
-                const bar = homeRes.sections.find(s => s.type === "top_micro_bar" && s.isVisible !== false);
-                if (bar) setTopBarConfig(bar.config);
-            }
+        if (homePageData?.sections) {
+            const bar = homePageData.sections.find(s => s.type === "top_micro_bar" && s.isVisible !== false);
+            if (bar) setTopBarConfig(bar.config);
+        }
+    }, [homePageData]);
 
-            const res = await getAllCategories();
-            if (res?.success) setDbCategories(res.categories);
+    useEffect(() => {
+        if (categoriesData?.success) {
+            setDbCategories(categoriesData.categories);
+        }
+    }, [categoriesData]);
+
+    useEffect(() => {
+        if (menuData?.success) {
+            // Deep clone the menu data so we can mutate it safely
+            let dynamicMenu = JSON.parse(JSON.stringify(menuData.menus || []));
+            // Map API fields (title/link) to component expected fields (name/path)
+            const mapMenuKeys = (nodes) => {
+                nodes.forEach(node => {
+                    node.name = node.title;
+                    node.path = node.link;
+                    node.isHighlight = node.type === "PROMOTION";
+                    if (node.children) mapMenuKeys(node.children);
+                });
+            };
+            mapMenuKeys(dynamicMenu);
             
-            const menuRes = await getMenus();
-            if (menuRes?.success) {
-                // Map API fields (title/link) to component expected fields (name/path)
-                const mapMenuKeys = (nodes) => {
-                    nodes.forEach(node => {
-                        node.name = node.title;
-                        node.path = node.link;
-                        node.isHighlight = node.type === "PROMOTION";
-                        if (node.children) mapMenuKeys(node.children);
-                    });
-                };
-                
-                // Fallback to empty array if no menus
-                let dynamicMenu = menuRes.menus || [];
-                mapMenuKeys(dynamicMenu);
-                
-                // If there are literally no menus created yet, we can show a placeholder or let it be empty
-                if (dynamicMenu.length === 0) {
-                     dynamicMenu.push({
-                         name: "Special Offers",
-                         path: "/promotions",
-                         isHighlight: true,
-                         children: [],
-                     });
-                }
-                
-                setMegaMenuData(dynamicMenu);
+            if (dynamicMenu.length === 0) {
+                 dynamicMenu.push({
+                     name: "Special Offers",
+                     path: "/promotions",
+                     isHighlight: true,
+                     children: [],
+                 });
             }
-        })();
-    }, []);
+            
+            setMegaMenuData(dynamicMenu);
+        }
+    }, [menuData]);
 
     // Global keyboard shortcut (Ctrl+K / Cmd+K) to open search modal
     useEffect(() => {
@@ -428,11 +428,16 @@ const Header = () => {
 
             <RegisterModal 
                 isOpen={isRegisterOpen} 
-                onClose={() => setIsRegisterOpen(false)} 
+                onClose={() => {
+                    setIsRegisterOpen(false);
+                    setUnverifiedUserId(null);
+                }} 
                 onSwitchToLogin={() => { 
                     setIsRegisterOpen(false); 
+                    setUnverifiedUserId(null);
                     setIsLoginOpen(true); 
-                }} 
+                }}
+                initialUserId={unverifiedUserId}
             />
 
             <LoginModal 
@@ -441,7 +446,12 @@ const Header = () => {
                 onSwitchToRegister={() => { 
                     setIsLoginOpen(false); 
                     setIsRegisterOpen(true); 
-                }} 
+                }}
+                onRequireVerification={(userId) => {
+                    setIsLoginOpen(false);
+                    setUnverifiedUserId(userId);
+                    setIsRegisterOpen(true);
+                }}
             />
         </header>
     );
