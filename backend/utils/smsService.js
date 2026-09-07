@@ -84,24 +84,25 @@ export const sendSMS = async (eventName, phone, payload = {}) => {
             return false;
         }
 
-        const apiKey = process.env.TEXTBEE_API_KEY;
-        const deviceId = "6a8ef9caf3dc6f0f7b861672";
+        const username = process.env.SMS_GATE_USERNAME;
+        const password = process.env.SMS_GATE_PASSWORD;
 
-        if (!apiKey) {
-            console.warn("SMS Service: TEXTBEE_API_KEY is not set in environment variables. SMS not sent.");
+        if (!username || !password) {
+            console.warn("SMS Service: SMS_GATE_USERNAME or SMS_GATE_PASSWORD is not set. SMS not sent.");
             return false;
         }
 
-        const res = await fetch('https://api.textbee.dev/api/v1/gateway/send-sms', {
+        const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
+
+        const res = await fetch('https://api.sms-gate.app/3rdparty/v1/message', {
             method: 'POST',
             headers: {
-                'x-api-key': apiKey,
+                'Authorization': `Basic ${basicAuth}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                deviceId,
-                recipients: [normalizedPhone],
-                message: finalMessage,
+                textMessage: { text: finalMessage },
+                phoneNumbers: [normalizedPhone],
             }),
         });
 
@@ -111,7 +112,7 @@ export const sendSMS = async (eventName, phone, payload = {}) => {
             console.log(`SMS Service: Successfully sent SMS for ${eventName} to ${normalizedPhone}`);
             return true;
         } else {
-            console.error(`SMS Service: Failed to send SMS via Textbee. Response:`, data);
+            console.error(`SMS Service: Failed to send SMS via sms-gate.app. Response:`, data);
             return false;
         }
     } catch (error) {
