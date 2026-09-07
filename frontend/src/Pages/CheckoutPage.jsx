@@ -323,6 +323,27 @@ const CheckoutPage = () => {
         return false;
     };
 
+    const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+    const loadingMessages = [
+        "Verifying your order...",
+        "Checking inventory...",
+        "Processing details...",
+        "Finalizing placement...",
+        "Almost there..."
+    ];
+
+    useEffect(() => {
+        let interval;
+        if (isLoading) {
+            interval = setInterval(() => {
+                setLoadingMessageIndex(prev => (prev + 1) % loadingMessages.length);
+            }, 1500);
+        } else {
+            setLoadingMessageIndex(0);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading]);
+
     const processOrder = async (orderData, savePermanently) => {
         try {
             if (savePermanently && user) {
@@ -728,6 +749,22 @@ const CheckoutPage = () => {
                                 Cancel
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Full Screen Loading Overlay */}
+            {isLoading && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in duration-300">
+                        <div className="w-16 h-16 bg-primary-pale rounded-full flex items-center justify-center mb-6 relative">
+                            <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping" />
+                            <Loader2 className="text-primary animate-spin relative z-10" size={32} />
+                        </div>
+                        <h2 className="text-xl font-black text-gray-900 mb-2">Processing Order</h2>
+                        <p className="text-sm font-bold text-gray-500 animate-pulse">
+                            {loadingMessages[loadingMessageIndex]}
+                        </p>
                     </div>
                 </div>
             )}

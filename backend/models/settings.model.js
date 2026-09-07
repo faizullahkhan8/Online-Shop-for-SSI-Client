@@ -41,6 +41,14 @@ const settingsSchema = new Schema(
                 orderValueThreshold: { type: Number, default: 1000 },
                 overrideFee: { type: Number, default: 0 }
             }
+        },
+        smsGatewayUsername: {
+            type: String,
+            default: "",
+        },
+        smsGatewayPassword: {
+            type: String,
+            default: "",
         }
     },
     {

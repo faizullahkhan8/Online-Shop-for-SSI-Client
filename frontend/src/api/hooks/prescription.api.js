@@ -62,11 +62,12 @@ export const useUploadPrescription = () => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (formData) => {
+        mutationFn: async ({ formData, onUploadProgress }) => {
             const response = await apiClient.post("/prescriptions", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
+                onUploadProgress,
             });
             return response.data;
         },
@@ -79,9 +80,9 @@ export const useUploadPrescription = () => {
         }
     });
 
-    const uploadPrescription = async (formData) => {
+    const uploadPrescription = async (formData, onUploadProgress) => {
         try {
-            return await mutation.mutateAsync(formData);
+            return await mutation.mutateAsync({ formData, onUploadProgress });
         } catch (error) {
             throw error;
         }

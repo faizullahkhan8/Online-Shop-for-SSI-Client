@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Truck, Receipt, Save, Loader2, CreditCard, Plus, Trash2, Image as ImageIcon, MapPin } from "lucide-react";
+import { Truck, Receipt, Save, Loader2, CreditCard, Plus, Trash2, Image as ImageIcon, MapPin, MessageSquare } from "lucide-react";
 import Input from "../../UI/Input.jsx";
 import Select from "../../UI/Select.jsx";
 import { useGetSettings, useUpdateSettings } from "../../api/hooks/settings.api";
@@ -33,6 +33,8 @@ const TaxShippingSettings = () => {
         shippingMethod: "standard",
         paymentMethods: [],
         advancedShipping: DEFAULT_ADV_SHIPPING,
+        smsGatewayUsername: "",
+        smsGatewayPassword: "",
     });
     
     const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -116,6 +118,8 @@ const TaxShippingSettings = () => {
                         ...(settingsData.settings.advancedShipping?.conditionalOverride || {})
                     }
                 },
+                smsGatewayUsername: settingsData.settings.smsGatewayUsername || "",
+                smsGatewayPassword: settingsData.settings.smsGatewayPassword || "",
             });
         }
     }, [settingsData]);
@@ -128,6 +132,8 @@ const TaxShippingSettings = () => {
             shippingMethod: form.shippingMethod,
             paymentMethods: form.paymentMethods,
             advancedShipping: form.advancedShipping,
+            smsGatewayUsername: form.smsGatewayUsername,
+            smsGatewayPassword: form.smsGatewayPassword,
         });
     };
 
@@ -577,6 +583,42 @@ const TaxShippingSettings = () => {
                                 <p className="text-sm text-gray-500">No custom payment methods added.</p>
                             </div>
                         )}
+                    </div>
+                </section>
+
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 flex flex-col gap-6">
+                    <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
+                            <MessageSquare size={20} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 tracking-tight">SMS Gateway Credentials</h2>
+                            <p className="text-sm text-gray-500 font-medium">Update username and password for sms-gate.app (Encrypted in database)</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">SMS Gateway Username</label>
+                            <Input
+                                type="text"
+                                value={form.smsGatewayUsername}
+                                onChange={(e) => setForm({ ...form, smsGatewayUsername: e.target.value })}
+                                placeholder="Enter Username"
+                                className="w-full text-sm font-bold bg-gray-50"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">SMS Gateway Password</label>
+                            <Input
+                                type="text"
+                                value={form.smsGatewayPassword}
+                                onChange={(e) => setForm({ ...form, smsGatewayPassword: e.target.value })}
+                                placeholder="Enter Password"
+                                className="w-full text-sm font-bold bg-gray-50"
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">Leave as is if you do not want to change it. This field displays the decrypted password.</p>
+                        </div>
                     </div>
                 </section>
 

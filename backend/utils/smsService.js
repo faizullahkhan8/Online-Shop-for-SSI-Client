@@ -1,4 +1,5 @@
-import { getLocalSmsTemplateModel } from "../config/localDb.js";
+import { getLocalSmsTemplateModel, getLocalSettingsModel } from "../config/localDb.js";
+import { decrypt } from "./encryption.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -51,12 +52,15 @@ const normalizePhoneNumber = (phone) => {
 export const sendSMS = async (eventName, phone, payload = {}) => {
     try {
         const SmsTemplateModel = getLocalSmsTemplateModel();
-        if (!SmsTemplateModel) {
+        const SettingsModel = getLocalSettingsModel();
+        
+        if (!SmsTemplateModel || !SettingsModel) {
             console.warn("SMS Service: Database model not found.");
             return false;
         }
 
         const templateDoc = await SmsTemplateModel.findOne({ eventName });
+        const settingsDoc = await SettingsModel.findOne();
         
         let messageText = "";
 
@@ -84,8 +88,15 @@ export const sendSMS = async (eventName, phone, payload = {}) => {
             return false;
         }
 
-        const username = process.env.SMS_GATE_USERNAME;
-        const password = process.env.SMS_GATE_PASSWORD;
+        // 1. Check DB first for dynamic settings
+        let username = settingsDoc?.smsGatewayUsername;
+        let password = settingsDoc?.smsGatewayPassword ? decrypt(settingsDoc.smsGatewayPassword) : null;
+        
+        // 2. Fallback to ENV if DB is empty
+        if (!username || !password) {
+            username = process.env.SMS_GATE_USERNAME;
+            password = process.env.SMS_GATE_PASSWORD;
+        }
 
         if (!username || !password) {
             console.warn("SMS Service: SMS_GATE_USERNAME or SMS_GATE_PASSWORD is not set. SMS not sent.");

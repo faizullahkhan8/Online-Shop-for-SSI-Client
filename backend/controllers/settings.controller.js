@@ -1,6 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import { getLocalSettingsModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
+import { encrypt, decrypt } from "../utils/encryption.js";
 
 export const getSettings = expressAsyncHandler(async (req, res, next) => {
     const SettingsModel = getLocalSettingsModel();
@@ -15,10 +16,16 @@ export const getSettings = expressAsyncHandler(async (req, res, next) => {
         });
     }
 
+    // Decrypt the password for the admin response
+    const settingsResponse = settings.toObject();
+    if (settingsResponse.smsGatewayPassword) {
+        settingsResponse.smsGatewayPassword = decrypt(settingsResponse.smsGatewayPassword) || "";
+    }
+
     return res.status(200).json({
         success: true,
         message: "Settings fetched.",
-        settings,
+        settings: settingsResponse,
     });
 });
 
@@ -26,7 +33,7 @@ export const updateSettings = expressAsyncHandler(async (req, res, next) => {
     const SettingsModel = getLocalSettingsModel();
     if (!SettingsModel) return next(new ErrorResponse("Model not found!", 400));
 
-    const { taxAmount, shippingFee, shippingMethod, paymentMethods, advancedShipping } = req.body;
+    const { taxAmount, shippingFee, shippingMethod, paymentMethods, advancedShipping, smsGatewayUsername, smsGatewayPassword } = req.body;
 
     let settings = await SettingsModel.findOne();
     if (!settings) {
@@ -36,11 +43,22 @@ export const updateSettings = expressAsyncHandler(async (req, res, next) => {
             shippingMethod: shippingMethod || "standard",
             paymentMethods: paymentMethods || [],
             advancedShipping: advancedShipping || undefined,
+            smsGatewayUsername: smsGatewayUsername || "",
+            smsGatewayPassword: smsGatewayPassword ? encrypt(smsGatewayPassword) : "",
         });
     } else {
         settings.taxAmount = Number(taxAmount) || 0;
         settings.shippingFee = Number(shippingFee) || 0;
         settings.shippingMethod = shippingMethod || settings.shippingMethod;
+        
+        if (smsGatewayUsername !== undefined) {
+            settings.smsGatewayUsername = smsGatewayUsername;
+        }
+        
+        if (smsGatewayPassword !== undefined) {
+            settings.smsGatewayPassword = smsGatewayPassword ? encrypt(smsGatewayPassword) : "";
+        }
+
         if (paymentMethods !== undefined) {
             settings.paymentMethods = paymentMethods;
         }
@@ -50,9 +68,14 @@ export const updateSettings = expressAsyncHandler(async (req, res, next) => {
         await settings.save({ validateModifiedOnly: true });
     }
 
+    const settingsResponse = settings.toObject();
+    if (settingsResponse.smsGatewayPassword) {
+        settingsResponse.smsGatewayPassword = decrypt(settingsResponse.smsGatewayPassword) || "";
+    }
+
     return res.status(200).json({
         success: true,
         message: "Settings updated.",
-        settings,
+        settings: settingsResponse,
     });
 });

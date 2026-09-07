@@ -198,6 +198,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                         className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -210,9 +211,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                         type="tel"
                                         required
                                         placeholder="03XX-XXXXXXX"
-                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -226,9 +228,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                     <input
                                         type="email"
                                         placeholder="name@example.com"
-                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -241,9 +244,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                         type="password"
                                         required
                                         placeholder="Create a password"
-                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -256,9 +260,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                         type="password"
                                         required
                                         placeholder="Confirm your password"
-                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
+                                        disabled={loading}
                                     />
                                 </div>
                             </div>
@@ -268,8 +273,15 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                 disabled={loading || !name || !phone || !password || !confirmPassword}
                                 className="w-full h-12 mt-6 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? <Loader2 className="animate-spin" size={18} /> : "Continue"} 
-                                {!loading && <ChevronRight size={18} />}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={18} /> Saving details...
+                                    </>
+                                ) : (
+                                    <>
+                                        Continue <ChevronRight size={18} />
+                                    </>
+                                )}
                             </button>
                             
                             <div className="mt-6 text-center border-t border-gray-100 pt-6">
@@ -300,13 +312,14 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                         value={digit}
                                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                                        className="w-14 h-14 bg-gray-50 border-2 border-gray-100 rounded-xl text-center text-xl font-black text-gray-900 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                        disabled={loading}
+                                        className="w-14 h-14 bg-gray-50 border-2 border-gray-100 rounded-xl text-center text-xl font-black text-gray-900 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 ))}
                             </div>
                             
                             <div className="text-center">
-                                <button type="button" onClick={handleResendOTP} className="text-xs font-bold text-primary hover:text-primary-dark transition-colors">
+                                <button type="button" onClick={handleResendOTP} disabled={loading} className="text-xs font-bold text-primary hover:text-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                     Resend Code
                                 </button>
                             </div>
@@ -316,7 +329,13 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                 disabled={loading || otp.join("").length < 6}
                                 className="w-full h-12 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? <Loader2 className="animate-spin" size={18} /> : "Verify OTP"}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={18} /> Verifying code...
+                                    </>
+                                ) : (
+                                    "Verify OTP"
+                                )}
                             </button>
                             
                             <div className="text-center mt-4">

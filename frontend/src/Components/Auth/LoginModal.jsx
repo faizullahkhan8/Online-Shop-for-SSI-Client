@@ -104,6 +104,7 @@ import { useNavigate } from "react-router-dom";
                                     className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
@@ -116,9 +117,10 @@ import { useNavigate } from "react-router-dom";
                                     type="password"
                                     required
                                     placeholder="Enter your password"
-                                    className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                                    className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
@@ -128,8 +130,16 @@ import { useNavigate } from "react-router-dom";
                             disabled={loading || !identifier || !password}
                             className="w-full h-12 mt-6 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-md hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
-                            {loading ? <Loader2 className="animate-spin" size={18} /> : "Log In"} 
-                            {!loading && <ChevronRight size={18} />}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={18} /> 
+                                    Logging in...
+                                </>
+                            ) : (
+                                <>
+                                    Log In <ChevronRight size={18} />
+                                </>
+                            )}
                         </button>
                         
                         <div className="mt-6 text-center border-t border-gray-100 pt-6">

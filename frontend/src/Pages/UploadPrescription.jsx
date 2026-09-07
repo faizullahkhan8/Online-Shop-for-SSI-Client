@@ -160,8 +160,11 @@ const UploadPrescription = () => {
         return false;
     };
 
+    const [uploadProgress, setUploadProgress] = useState(0);
+
     const processPrescription = async (formData, savePermanently) => {
         try {
+            setUploadProgress(1); // Start progress
             if (savePermanently && user) {
                 const updatedUser = {
                     ...user,
@@ -182,15 +185,23 @@ const UploadPrescription = () => {
                 }
             }
 
-            const response = await uploadPrescription(formData);
+            const response = await uploadPrescription(formData, (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(percentCompleted);
+            });
+            
             if (response.success) {
                 toast.success("Prescription submitted successfully!");
                 navigate("/");
             }
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to submit prescription.");
+            setUploadProgress(0);
         } finally {
             setShowAddressPrompt(false);
+            if (uploadProgress === 100) {
+                setTimeout(() => setUploadProgress(0), 1000);
+            }
         }
     };
 
@@ -405,17 +416,34 @@ const UploadPrescription = () => {
                                 <button 
                                     onClick={handlePlaceOrder}
                                     disabled={loading || !imagePreview}
-                                    className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-md flex justify-center items-center gap-2 cursor-pointer ${
+                                    className={`w-full relative overflow-hidden py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-md flex justify-center items-center gap-2 cursor-pointer ${
                                         !imagePreview 
                                             ? "bg-gray-100 text-gray-400 shadow-none cursor-not-allowed" 
                                             : "bg-primary text-white hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5"
                                     }`}
                                 >
-                                    {loading ? (
-                                        <><Loader size={18} className="animate-spin" /> Processing...</>
-                                    ) : (
-                                        "Submit Prescription"
+                                    {/* Progress Bar Background Fill */}
+                                    {loading && uploadProgress > 0 && (
+                                        <div 
+                                            className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out" 
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
                                     )}
+
+                                    <div className="relative z-10 flex items-center gap-2">
+                                        {loading ? (
+                                            <>
+                                                <Loader size={18} className="animate-spin" /> 
+                                                {uploadProgress > 0 && uploadProgress < 100 
+                                                    ? `Uploading ${uploadProgress}%` 
+                                                    : uploadProgress === 100 
+                                                        ? "Processing..." 
+                                                        : "Starting..."}
+                                            </>
+                                        ) : (
+                                            "Submit Prescription"
+                                        )}
+                                    </div>
                                 </button>
                                 {!imagePreview && (
                                     <p className="text-center text-xs font-bold text-amber-500 mt-3">
@@ -443,13 +471,33 @@ const UploadPrescription = () => {
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => processPrescription(pendingFormData, true)}
-                                className="w-full bg-primary text-white py-3.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-primary-dark transition-all cursor-pointer"
+                                disabled={loading}
+                                className="w-full relative overflow-hidden bg-primary text-white py-3.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-primary-dark transition-all cursor-pointer disabled:opacity-80"
                             >
-                                Save Permanently & Submit
+                                {/* Progress Bar */}
+                                {loading && uploadProgress > 0 && (
+                                    <div 
+                                        className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out" 
+                                        style={{ width: `${uploadProgress}%` }}
+                                    />
+                                )}
+                                <div className="relative z-10 flex items-center justify-center gap-2">
+                                    {loading ? (
+                                        <>
+                                            <Loader size={18} className="animate-spin" /> 
+                                            {uploadProgress > 0 && uploadProgress < 100 
+                                                ? `Uploading ${uploadProgress}%` 
+                                                : "Processing..."}
+                                        </>
+                                    ) : (
+                                        "Save Permanently & Submit"
+                                    )}
+                                </div>
                             </button>
                             <button
                                 onClick={() => processPrescription(pendingFormData, false)}
-                                className="w-full bg-gray-100 text-gray-700 py-3.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all cursor-pointer"
+                                disabled={loading}
+                                className="w-full bg-gray-100 text-gray-700 py-3.5 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all cursor-pointer disabled:opacity-50"
                             >
                                 Just for this Request
                             </button>
