@@ -33,6 +33,7 @@ const homePageSchema = new Schema(
                         "custom_html",
                         "whatsapp_fab",
                         "spacer",
+                        "footer",
                     ],
                 },
                 isVisible: { type: Boolean, default: true },

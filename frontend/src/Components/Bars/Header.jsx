@@ -178,12 +178,10 @@ const Header = () => {
     };
 
     const handleSignOut = async () => {
-        const response = await logoutUser();
-        if (response.success) {
-            dispatch(logout());
-            setUserDropDownOpen(false);
-            navigate("/");
-        }
+        await logoutUser();
+        dispatch(logout());
+        setUserDropDownOpen(false);
+        navigate("/");
     };
 
     const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);

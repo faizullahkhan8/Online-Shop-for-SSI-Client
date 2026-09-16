@@ -1,4 +1,6 @@
 import axios from "axios"
+import { store } from "../store/store";
+import { logout } from "../store/slices/authSlice";
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
@@ -46,6 +48,7 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 isRefreshing = false;
                 processQueue(refreshError, null);
+                store.dispatch(logout());
                 return Promise.reject(refreshError);
             }
         }

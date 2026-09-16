@@ -23,7 +23,7 @@ router.post("/register", registerUser);
 router.post("/verify-phone", verifyPhone);
 router.post("/resend-otp", resendOTP);
 router.post("/login", loginUser);
-router.post("/logout", isAuth, logoutUser);
+router.post("/logout", logoutUser);
 router.get("/get/:id", isAuth, getUser);
 router.put(
     "/update/:id",

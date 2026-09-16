@@ -12,6 +12,7 @@ const ProductCard = ({ product }) => {
     const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
+    const dispatch = useDispatch();
 
     const productId = product?._id || product?.id;
 

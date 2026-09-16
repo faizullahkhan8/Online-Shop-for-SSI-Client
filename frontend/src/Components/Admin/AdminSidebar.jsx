@@ -21,6 +21,7 @@ import {
     LayoutTemplate,
     Building2,
     MessageSquare,
+    Settings as SettingsIcon,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -358,6 +359,13 @@ const AdminSidebar = () => {
                         icon={<MessageSquare size={18} />}
                     >
                         SMS Templates
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/settings" />}
+                        icon={<SettingsIcon size={18} />}
+                    >
+                        Settings
                     </MenuItem>
 
                     {/* Bottom Actions */}

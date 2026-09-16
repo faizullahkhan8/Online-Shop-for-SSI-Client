@@ -29,6 +29,7 @@ const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
 const ProductsListPage = lazy(() => import("./Pages/Admin/ProductsListPage"));
 const AddProductPage = lazy(() => import("./Pages/Admin/AddProductPage"));
 const TaxShippingPage = lazy(() => import("./Pages/Admin/TaxShippingPage"));
+const SettingsPage = lazy(() => import("./Pages/Admin/SettingsPage"));
 const CategoriesListPage = lazy(() => import("./Pages/Admin/CategoriesListPage"));
 const VendorsListPage = lazy(() => import("./Pages/Admin/VendorsListPage"));
 const OrdersListPage = lazy(() => import("./Pages/Admin/OrdersListPage"));
@@ -135,6 +136,7 @@ const App = () => {
                         <Route index element={<DashboardPage />} />
                         <Route path="products" element={<ProductsListPage />} />
                         <Route path="products/add" element={<AddProductPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
                         <Route path="settings/tax-shipping" element={<TaxShippingPage />} />
                         <Route path="categories" element={<CategoriesListPage />} />
                         <Route path="vendors" element={<VendorsListPage />} />

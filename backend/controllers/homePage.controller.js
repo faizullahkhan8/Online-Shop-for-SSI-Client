@@ -450,10 +450,21 @@ export const updateHomePage = expressAsyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("sections array is required", 400));
     }
 
+    // Clean up invalid or temporary IDs from sections
+    const cleanedSections = sections.map(section => {
+        const cleaned = { ...section };
+        // Mongoose ObjectIds are exactly 24 character hex strings. 
+        // If it's a temporary ID, or anything else, remove it so Mongoose generates a new one.
+        if (cleaned._id && !/^[a-fA-F0-9]{24}$/.test(String(cleaned._id))) {
+            delete cleaned._id;
+        }
+        return cleaned;
+    });
+
     // Upsert — create if not exists, update if exists
     const doc = await HomePageModel.findOneAndUpdate(
         {},
-        { sections },
+        { sections: cleanedSections },
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

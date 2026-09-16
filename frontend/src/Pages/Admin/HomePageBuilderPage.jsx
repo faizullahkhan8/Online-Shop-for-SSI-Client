@@ -11,6 +11,7 @@ import { useGetHomePage, useUpdateHomePage, useResetHomePage, useUploadHomePageI
 import { useGetAllVendors } from "../../api/hooks/vendor.api.js";
 import { useNavigate } from "react-router-dom";
 import HomePage from "../HomePage";
+import Footer from "../../Components/Home/Footer";
 import ProductSelector from "../../Components/Admin/ProductSelector";
 
 /* ─── Section Type Meta ────────────────────────────────────────────────── */
@@ -40,9 +41,29 @@ const SECTION_META = {
     custom_html: { label: "Custom HTML Block", icon: "🖥️", color: "bg-gray-100 text-gray-700", category: "Utility" },
     whatsapp_fab: { label: "WhatsApp FAB", icon: "💬", color: "bg-green-100 text-green-700", category: "Utility" },
     spacer: { label: "Spacer / Divider", icon: "➖", color: "bg-gray-100 text-gray-500", category: "Utility" },
+    footer: { label: "Global Footer", icon: "🦶", color: "bg-gray-800 text-white", category: "Utility" },
 };
 
 const ALL_SECTION_TYPES = Object.keys(SECTION_META);
+
+const DEFAULT_LAYOUT = [
+    { type: "announcement_bar" },
+    { type: "hero" },
+    { type: "trust_badges" },
+    { type: "categories" },
+    { type: "ribbon" },
+    { type: "promo_banners" },
+    { type: "payment_strip" },
+    { type: "products_grid", gridVariant: "standard" },
+    { type: "mid_banners" },
+    { type: "products_grid", gridVariant: "deals" },
+    { type: "app_download" },
+    { type: "featured_category" },
+    { type: "conditions" },
+    { type: "blogs" },
+    { type: "brands" },
+    { type: "footer" }
+];
 
 /* ─── Add Section Picker ─────────────────────────────────────────────── */
 const SECTION_DEFAULTS = {
@@ -71,6 +92,15 @@ const SECTION_DEFAULTS = {
     custom_html: { config: { html: "<!-- Add your custom HTML here -->", label: "Custom Block" } },
     whatsapp_fab: { config: { phoneNumber: "+923001234567", message: "Hello! I need help with my order.", position: "right" } },
     spacer: { config: { height: 40, showDivider: false, dividerColor: "#E5E7EB" } },
+    footer: { config: { 
+        copyright: "© 2026 Zada Online Pharmacy. All Rights Reserved.",
+        categoriesLinks: [{ name: "Medicines", path: "/products?category=Medicines" }],
+        quickLinks: [{ name: "About Us", path: "/about-us" }],
+        supportLinks: [{ name: "Contact Support", path: "/contact-us" }],
+        socialLinks: [{ platform: "Facebook", url: "#", color: "hover:bg-[#1877F2]" }],
+        trustBadges: [{ icon: "Truck", title: "Free Delivery", desc: "Orders above Rs 999" }],
+        contact: { phone: "+923001234567", email: "support@example.com", address: "Karachi, Pakistan" }
+    }},
 };
 
 /* ─── Section Edit Forms ─────────────────────────────────────────────── */
@@ -940,6 +970,98 @@ const EditForm = ({ section, onChange }) => {
                 </div>
             );
 
+        case "footer":
+            const renderLinkList = (listKey, titleKey, defaultTitle, label) => (
+                <div className="mb-4 border border-gray-100 rounded-xl p-3 bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-bold text-gray-700">{label} Configuration</label>
+                    </div>
+                    <div className="mb-3">
+                        <input type="text" placeholder="Section Heading (e.g. Categories)" value={cfg[titleKey] !== undefined ? cfg[titleKey] : defaultTitle} onChange={e => set(titleKey, e.target.value)} className="w-full text-xs font-bold p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                    </div>
+                    {(cfg[listKey] || []).map((link, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                            <input type="text" placeholder="Name" value={link.name} onChange={e => set(listKey, cfg[listKey].map((l, idx) => idx === i ? { ...l, name: e.target.value } : l))} className="w-1/2 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                            <input type="text" placeholder="Path" value={link.path} onChange={e => set(listKey, cfg[listKey].map((l, idx) => idx === i ? { ...l, path: e.target.value } : l))} className="w-1/2 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                            <button onClick={() => set(listKey, cfg[listKey].filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1"><Trash2 size={13} /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => set(listKey, [...(cfg[listKey] || []), { name: "New Link", path: "/" }])} className="text-xs text-primary font-bold mt-1">
+                        + Add {label} Link
+                    </button>
+                </div>
+            );
+
+            return (
+                <div className="space-y-4">
+                    <TextField label="Copyright Text" value={cfg.copyright} onChange={v => set("copyright", v)} />
+                    
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                        <label className="block text-xs font-bold text-gray-700 mb-3">Contact Info</label>
+                        <TextField label="Phone" value={cfg.contact?.phone} onChange={v => set("contact", { ...cfg.contact, phone: v })} />
+                        <TextField label="Email" value={cfg.contact?.email} onChange={v => set("contact", { ...cfg.contact, email: v })} />
+                        <TextField label="Address" value={cfg.contact?.address} onChange={v => set("contact", { ...cfg.contact, address: v })} />
+                    </div>
+
+                    {renderLinkList("categoriesLinks", "categoriesLinksTitle", "Categories", "Categories Links")}
+                    {renderLinkList("quickLinks", "quickLinksTitle", "Quick Links", "Quick Links")}
+                    {renderLinkList("supportLinks", "supportLinksTitle", "Support", "Support Links")}
+
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50 mb-4">
+                        <label className="block text-xs font-bold text-gray-700 mb-2">Social Links</label>
+                        {(cfg.socialLinks || []).map((link, i) => (
+                            <div key={i} className="flex gap-2 mb-2 items-center">
+                                <select 
+                                    value={link.platform} 
+                                    onChange={e => {
+                                        const newPlatform = e.target.value;
+                                        let defaultColor = link.color;
+                                        if (newPlatform === "Facebook") defaultColor = "hover:bg-[#1877F2]";
+                                        else if (newPlatform === "Instagram") defaultColor = "hover:bg-[#E1306C]";
+                                        else if (newPlatform === "Twitter") defaultColor = "hover:bg-[#1DA1F2]";
+                                        else if (newPlatform === "Youtube") defaultColor = "hover:bg-[#FF0000]";
+                                        else if (newPlatform === "Linkedin") defaultColor = "hover:bg-[#0A66C2]";
+                                        set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, platform: newPlatform, color: defaultColor } : l));
+                                    }} 
+                                    className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white"
+                                >
+                                    <option value="New" disabled>Select Platform</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Twitter">Twitter / X</option>
+                                    <option value="Youtube">Youtube</option>
+                                    <option value="Linkedin">LinkedIn</option>
+                                </select>
+                                <input type="text" placeholder="URL" value={link.url} onChange={e => set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, url: e.target.value } : l))} className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                                <input type="text" placeholder="Color Class (e.g. hover:bg-[#1877F2])" value={link.color} onChange={e => set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, color: e.target.value } : l))} className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                                <button onClick={() => set("socialLinks", cfg.socialLinks.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1"><Trash2 size={13} /></button>
+                            </div>
+                        ))}
+                        <button onClick={() => set("socialLinks", [...(cfg.socialLinks || []), { platform: "Facebook", url: "#", color: "hover:bg-[#1877F2]" }])} className="text-xs text-primary font-bold mt-1">
+                            + Add Social Link
+                        </button>
+                    </div>
+
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50 mb-4">
+                        <label className="block text-xs font-bold text-gray-700 mb-2">Trust Badges</label>
+                        {(cfg.trustBadges || []).map((badge, i) => (
+                            <div key={i} className="border border-gray-200 rounded-lg p-2 mb-2 bg-white flex gap-2 flex-col">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs font-bold text-gray-500">Badge {i + 1}</span>
+                                    <button onClick={() => set("trustBadges", cfg.trustBadges.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                </div>
+                                <input type="text" placeholder="Icon (lucide icon name e.g. Truck)" value={badge.icon} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, icon: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                                <input type="text" placeholder="Title" value={badge.title} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, title: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                                <input type="text" placeholder="Description" value={badge.desc} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, desc: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                            </div>
+                        ))}
+                        <button onClick={() => set("trustBadges", [...(cfg.trustBadges || []), { icon: "Check", title: "New Badge", desc: "" }])} className="text-xs text-primary font-bold mt-1">
+                            + Add Trust Badge
+                        </button>
+                    </div>
+                </div>
+            );
+
         default:
             return (
                 <div className="p-4 text-xs text-gray-400 text-center border border-dashed border-gray-200 rounded-xl">
@@ -1549,6 +1671,7 @@ const HomePageBuilderPage = () => {
                     <div className="flex-1 overflow-y-auto">
                         <div className="w-full bg-white min-h-full pb-32">
                             <HomePage previewSections={sections} activePreviewIdx={activeIdx} />
+                            <Footer previewSections={sections} />
                         </div>
                     </div>
                 </div>
