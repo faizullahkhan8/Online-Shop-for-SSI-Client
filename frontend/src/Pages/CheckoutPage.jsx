@@ -407,6 +407,8 @@ const CheckoutPage = () => {
 
         const formattedItems = validItems.map((item) => ({
             product: item._id,
+            variantId: item.variantId,
+            variantName: item.variantName,
             quantity: item.quantity,
             price: item.price,
             totalAmount: item.totalPrice,
@@ -465,7 +467,7 @@ const CheckoutPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
-            <div className="container mx-auto px-4 max-w-[1200px]">
+            <div className="site-shell">
                 <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-8">
                     <Link to="/cart" className="hover:text-primary transition-colors flex items-center gap-1.5">
                         <ArrowLeft size={14} /> Back to Cart

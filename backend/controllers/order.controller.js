@@ -86,11 +86,20 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                     );
                 }
 
-                // SECURITY: Re-calculate the price on server side
-                const { price: effectivePrice } = await getEffectivePrice(
-                    tempProd._id,
-                    tempProd.price,
-                );
+                const selectedVariant = item.variantId
+                    ? tempProd.variants?.id(item.variantId)
+                    : null;
+                if (item.variantId && (!selectedVariant || selectedVariant.active === false)) {
+                    throw new ErrorResponse(`Selected variant is unavailable for ${tempProd.name}`, 400);
+                }
+                const basePrice = selectedVariant
+                    ? Number(selectedVariant.price)
+                    : Number(tempProd.price);
+                const effectivePrice = (await getEffectivePrice(tempProd._id, basePrice)).price;
+
+                if (!Number.isFinite(effectivePrice) || effectivePrice < 0) {
+                    throw new ErrorResponse(`Invalid price computed for product ${tempProd.name}`, 400);
+                }
 
                 if (quantity <= 0) {
                     throw new ErrorResponse(
@@ -99,7 +108,16 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                     );
                 }
 
-                if (tempProd.stock < quantity) {
+                const variantStockTotal = (tempProd.variants || [])
+                    .filter((variant) => variant.active !== false)
+                    .reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
+                const usesSharedStock = Boolean(
+                    selectedVariant && variantStockTotal === 0 && Number(tempProd.stock) > 0,
+                );
+                const availableStock = selectedVariant && !usesSharedStock
+                    ? selectedVariant.stock
+                    : tempProd.stock;
+                if (availableStock < quantity) {
                     throw new ErrorResponse(
                         `Product ${tempProd.name} is out of stock or requested quantity exceeds available stock`,
                         400,
@@ -108,6 +126,10 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
 
                 return {
                     product: item.product,
+                    variantId: selectedVariant?._id,
+                    variantName: selectedVariant?.name || "",
+                    variantSku: selectedVariant?.sku || "",
+                    usesSharedStock,
                     quantity,
                     price: effectivePrice,
                     totalAmount: effectivePrice * quantity,
@@ -127,10 +149,52 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
         orderUserId = userId;
     }
 
+    // Verify products and variants exist before mutating stock
+    for (const prod of normalizedItems) {
+        const tempProd = await ProductModel.findById(prod.product);
+        if (!tempProd) {
+            return next(
+                new ErrorResponse(`Product not found: ${prod.product}`, 404),
+            );
+        }
+        if (prod.variantId && !prod.usesSharedStock) {
+            const variant = tempProd.variants?.id(prod.variantId);
+            if (!variant) {
+                return next(
+                    new ErrorResponse(
+                        `Variant not found for product ${tempProd.name}`,
+                        400,
+                    ),
+                );
+            }
+        }
+    }
+
     // Process stock and sold count
     for (const prod of normalizedItems) {
         const tempProd = await ProductModel.findById(prod.product);
-        tempProd.stock -= prod.quantity;
+        if (!tempProd) {
+            return next(
+                new ErrorResponse(`Product not found: ${prod.product}`, 404),
+            );
+        }
+        if (prod.variantId && !prod.usesSharedStock) {
+            const variant = tempProd.variants?.id(prod.variantId);
+            if (!variant) {
+                return next(
+                    new ErrorResponse(
+                        `Variant not found for product ${tempProd.name}`,
+                        400,
+                    ),
+                );
+            }
+            variant.stock -= prod.quantity;
+            tempProd.stock = tempProd.variants
+                .filter((item) => item.active !== false)
+                .reduce((sum, item) => sum + (Number(item.stock) || 0), 0);
+        } else {
+            tempProd.stock -= prod.quantity;
+        }
         tempProd.sold += prod.quantity;
         await tempProd.save({ validateModifiedOnly: true });
     }
@@ -386,8 +450,25 @@ export const cancelOrder = expressAsyncHandler(async (req, res, next) => {
         if (item.status !== "cancelled") {
             const product = await ProductModel.findById(item.product);
             if (product) {
-                product.stock += item.quantity;
-                product.sold -= item.quantity;
+                if (item.variantId && !item.usesSharedStock) {
+                    const variant = product.variants?.id(item.variantId);
+                    if (variant) {
+                        variant.stock += item.quantity;
+                        product.stock = product.variants
+                            .filter((entry) => entry.active !== false)
+                            .reduce((sum, entry) => sum + (Number(entry.stock) || 0), 0);
+                    } else {
+                        const hasActiveVariants = (product.variants || []).some(
+                            (entry) => entry.active !== false,
+                        );
+                        if (!hasActiveVariants) {
+                            product.stock += item.quantity;
+                        }
+                    }
+                } else {
+                    product.stock += item.quantity;
+                }
+                product.sold = Math.max(0, product.sold - item.quantity);
                 await product.save({ validateModifiedOnly: true });
             }
             item.status = "cancelled"; // Mark all items as cancelled
@@ -440,8 +521,25 @@ export const cancelOrderItem = expressAsyncHandler(async (req, res, next) => {
     // Restore stock
     const product = await ProductModel.findById(item.product);
     if (product) {
-        product.stock += item.quantity;
-        product.sold -= item.quantity;
+        if (item.variantId && !item.usesSharedStock) {
+            const variant = product.variants?.id(item.variantId);
+            if (variant) {
+                variant.stock += item.quantity;
+                product.stock = product.variants
+                    .filter((entry) => entry.active !== false)
+                    .reduce((sum, entry) => sum + (Number(entry.stock) || 0), 0);
+            } else {
+                const hasActiveVariants = (product.variants || []).some(
+                    (entry) => entry.active !== false,
+                );
+                if (!hasActiveVariants) {
+                    product.stock += item.quantity;
+                }
+            }
+        } else {
+            product.stock += item.quantity;
+        }
+        product.sold = Math.max(0, product.sold - item.quantity);
         await product.save({ validateModifiedOnly: true });
     }
 

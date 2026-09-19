@@ -143,15 +143,6 @@ const Header = () => {
             };
             mapMenuKeys(dynamicMenu);
             
-            if (dynamicMenu.length === 0) {
-                 dynamicMenu.push({
-                     name: "Special Offers",
-                     path: "/promotions",
-                     isHighlight: true,
-                     children: [],
-                 });
-            }
-            
             setMegaMenuData(dynamicMenu);
         }
     }, [menuData]);
@@ -202,7 +193,7 @@ const Header = () => {
             {/* ── 1. TOP MICRO BAR */}
             {topBarConfig ? (
                 <div style={{ backgroundColor: topBarConfig.bgColor, color: topBarConfig.textColor }} className="py-1.5 transition-colors">
-                    <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
+                    <div className="site-shell">
                         {topBarConfig.style === "marquee" ? (
                             <div className="marquee-container overflow-hidden w-full flex items-center">
                                 <div className="animate-marquee flex items-center gap-8 whitespace-nowrap text-[11px] font-bold tracking-wide">
@@ -234,28 +225,10 @@ const Header = () => {
                         )}
                     </div>
                 </div>
-            ) : (
-                <div className="bg-primary-dark text-white py-1.5">
-                    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-primary-pale">
-                            <Clock size={12} className="text-primary-light shrink-0" />
-                            <span>Express 2-Hour Delivery in Karachi, Lahore &amp; Islamabad</span>
-                        </div>
-                        <div className="hidden sm:flex items-center divide-x divide-white/20 text-[11px] font-medium text-primary-pale">
-                            <span className="flex items-center gap-1.5 pr-4">
-                                <ShieldCheck size={12} className="text-primary-light" />
-                                100% Genuine &amp; Licensed
-                            </span>
-                            <a href="tel:021111633422" className="flex items-center gap-1.5 pl-4 hover:text-white transition-colors">
-                                <PhoneCall size={11} /> (021) 111-633-422
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
+            ) : null}
 
             {/* ── 2. MAIN HEADER BAR */}
-            <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-2.5">
+            <div className="site-shell py-2.5">
                 <div className="flex items-center gap-4 lg:gap-6">
 
                     {/* Logo */}
@@ -374,7 +347,7 @@ const Header = () => {
 
             {/* ── 3. MEGA NAV STRIP */}
             <div className="hidden md:block border-t border-gray-100 bg-white relative z-40">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <nav className="flex flex-wrap items-center justify-start gap-y-1">
                         {megaMenuData.map((cat) => {
                             const isActive = activeMegaMenu === cat.name;

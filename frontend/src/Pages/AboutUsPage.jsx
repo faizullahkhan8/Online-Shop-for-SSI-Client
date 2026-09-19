@@ -6,7 +6,7 @@ const AboutUs = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="container mx-auto px-4 lg:px-8 py-8">
+            <div className="site-shell py-8">
                 <div className="text-center max-w-3xl mx-auto pb-6 border-b border-gray-200">
                     <h1 className="text-3xl lg:text-4xl font-semibold text-gray-900 mb-3">
                         About E-Shop
@@ -20,7 +20,7 @@ const AboutUs = () => {
 
             {/* Admin Section */}
             <section className="py-8 lg:py-12">
-                <div className="container mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                         <div className="grid lg:grid-cols-2 gap-0">
                             {/* Admin Image */}
@@ -110,7 +110,7 @@ const AboutUs = () => {
 
             {/* Mission & Vision */}
             <section className="py-8 bg-white border-y border-gray-200">
-                <div className="container mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-6">
                         <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                             <h3 className="text-xl font-semibold text-gray-900 mb-3">
@@ -143,7 +143,7 @@ const AboutUs = () => {
 
             {/* CTA Section */}
             <section className="py-12">
-                <div className="container mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg p-10 text-white text-center shadow-md">
                         <h2 className="text-2xl lg:text-3xl font-semibold mb-3">
                             Ready to Start Shopping?

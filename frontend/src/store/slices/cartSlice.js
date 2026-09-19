@@ -17,13 +17,18 @@ const cartSlice = createSlice({
                 newItem.effectivePrice !== undefined
                     ? newItem.effectivePrice
                     : newItem.price;
+            const cartKey = newItem.variantId ? `${newItem._id}:${newItem.variantId}` : newItem._id;
             const existingItem = state.items.find(
-                (item) => item._id === newItem._id,
+                (item) => (item.cartKey || item._id) === cartKey,
             );
             if (!existingItem) {
                 const finalQty = newItem.stock !== undefined && qty > newItem.stock ? newItem.stock : qty;
                 state.items.push({
                     _id: newItem._id,
+                    cartKey,
+                    variantId: newItem.variantId,
+                    variantName: newItem.variantName,
+                    selectedVariant: newItem.selectedVariant,
                     name: newItem.name,
                     price: priceToUse,
                     originalPrice: newItem.price,
@@ -51,10 +56,11 @@ const cartSlice = createSlice({
             );
         },
         removeFromCart: (state, action) => {
-            const { _id } = action.payload;
-            const existingItem = state.items.find((item) => item._id === _id);
+            const { _id, cartKey } = action.payload;
+            const key = cartKey || _id;
+            const existingItem = state.items.find((item) => (item.cartKey || item._id) === key);
             if (existingItem) {
-                state.items = state.items.filter((item) => item._id !== _id);
+                state.items = state.items.filter((item) => (item.cartKey || item._id) !== key);
                 state.totalAmount = state.items.reduce(
                     (total, item) => total + item.totalPrice,
                     0,
@@ -67,8 +73,9 @@ const cartSlice = createSlice({
             }
         },
         updateQuantity: (state, action) => {
-            const { _id, quantity } = action.payload;
-            const existingItem = state.items.find((item) => item._id === _id);
+            const { _id, cartKey, quantity } = action.payload;
+            const key = cartKey || _id;
+            const existingItem = state.items.find((item) => (item.cartKey || item._id) === key);
             if (existingItem && quantity > 0) {
                 const finalQty = existingItem.stock !== undefined && quantity > existingItem.stock
                     ? existingItem.stock
@@ -92,8 +99,9 @@ const cartSlice = createSlice({
             state.selectedTotalAmount = 0;
         },
         toggleItemSelection: (state, action) => {
-            const { _id } = action.payload;
-            const item = state.items.find((item) => item._id === _id);
+            const { _id, cartKey } = action.payload;
+            const key = cartKey || _id;
+            const item = state.items.find((item) => (item.cartKey || item._id) === key);
             if (item) {
                 item.selected = !item.selected;
                 state.selectedTotalAmount = state.items.reduce(

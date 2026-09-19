@@ -26,7 +26,7 @@ const PromotionsPage = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <main className="py-8">
-                <div className="container mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="flex flex-col items-center text-center mb-8 space-y-3 pb-6 border-b border-gray-200">
                         <div className="flex items-center gap-2">
                             <Tag className="text-blue-600" size={20} />

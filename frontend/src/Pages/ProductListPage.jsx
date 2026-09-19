@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import {
     LayoutGrid,
     List,
@@ -13,15 +13,22 @@ import ProductCard from "../Components/ProductCard.jsx";
 import ProductListItem from "../Components/ProductListItem";
 import Pagination from "../Components/Pagination";
 import { useGetAllProducts } from "../api/hooks/product.api";
+import useScrollReveal from "../hooks/useScrollReveal";
 
 const ProductListPage = () => {
     const [viewMode, setViewMode] = useState("grid");
+    const productsGridRef = useRef(null);
     const [searchParams, setSearchParams] = useSearchParams();
+    useScrollReveal(productsGridRef);
 
     const page = parseInt(searchParams.get("page") || "1");
     const searchQuery = searchParams.get("search");
 
-    const { data: productsData, isLoading: productLoading } = useGetAllProducts({ page, search: searchQuery });
+    const {
+        data: productsData,
+        loading: productLoading,
+        error: productError,
+    } = useGetAllProducts({ page, search: searchQuery });
     const products = productsData?.products || [];
     const totalPages = productsData?.totalPages || 1;
 
@@ -40,7 +47,7 @@ const ProductListPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-screen">
-            <div className="container mx-auto px-4 lg:px-8 py-6 lg:py-8">
+            <div className="site-shell py-6 lg:py-8">
                 <div className="mb-6">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-gray-200">
                         <div>
@@ -108,6 +115,16 @@ const ProductListPage = () => {
                                     Loading products...
                                 </p>
                             </div>
+                        ) : productError ? (
+                            <div className="bg-white border border-red-200 rounded-2xl py-16 px-6 flex flex-col items-center justify-center shadow-2xs">
+                                <PackageSearch size={32} className="text-red-400 mb-4" />
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                    Products could not be loaded
+                                </h3>
+                                <p className="text-gray-500 text-sm max-w-md text-center">
+                                    Please refresh the page or try again in a moment.
+                                </p>
+                            </div>
                         ) : products?.length === 0 ? (
                             <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 flex flex-col items-center justify-center shadow-2xs">
                                 <div className="w-20 h-20 bg-[#F4F8EE] rounded-2xl flex items-center justify-center mb-4 text-[#74AA34]">
@@ -124,6 +141,7 @@ const ProductListPage = () => {
                             </div>
                         ) : (
                             <div
+                                ref={productsGridRef}
                                 className={
                                     viewMode === "grid"
                                         ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"

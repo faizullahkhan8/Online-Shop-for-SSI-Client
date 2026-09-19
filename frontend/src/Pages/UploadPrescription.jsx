@@ -237,7 +237,7 @@ const UploadPrescription = () => {
         <div className="bg-gray-50 min-h-[85vh] pb-20">
             {/* Header Section */}
             <div className="bg-white border-b border-gray-200 pt-6 pb-10">
-                <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">
                         <Link to="/" className="hover:text-primary transition-colors">Home</Link>
                         <ChevronRight size={14} />
@@ -260,7 +260,7 @@ const UploadPrescription = () => {
                 </div>
             </div>
 
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-8 mt-8">
+            <div className="site-shell mt-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* Left Column: Upload & Guidelines */}

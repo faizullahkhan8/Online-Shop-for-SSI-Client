@@ -25,18 +25,18 @@ const CartPage = () => {
     const dispatch = useDispatch();
     const { items, selectedTotalAmount } = useSelector((state) => state.cart);
 
-    const handleRemove = (_id) => dispatch(removeFromCart({ _id }));
-    const handleQuantityChange = (_id, qty, stock) => {
+    const handleRemove = (cartKey) => dispatch(removeFromCart({ cartKey }));
+    const handleQuantityChange = (cartKey, qty, stock) => {
         if (qty >= 1) {
             if (stock !== undefined && qty > stock) {
                 toast.warning(`Only ${stock} items available in stock.`);
                 return;
             }
-            dispatch(updateQuantity({ _id, quantity: qty }));
+            dispatch(updateQuantity({ cartKey, quantity: qty }));
         }
     };
     const handleClearCart = () => dispatch(clearCart());
-    const handleToggleSelection = (_id) => dispatch(toggleItemSelection({ _id }));
+    const handleToggleSelection = (cartKey) => dispatch(toggleItemSelection({ cartKey }));
     const handleToggleAllSelection = () => {
         const allSelected = items.every((item) => item.selected);
         dispatch(toggleAllSelection({ selected: !allSelected }));
@@ -47,7 +47,7 @@ const CartPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
-            <div className="container mx-auto px-4 lg:px-8 max-w-[1200px]">
+            <div className="site-shell">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                     <div>
@@ -106,7 +106,7 @@ const CartPage = () => {
                         ) : (
                             items.map((item) => (
                                 <div
-                                    key={item._id}
+                                    key={item.cartKey || item._id}
                                     className={`bg-white rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row gap-5 sm:gap-6 items-start sm:items-center transition-all duration-200 relative group overflow-hidden ${
                                         item.selected 
                                             ? "border-2 border-primary-light shadow-md" 
@@ -115,7 +115,7 @@ const CartPage = () => {
                                 >
                                     {/* Selection Toggle (Mobile floating, Desktop inline) */}
                                     <button
-                                        onClick={() => handleToggleSelection(item._id)}
+                                        onClick={() => handleToggleSelection(item.cartKey || item._id)}
                                         className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 w-8 h-8 flex items-center justify-center transition-colors cursor-pointer shrink-0 z-10 bg-white rounded-lg"
                                     >
                                         {item.selected ? (
@@ -149,6 +149,7 @@ const CartPage = () => {
                                                 {item.name}
                                             </Link>
                                         </div>
+                                        {item.variantName && <p className="text-xs font-bold text-primary mt-1 mb-2">{item.variantName}</p>}
                                         
                                         {item.stock < item.quantity && (
                                             <div className="mb-2">
@@ -176,7 +177,7 @@ const CartPage = () => {
                                             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 h-10 overflow-hidden shadow-inner">
                                                 <button
                                                     disabled={!item.selected}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity - 1, item.stock)}
+                                                    onClick={() => handleQuantityChange(item.cartKey || item._id, item.quantity - 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
                                                     <Minus size={16} />
@@ -186,7 +187,7 @@ const CartPage = () => {
                                                 </span>
                                                 <button
                                                     disabled={!item.selected}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity + 1, item.stock)}
+                                                    onClick={() => handleQuantityChange(item.cartKey || item._id, item.quantity + 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                                 >
                                                     <Plus size={16} />
@@ -195,7 +196,7 @@ const CartPage = () => {
 
                                             <button
                                                 disabled={!item.selected}
-                                                onClick={() => handleRemove(item._id)}
+                                                onClick={() => handleRemove(item.cartKey || item._id)}
                                                 className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 px-3 py-2.5 rounded-xl transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                             >
                                                 <Trash2 size={16} /> <span className="hidden sm:inline">Remove</span>

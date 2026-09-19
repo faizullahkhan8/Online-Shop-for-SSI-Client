@@ -5,8 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 import LoadingSpinner from "./Components/LoadingSpinner";
 import ScrollToTop from "./Components/ScrollToTop";
-import AboutPage from "./Pages/AboutUsPage";
-import AdminLayout from "./Layout/AdminLayout.jsx";
+const AboutPage = lazy(() => import("./Pages/AboutUsPage"));
+const AdminLayout = lazy(() => import("./Layout/AdminLayout.jsx"));
 
 const BaseLayout = lazy(() => import("./Layout/BaseLayout"));
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -23,6 +23,7 @@ const ContactUsPage = lazy(() => import("./Pages/ContactUsPage"));
 const PromotionsPage = lazy(() => import("./Pages/PromotionsPage.jsx"));
 const UploadPrescription = lazy(() => import("./Pages/UploadPrescription"));
 const StaffTreePage = lazy(() => import("./Pages/StaffTreePage"));
+const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 
 // Admin Pages
 const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
@@ -122,6 +123,7 @@ const App = () => {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route path="*" element={<NotFoundPage />} />
                     </Route>
 
                     {/* Admin Routes */}

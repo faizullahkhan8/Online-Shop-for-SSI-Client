@@ -1,5 +1,5 @@
 import expressAsyncHandler from "express-async-handler";
-import { getLocalStaffModel } from "../config/localDb.js";
+import { getLocalStaffModel, getLocalHomePageModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 
 // @desc    Get all staff nodes
@@ -109,4 +109,41 @@ export const deleteStaff = expressAsyncHandler(async (req, res, next) => {
         success: true,
         data: {},
     });
+});
+
+// Team hero uses its own update so editing it cannot overwrite homepage sections.
+export const getTeamHero = expressAsyncHandler(async (req, res, next) => {
+    const HomePageModel = getLocalHomePageModel();
+    if (!HomePageModel) return next(new ErrorResponse("HomePage model not found", 500));
+
+    const page = await HomePageModel.findOne({}).select("teamHero");
+    res.json({ success: true, data: page?.teamHero || {} });
+});
+
+export const updateTeamHero = expressAsyncHandler(async (req, res, next) => {
+    const HomePageModel = getLocalHomePageModel();
+    if (!HomePageModel) return next(new ErrorResponse("HomePage model not found", 500));
+
+    const fields = ["enabled", "image", "imageFileId", "mobileImage", "mobileFileId", "alt", "eyebrow", "heading", "description", "buttonText", "focusX", "focusY", "mobileFocusX", "mobileFocusY"];
+    const update = {};
+    for (const field of fields) {
+        if (req.body[field] === undefined) continue;
+        const value = req.body[field];
+        const numeric = ["focusX", "focusY", "mobileFocusX", "mobileFocusY"].includes(field);
+        if ((numeric && (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100)) || (field === "enabled" && typeof value !== "boolean") || (!numeric && field !== "enabled" && typeof value !== "string")) {
+            return next(new ErrorResponse("Invalid team hero field: " + field, 400));
+        }
+        if (["image", "mobileImage"].includes(field) && value && !/^(https:\/\/|\/(?!\/))/.test(value)) {
+            return next(new ErrorResponse("Use an uploaded image or an HTTPS image URL", 400));
+        }
+        update["teamHero." + field] = value;
+    }
+    if (!Object.keys(update).length) return next(new ErrorResponse("No hero settings provided", 400));
+    try {
+        const page = await HomePageModel.findOneAndUpdate({}, { $set: update }, { upsert: true, returnDocument: "after", runValidators: true });
+        res.json({ success: true, data: page.teamHero });
+    } catch (error) {
+        if (error.name === "ValidationError") return next(new ErrorResponse("Please check the hero text length and image settings", 400));
+        throw error;
+    }
 });

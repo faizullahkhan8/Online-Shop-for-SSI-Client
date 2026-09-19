@@ -12,7 +12,11 @@ const ProductList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const page = parseInt(searchParams.get("page") || "1");
 
-    const { data: productsData, isLoading: getAllProductsLoading } = useGetAllProducts({ page, limit: 10 });
+    const {
+        data: productsData,
+        loading: getAllProductsLoading,
+        error: getAllProductsError,
+    } = useGetAllProducts({ page, limit: 10 });
     const products = productsData?.products || [];
     const totalPages = productsData?.totalPages || 1;
 
@@ -99,6 +103,20 @@ const ProductList = () => {
                                         </div>
                                     </td>
                                 </tr>
+                            ) : getAllProductsError ? (
+                                <tr>
+                                    <td colSpan={5} className="py-24 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <PackageOpen size={48} className="text-red-300" strokeWidth={1.5} />
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                Products could not be loaded
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                Please refresh the page or check the backend connection.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
                             ) : products.length > 0 ? (
                                 products.map((product) => (
                                     <tr
@@ -128,10 +146,17 @@ const ProductList = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-semibold text-gray-900">
-                                                Rs{" "}
-                                                {Number(
-                                                    product.price,
-                                                ).toLocaleString()}
+                                                {(() => {
+                                                    const prices = (product.variants || [])
+                                                        .filter((variant) => variant.active !== false)
+                                                        .map((variant) => Number(variant.price))
+                                                        .filter(Number.isFinite);
+                                                    const low = prices.length ? Math.min(...prices) : Number(product.price);
+                                                    const high = prices.length ? Math.max(...prices) : low;
+                                                    return high === low
+                                                        ? `Rs ${low.toLocaleString()}`
+                                                        : `Rs ${low.toLocaleString()} – Rs ${high.toLocaleString()}`;
+                                                })()}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">

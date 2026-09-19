@@ -4,7 +4,7 @@ import { getImageUrl, handleImageError } from "../../utils/imageHelper";
 
 const CategoriesSection = ({ config, categories }) => {
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-12">
+        <section className="site-shell mt-12">
             <SectionHeader 
                 title={config.title} 
                 subtitle={config.subtitle} 

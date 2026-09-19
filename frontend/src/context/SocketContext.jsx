@@ -30,7 +30,7 @@ export const SocketProvider = ({ children }) => {
         // Connect to root namespace via proxy or direct URL
         const backendUrl =
             import.meta.env.VITE_SOCKET_URL ||
-            (window.location.hostname === "localhost" ? "http://localhost:3000" : window.location.origin);
+            (window.location.hostname === "localhost" ? "http://localhost:5174" : window.location.origin);
 
         const socketInstance = io(backendUrl, {
             withCredentials: true,

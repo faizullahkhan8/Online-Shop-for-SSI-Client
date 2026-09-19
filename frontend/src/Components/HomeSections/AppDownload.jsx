@@ -4,7 +4,7 @@ import QRCode from "react-qr-code";
 const AppDownload = ({ config }) => {
     const titleLines = (config.title || "").split("\n");
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <div className="relative rounded-3xl bg-primary-pale/40 border border-primary-light overflow-hidden shadow-sm">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     {/* Decorative circles */}

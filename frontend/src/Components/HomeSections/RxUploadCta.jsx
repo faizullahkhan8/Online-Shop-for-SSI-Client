@@ -3,7 +3,7 @@ import { FileText, Upload } from "lucide-react";
 
 const RxUploadCta = ({ config }) => {
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <div className="rounded-3xl p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden bg-primary-dark">
                 {/* Decorative blob */}
                 <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>

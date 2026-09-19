@@ -4,7 +4,7 @@ import { getImageUrl, handleImageError } from "../../utils/imageHelper";
 
 const PromoBanners = ({ config }) => {
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-6">
+        <section className="site-shell mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(config.banners || []).map((b, i) => (
                     <div key={i}
@@ -69,4 +69,3 @@ const PromoBanners = ({ config }) => {
 };
 
 export default PromoBanners;
-

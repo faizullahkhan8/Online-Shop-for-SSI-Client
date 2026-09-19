@@ -12,11 +12,26 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
     if (!ProductModel)
         return next(new ErrorResponse("Product model not found", 500));
 
-    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock } = JSON.parse(
-        req.body?.data,
-    );
+    const payload = JSON.parse(req.body?.data);
+    const { name, slug, productType, vendor, description, details, badges, category, lowStock } = payload;
+    const variants = Array.isArray(payload.variants) ? payload.variants : [];
+    const activeVariants = variants.filter((variant) => variant.active !== false);
+    const variantPrices = activeVariants
+        .filter((variant) => variant.price !== "" && variant.price !== null && variant.price !== undefined)
+        .map((variant) => Number(variant.price))
+        .filter(Number.isFinite);
+    const hasVariants = activeVariants.length > 0;
+    
+    if (hasVariants && variantPrices.length !== activeVariants.length) {
+        return next(new ErrorResponse("Every active variant must have a valid price", 400));
+    }
 
-    if (!name || !price || !category || !stock || !lowStock)
+    const price = hasVariants ? Math.min(...variantPrices) : Number(payload.price);
+    const stock = hasVariants
+        ? activeVariants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0)
+        : Number(payload.stock);
+
+    if (!name || !Number.isFinite(price) || !category || !Number.isFinite(stock) || lowStock === undefined || lowStock === "")
         return next(new ErrorResponse("All fields are required except description", 400));
 
     let finalSlug = slug;
@@ -40,14 +55,14 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
         productType,
         vendor,
         price,
-        minPrice,
-        maxPrice,
         description,
         details: details || [],
         badges: badges || [],
         category,
         stock,
         lowStock,
+        hasVariants,
+        variants,
         image: req.uploadedImages[0]?.filePath || "",
         imagekitFileId: req.uploadedImages[0]?.fileId || "",
         images: req.uploadedImages,
@@ -229,9 +244,31 @@ export const updateProduct = expressAsyncHandler(async (req, res, next) => {
         updateData.image = updateData.images[0]?.filePath || "";
     }
 
+    if (Array.isArray(updateData.variants)) {
+        const activeVariants = updateData.variants.filter((variant) => variant.active !== false);
+        const variantPrices = activeVariants
+            .filter((variant) => variant.price !== "" && variant.price !== null && variant.price !== undefined)
+            .map((variant) => Number(variant.price))
+            .filter(Number.isFinite);
+        if (variantPrices.length !== activeVariants.length) {
+            return next(new ErrorResponse("Every active variant must have a valid price", 400));
+        }
+        updateData.hasVariants = activeVariants.length > 0;
+        if (activeVariants.length > 0) {
+            updateData.price = Math.min(...variantPrices);
+            updateData.stock = activeVariants.reduce(
+                (sum, variant) => sum + (Number(variant.stock) || 0),
+                0,
+            );
+        }
+    }
+
+    delete updateData.minPrice;
+    delete updateData.maxPrice;
+
     const updatedProduct = await ProductModel.findByIdAndUpdate(
         id,
-        { $set: updateData },
+        { $set: updateData, $unset: { minPrice: "", maxPrice: "" } },
         { new: true, runValidators: true },
     );
 

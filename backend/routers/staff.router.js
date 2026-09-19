@@ -1,6 +1,8 @@
 import express from "express";
 import {
     getStaff,
+    getTeamHero,
+    updateTeamHero,
     createStaff,
     updateStaff,
     deleteStaff,
@@ -16,6 +18,10 @@ router.use(setLocalDB);
 router.route("/")
     .get(getStaff)
     .post(isAuth, authorize("admin", "manager"), upload.single("image"), imagekitUpload, createStaff);
+
+router.route("/hero")
+    .get(getTeamHero)
+    .put(isAuth, authorize("admin"), updateTeamHero);
 
 router.route("/:id")
     .put(isAuth, authorize("admin", "manager"), upload.single("image"), imagekitUpload, updateStaff)

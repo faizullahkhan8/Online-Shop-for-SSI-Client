@@ -52,7 +52,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[90] ${
+                className={`fixed inset-0 bg-black/60 transition-opacity z-[90] ${
                     isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                 }`}
                 onClick={onClose}

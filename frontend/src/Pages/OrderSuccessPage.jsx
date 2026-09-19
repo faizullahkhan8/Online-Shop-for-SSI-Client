@@ -54,7 +54,7 @@ const OrderSuccessPage = () => {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute top-40 right-10 w-[400px] h-[400px] bg-primary-pale/20 rounded-full blur-[80px] pointer-events-none" />
             
-            <div className="container mx-auto px-4 relative z-10">
+            <div className="site-shell relative z-10">
                 <div className="max-w-3xl mx-auto">
                     
                     {/* Header Card */}
@@ -135,6 +135,9 @@ const OrderSuccessPage = () => {
                                                 </div>
                                                 <div className="flex-1 flex flex-col justify-center">
                                                     <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.product?.name || item.name || "Product Item"}</p>
+                                                    {item.variantName && (
+                                                        <p className="text-xs font-semibold text-primary mt-0.5">{item.variantName}</p>
+                                                    )}
                                                     <p className="text-xs font-semibold text-gray-500 mt-0.5">Qty: {item.quantity}</p>
                                                 </div>
                                                 <div className="flex items-center">

@@ -2,7 +2,7 @@ import { Mail } from "lucide-react";
 
 const NewsletterSection = ({ config }) => {
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <div className="rounded-3xl p-8 sm:p-12 md:p-16 text-center flex flex-col items-center justify-center border border-primary-light shadow-sm" style={{ backgroundColor: config.bgColor || "#ebf7d9" }}>
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-6 text-primary shadow-sm border border-primary-light">
                     <Mail size={28} strokeWidth={2} />

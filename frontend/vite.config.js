@@ -8,13 +8,24 @@ export default defineConfig({
     server: {
         proxy: {
             "/api": {
-                target: "http://localhost:3000",
+                target: "http://localhost:5174",
                 changeOrigin: true,
             },
             "/socket.io": {
-                target: "http://localhost:3000",
+                target: "http://localhost:5174",
                 ws: true,
                 changeOrigin: true,
+            }
+        }
+    },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    "vendor-react": ["react", "react-dom", "react-router-dom"],
+                    "vendor-state": ["@reduxjs/toolkit", "react-redux", "redux-persist"],
+                    "vendor-data": ["@tanstack/react-query", "axios"],
+                }
             }
         }
     }

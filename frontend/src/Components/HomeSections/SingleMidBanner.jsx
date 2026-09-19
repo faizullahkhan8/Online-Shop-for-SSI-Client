@@ -4,7 +4,7 @@ import { getImageUrl, handleImageError } from "../../utils/imageHelper";
 
 const SingleMidBanner = ({ config }) => {
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-6">
+        <section className="site-shell mt-6">
             <div className="relative rounded-3xl text-white overflow-hidden p-8 sm:p-12 md:p-16 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 min-h-[300px] sm:min-h-[360px] flex items-center"
                 style={{ background: `linear-gradient(to right, ${config.bgFrom || '#1e4d28'}, ${config.bgTo || '#4d8d3a'})` }}>
                 

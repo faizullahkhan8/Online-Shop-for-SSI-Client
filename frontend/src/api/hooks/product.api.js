@@ -88,9 +88,15 @@ export const useUpdateProduct = () => {
             });
             return response.data;
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             if (data) {
                 toast.success("Product updated successfully");
+                if (data.product && variables?.id) {
+                    queryClient.setQueryData(["products", variables.id], {
+                        success: true,
+                        product: { ...data.product, id: data.product._id },
+                    });
+                }
                 queryClient.invalidateQueries({ queryKey: ["products"] });
             }
         },
@@ -158,6 +164,8 @@ export const useGetProductById = (defaultId = null) => {
             return response.data;
         },
         enabled: defaultId !== null,
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 
     // Imperative fetch

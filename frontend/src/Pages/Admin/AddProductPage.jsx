@@ -33,13 +33,13 @@ const INITAIL_STATE = {
     productType: "",
     vendor: "",
     price: "",
-    minPrice: "",
-    maxPrice: "",
     description: "",
     details: [],
     category: "",
     stock: "",
     lowStock: "",
+    hasVariants: false,
+    variants: [],
     badges: [],
     image: null,
     images: [],
@@ -53,7 +53,16 @@ const AddProduct = () => {
     const parseProductFromParams = () => {
         try {
             const raw = searchParams.get("product");
-            return raw ? JSON.parse(raw) : INITAIL_STATE;
+            if (!raw) return INITAIL_STATE;
+            const parsed = JSON.parse(raw);
+            delete parsed.minPrice;
+            delete parsed.maxPrice;
+            return {
+                ...INITAIL_STATE,
+                ...parsed,
+                category: parsed.category?._id || parsed.category || "",
+                vendor: parsed.vendor?._id || parsed.vendor || "",
+            };
         } catch {
             return INITAIL_STATE;
         }
@@ -138,11 +147,56 @@ const AddProduct = () => {
         });
     };
 
+    const addVariant = () => {
+        setProductData((prev) => ({
+            ...prev,
+            hasVariants: true,
+            variants: [...(prev.variants || []), {
+                name: "", color: "", sku: "", price: prev.price || "",
+                stock: 0, lowStock: 5, imageIndex: (prev.variants || []).length,
+                active: true,
+            }],
+        }));
+    };
+
+    const updateVariant = (index, field, value) => {
+        setProductData((prev) => {
+            const variants = [...(prev.variants || [])];
+            variants[index] = { ...variants[index], [field]: value };
+            const active = variants.filter((variant) => variant.active !== false);
+            const prices = active.map((variant) => Number(variant.price)).filter(Number.isFinite);
+            const totalStock = active.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
+            return {
+                ...prev,
+                variants,
+                price: prices.length ? Math.min(...prices) : prev.price,
+                stock: totalStock,
+            };
+        });
+    };
+
+    const removeVariant = (index) => {
+        setProductData((prev) => {
+            const variants = (prev.variants || []).filter((_, variantIndex) => variantIndex !== index);
+            const active = variants.filter((variant) => variant.active !== false);
+            const prices = active.map((variant) => Number(variant.price)).filter(Number.isFinite);
+            return {
+                ...prev,
+                variants,
+                hasVariants: variants.length > 0,
+                price: prices.length ? Math.min(...prices) : prev.price,
+                stock: active.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0),
+            };
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
 
         const { image, images, ...textData } = productData;
+        delete textData.minPrice;
+        delete textData.maxPrice;
         const newImages = images?.filter((img) => img instanceof File) || [];
         const existingImages = images?.filter((img) => !(img instanceof File)) || [];
 
@@ -299,7 +353,38 @@ const AddProduct = () => {
                         </div>
 
                         {/* Pricing */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-800">Product Variants</label>
+                                    <p className="text-xs text-gray-500 mt-0.5">Add colours, scents or pack options under one product.</p>
+                                </div>
+                                <button type="button" onClick={addVariant} className="px-3 py-2 rounded-lg bg-primary-pale text-primary-dark text-xs font-bold hover:bg-primary hover:text-white transition-colors">
+                                    + Add Variant
+                                </button>
+                            </div>
+                            {(productData.variants || []).length > 0 && (
+                                <div className="space-y-3">
+                                    {productData.variants.map((variant, index) => (
+                                        <div key={index} className="grid grid-cols-2 sm:grid-cols-7 gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                                            <Input type="text" value={variant.name} placeholder="Variant name" onChange={(e) => updateVariant(index, "name", e.target.value)} required />
+                                            <Input type="text" value={variant.color} placeholder="Colour" onChange={(e) => updateVariant(index, "color", e.target.value)} />
+                                            <Input type="text" value={variant.sku} placeholder="SKU" onChange={(e) => updateVariant(index, "sku", e.target.value)} />
+                                            <Input type="number" value={variant.price} placeholder="Price" onChange={(e) => updateVariant(index, "price", e.target.value)} required />
+                                            <Input type="number" value={variant.stock} placeholder="Stock" onChange={(e) => updateVariant(index, "stock", e.target.value)} required />
+                                            <select value={variant.imageIndex} onChange={(e) => updateVariant(index, "imageIndex", Number(e.target.value))} className="rounded-lg border border-gray-200 px-2 text-xs bg-white">
+                                                {(productData.images || []).map((_, imageIndex) => <option key={imageIndex} value={imageIndex}>Image {imageIndex + 1}</option>)}
+                                            </select>
+                                            <button type="button" onClick={() => removeVariant(index)} className="rounded-lg border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50">Remove</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pricing */}
+                        {(productData.variants || []).length === 0 ? (
+                        <div className="grid grid-cols-1 gap-4">
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign
@@ -319,38 +404,16 @@ const AddProduct = () => {
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-primary" />
-                                    Min Price
-                                </label>
-                                <Input
-                                    type="number"
-                                    id="minPrice"
-                                    value={productData?.minPrice}
-                                    placeholder="Optional"
-                                    className="w-full"
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-primary" />
-                                    Max Price
-                                </label>
-                                <Input
-                                    type="number"
-                                    id="maxPrice"
-                                    value={productData?.maxPrice}
-                                    placeholder="Optional"
-                                    className="w-full"
-                                    onChange={handleChange}
-                                />
-                            </div>
                         </div>
+                        ) : (
+                            <div className="rounded-xl border border-primary/20 bg-primary-pale/30 px-4 py-3 text-sm text-gray-700">
+                                Variant price range is calculated automatically: <span className="font-bold text-primary-dark">Rs {Math.min(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()} – Rs {Math.max(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()}</span>
+                            </div>
+                        )}
 
                         {/* Stock Quantity */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={`grid ${(productData.variants || []).length === 0 ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
+                            {(productData.variants || []).length === 0 && (
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Boxes
@@ -369,6 +432,7 @@ const AddProduct = () => {
                                     required
                                 />
                             </div>
+                            )}
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Box size={14} className="text-primary" />

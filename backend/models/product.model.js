@@ -5,14 +5,21 @@ const productSchema = new Schema(
         name: { type: String, required: true },
         slug: { type: String, unique: true, sparse: true },
         productType: { type: String, default: "" },
+        brand: { type: String, default: "" },
+        shortDescription: { type: String, default: "" },
+        packSize: { type: String, default: "" },
+        tags: [{ type: String }],
+        seoTitle: { type: String, default: "" },
+        metaDescription: { type: String, default: "" },
+        searchKeywords: [{ type: String }],
+        researchSources: [{ type: String }],
+        imageSources: [{ type: String }],
         vendor: { 
             type: SchemaTypes.ObjectId, 
             ref: "Vendor", 
             default: null 
         },
         price: { type: Number, required: true },
-        minPrice: { type: Number },
-        maxPrice: { type: Number },
         description: { type: String, required: false },
         details: [
             {
@@ -30,6 +37,19 @@ const productSchema = new Schema(
         },
         stock: { type: Number, required: true },
         lowStock: { type: Number, required: true },
+        hasVariants: { type: Boolean, default: false },
+        variants: [
+            {
+                name: { type: String, required: true },
+                color: { type: String, default: "" },
+                sku: { type: String, default: "" },
+                price: { type: Number, required: true },
+                stock: { type: Number, default: 0 },
+                lowStock: { type: Number, default: 5 },
+                imageIndex: { type: Number, default: 0 },
+                active: { type: Boolean, default: true },
+            },
+        ],
         // Legacy single image support
         image: { type: String, required: false },
         imagekitFileId: { type: String, required: false },

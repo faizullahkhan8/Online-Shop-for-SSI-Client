@@ -1,9 +1,14 @@
+import { useRef } from "react";
 import { Timer } from "lucide-react";
 import ProductCard from "../ProductCard";
+import useScrollReveal from "../../hooks/useScrollReveal";
 
 const FlashSale = ({ config, products }) => {
+    const gridRef = useRef(null);
+    useScrollReveal(gridRef);
+
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <div className="flex items-end justify-between mb-7">
                 <div>
                     <div className="flex items-center gap-2 mb-1.5">
@@ -15,7 +20,7 @@ const FlashSale = ({ config, products }) => {
                     <h2 className="font-sans text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{config.title}</h2>
                 </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {products.slice(0, 6).map((prod) => (
                     <ProductCard key={prod._id || prod.id} product={prod} />
                 ))}

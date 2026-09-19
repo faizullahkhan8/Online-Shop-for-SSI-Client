@@ -3,6 +3,7 @@ import { useGetStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "../
 import LoadingSpinner from "../../Components/LoadingSpinner";
 import { Plus, Edit2, Trash2, X, Save } from "lucide-react";
 import { getImageUrl } from "../../utils/imageHelper";
+import TeamHeroEditor from "../../Components/Admin/TeamHeroEditor";
 import LexicalEditor from "../../Components/LexicalEditor";
 
 const StaffTreeBuilderPage = () => {
@@ -182,6 +183,8 @@ const StaffTreeBuilderPage = () => {
                     <Plus size={16} /> Add Staff Node
                 </button>
             </div>
+
+            <TeamHeroEditor />
 
             {getLoading ? (
                 <LoadingSpinner />

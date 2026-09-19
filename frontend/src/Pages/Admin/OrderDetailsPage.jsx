@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     useGetOrderById,
@@ -121,8 +121,8 @@ const OrderDetails = () => {
             {/* seperate item cancellation */}
             <CancellationModal
                 isOpen={cancelModal.isOpen}
-                onClose={handleOpenOrderCancelModal}
-                onConfirm={handleConfirmItemCancel}
+                onClose={() => setCancelModal({ isOpen: false, itemId: null })}
+                onConfirm={handleCancelItemConfirm}
                 loading={cancelLoading}
                 title="Cancel Item"
                 description="Are you sure you want to cancel this item? Stock will be restored and the order total will be adjusted."
@@ -283,6 +283,13 @@ const OrderDetails = () => {
                                                                         ?.name
                                                                 }
                                                             </p>
+
+                                                            {item.variantName && (
+                                                                <span className="inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary-dark">
+                                                                    {item.variantName}
+                                                                    {item.variantSku ? ` · ${item.variantSku}` : ""}
+                                                                </span>
+                                                            )}
 
                                                             {item.status ===
                                                                 "cancelled" && (

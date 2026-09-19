@@ -14,8 +14,10 @@ import {
     LogOut,
     FileText
 } from "lucide-react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useLogoutUser } from "../../api/hooks/user.api";
+import { logout } from "../../store/slices/authSlice";
 
 const MobileSideBar = ({
     isMenuOpen,
@@ -29,13 +31,23 @@ const MobileSideBar = ({
     onLoginClick,
 }) => {
     const { user } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { logoutUser } = useLogoutUser();
+
+    const handleSignOut = async () => {
+        await logoutUser();
+        dispatch(logout());
+        setIsMenuOpen(false);
+        navigate("/");
+    };
 
     return (
         <>
             {/* Overlay */}
             {isMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300"
+                    className="fixed inset-0 bg-gray-900/70 z-[60] md:hidden transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}
@@ -51,7 +63,7 @@ const MobileSideBar = ({
                     <div className="absolute top-0 right-0 p-4">
                         <button
                             onClick={() => setIsMenuOpen(false)}
-                            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
+                            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
                         >
                             <X size={20} />
                         </button>
@@ -59,7 +71,7 @@ const MobileSideBar = ({
 
                     {isAuthenticated ? (
                         <div className="flex items-center gap-4 mt-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
+                            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
                                 <User size={28} className="text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -189,7 +201,7 @@ const MobileSideBar = ({
                                 badge={cartCount}
                             />
                             {isAuthenticated && (
-                                <button onClick={() => { /* Implement if needed or use Header logic */ }} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors border-t border-gray-50 group">
+                                <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors border-t border-gray-50 group cursor-pointer">
                                     <div className="w-8 h-8 rounded-lg bg-red-100 text-red-500 flex items-center justify-center">
                                         <LogOut size={16} />
                                     </div>

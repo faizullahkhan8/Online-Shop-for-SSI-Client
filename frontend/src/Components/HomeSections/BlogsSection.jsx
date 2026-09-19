@@ -1,18 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, Leaf, Apple, Bandage } from "lucide-react";
+import { ArrowRight, BookOpen, Leaf } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 
-const DEFAULT_BLOGS = [
-    { title: "Top 7 Essential Vitamins for Daily Immunity in Summer", readTime: "4 min read", category: "Nutrition", author: "Dr. Ayesha Malik", icon: <Apple size={18} strokeWidth={2} />, accentColor: "#4d8d3a" },
-    { title: "First Aid Kit Checklist: 10 Must-Have Medicines for Every Home", readTime: "5 min read", category: "Emergency Care", author: "Pharmacist Tariq", icon: <Bandage size={18} strokeWidth={2} />, accentColor: "#4d8d3a" },
-    { title: "Seasonal Allergy Symptoms, Causes and Safe Treatment Options", readTime: "3 min read", category: "Wellness", author: "Dr. Hamza Khan", icon: <Leaf size={18} strokeWidth={2} />, accentColor: "#4d8d3a" },
-];
-
 const BlogsSection = ({ config }) => {
-    const blogsList = config.blogs?.length ? config.blogs : DEFAULT_BLOGS;
+    const blogsList = config.blogs || [];
+    if (blogsList.length === 0) return null;
 
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <SectionHeader title={config.title} subtitle={config.subtitle} cta={config.ctaText} ctaPath={config.ctaLink} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {blogsList.map((blog, idx) => {

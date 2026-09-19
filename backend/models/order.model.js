@@ -54,6 +54,10 @@ const orderSchema = new Schema(
                     type: Number,
                     required: true,
                 },
+                variantId: { type: Schema.Types.ObjectId },
+                variantName: { type: String, default: "" },
+                variantSku: { type: String, default: "" },
+                usesSharedStock: { type: Boolean, default: false },
                 price: {
                     type: Number,
                     required: true,

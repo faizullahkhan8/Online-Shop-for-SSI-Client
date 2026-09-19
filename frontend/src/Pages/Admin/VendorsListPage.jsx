@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     useGetAllVendors,
     useDeleteVendor,
@@ -45,7 +45,12 @@ const VendorsListPage = () => {
         imagePreview: null,
     });
 
-    const { data: vendorsData, loading: getAllVendorsLoading } = useGetAllVendors();
+    const {
+        getAllVendors: fetchVendors,
+        data: vendorsData,
+        loading: getAllVendorsLoading,
+        error: getAllVendorsError,
+    } = useGetAllVendors();
     const vendors = vendorsData?.vendors || [];
     const { createVendor, loading: creating } = useCreateVendor();
     const { deleteVendor, loading: deleteVendorLoading } = useDeleteVendor();
@@ -137,8 +142,8 @@ const VendorsListPage = () => {
         });
     };
 
-    const filteredVendors = vendors.filter(v => 
-        v.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredVendors = vendors.filter(v =>
+        (v.name || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -220,6 +225,20 @@ const VendorsListPage = () => {
                                         <td colSpan="3" className="p-8 text-center text-gray-400">
                                             <Loader size={24} className="animate-spin mx-auto mb-2 text-primary" />
                                             <p className="text-sm">Loading vendors...</p>
+                                        </td>
+                                    </tr>
+                                ) : getAllVendorsError ? (
+                                    <tr>
+                                        <td colSpan="3" className="p-8 text-center">
+                                            <Building2 size={32} className="mx-auto mb-3 text-red-300" />
+                                            <p className="text-sm font-semibold text-gray-800">Vendors could not be loaded.</p>
+                                            <button
+                                                type="button"
+                                                onClick={fetchVendors}
+                                                className="mt-3 text-sm font-semibold text-primary hover:text-primary-dark"
+                                            >
+                                                Try again
+                                            </button>
                                         </td>
                                     </tr>
                                 ) : filteredVendors.length === 0 ? (

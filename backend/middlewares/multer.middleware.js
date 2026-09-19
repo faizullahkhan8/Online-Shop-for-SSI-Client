@@ -77,7 +77,7 @@ export const handleOptionalBackgroundRemoval = async (req, res, next) => {
     }
 };
 
-export const imagekitUpload = async (req, res, next) => {
+export const imagekitUploadTo = (folder = "/products") => async (req, res, next) => {
     const files = req.files || (req.file ? [req.file] : []);
     if (files.length === 0) {
         return next();
@@ -88,7 +88,7 @@ export const imagekitUpload = async (req, res, next) => {
             imagekit.files.upload({
                 file: file.buffer.toString("base64"),
                 fileName: file.originalname,
-                folder: "/products",
+                folder,
                 useUniqueFileName: true,
             })
         );
@@ -116,3 +116,5 @@ export const imagekitUpload = async (req, res, next) => {
         });
     }
 };
+
+export const imagekitUpload = imagekitUploadTo("/products");

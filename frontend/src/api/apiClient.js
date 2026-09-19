@@ -4,6 +4,7 @@ import { logout } from "../store/slices/authSlice";
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
+    timeout: 15000,
     headers: {
         "Content-Type": "application/json"
     },
