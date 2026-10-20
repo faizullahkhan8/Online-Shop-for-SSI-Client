@@ -1,9 +1,46 @@
 import { Link } from "react-router-dom";
+import { ArrowRight, BookOpen, Leaf } from "lucide-react";
 import SectionHeader from "./SectionHeader";
-const validLink = value => typeof value === "string" && ((value.startsWith("/") && !value.startsWith("//")) || value.startsWith("https://"));
+
 const BlogsSection = ({ config = {} }) => {
-    const blogs = (config.blogs || []).filter(blog => validLink(blog.link || blog.url));
-    if (!blogs.length) return null;
-    return <section className="max-w-[1400px] mx-auto px-4 lg:px-8 mt-12"><SectionHeader title={config.title || "From our pharmacy"} subtitle={config.subtitle} /><div className="grid grid-cols-1 md:grid-cols-3 gap-5">{blogs.map((blog,index) => <article key={index} className="bg-white border border-gray-200 rounded-2xl p-6"><p className="text-sm text-primary-dark mb-3">{blog.category}</p><h3 className="text-lg mb-3">{blog.title}</h3>{blog.author && <p className="text-sm text-gray-600 mb-4">By {blog.author}</p>}<Link className="inline-flex py-2 text-sm font-semibold text-primary-dark underline underline-offset-4" to={blog.link || blog.url}>Read article</Link></article>)}</div></section>;
+    const blogsList = (config.blogs || []).filter(blog => typeof (blog.link || blog.url) === "string" && /^(\/(?!\/)|https:\/\/)/.test(blog.link || blog.url));
+    if (blogsList.length === 0) return null;
+
+    return (
+        <section className="site-shell mt-14">
+            <SectionHeader title={config.title} subtitle={config.subtitle} cta={config.ctaText} ctaPath={config.ctaLink} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {blogsList.map((blog, idx) => {
+                    const accentColor = blog.accentColor || "#4d8d3a";
+                    return (
+                        <article key={idx}
+                            className="bg-white rounded-3xl border border-gray-100 flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-primary/40 transition-all duration-300 group cursor-pointer overflow-hidden">
+                            <div className="h-1.5 w-full bg-primary" />
+                            <div className="p-5 sm:p-6 flex flex-col flex-1">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-10 h-10 rounded-xl bg-primary-pale text-primary flex items-center justify-center shrink-0 shadow-inner">
+                                            {blog.icon || <Leaf size={18} strokeWidth={2} />}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-primary bg-primary-pale px-3 py-1.5 rounded-full">{blog.category}</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-500 font-bold flex items-center gap-1.5">
+                                        <BookOpen size={12} className="text-gray-400" /> {blog.readTime}
+                                    </span>
+                                </div>
+                                <h3 className="font-sans font-black text-sm sm:text-base text-gray-900 group-hover:text-primary transition-colors leading-snug mb-auto">{blog.title}</h3>
+                                <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                    <span className="text-xs text-gray-500 font-bold">By {blog.author}</span>
+                                    <Link to={blog.link || blog.url} className="text-xs font-black text-primary flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
+                                        Read Article <ArrowRight size={14} strokeWidth={3} />
+                                    </Link>
+                                </div>
+                            </div>
+                        </article>
+                    );
+                })}
+            </div>
+        </section>
+    );
 };
 export default BlogsSection;

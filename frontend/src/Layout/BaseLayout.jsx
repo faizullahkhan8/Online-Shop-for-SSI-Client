@@ -18,7 +18,7 @@ const BaseLayout = () => {
         const handleOrderStatus = (data) => {
             const status = data?.order?.status || "updated";
             const orderId = data?.order?._id ? `#${data.order._id.toString().slice(-6).toUpperCase()}` : "Order";
-            
+
             toast.info(
                 <div className="flex flex-col gap-1 cursor-pointer" onClick={() => navigate("/orders")}>
                     <div className="flex items-center gap-2 font-bold text-gray-900">
@@ -35,7 +35,7 @@ const BaseLayout = () => {
 
         const handlePrescriptionStatus = (data) => {
             const status = data?.prescription?.status || "updated";
-            
+
             toast.info(
                 <div className="flex flex-col gap-1 cursor-pointer">
                     <div className="flex items-center gap-2 font-bold text-gray-900">
@@ -63,12 +63,12 @@ const BaseLayout = () => {
         <div className="min-h-screen flex flex-col font-sans selection:bg-primary/10 selection:text-primary">
             <Header />
 
-            <main className="flex-1 bg-[#fafbfc] text-slate-900 pb-20 md:pb-0">
+            <main className="flex-1 bg-surface text-slate-900 pb-20 md:pb-0">
                 <Outlet />
             </main>
 
             <Footer />
-            
+
             <MobileBottomNav />
             <GlobalWhatsappFab />
         </div>

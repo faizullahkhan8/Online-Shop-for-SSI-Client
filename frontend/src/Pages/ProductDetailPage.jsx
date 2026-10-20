@@ -15,12 +15,12 @@ import {
     Truck,
     Clock,
     MessageSquare,
-    Box,
+    Package,
 } from "lucide-react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Breadcrumb from "../Components/Breadcrumb";
-import { 
-    useGetProductById, 
+import {
+    useGetProductById,
     useGetAllProducts
 } from "../api/hooks/product.api";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
@@ -35,10 +35,12 @@ import { toast } from "react-toastify";
 
 const ProductDetailPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { data: productData, loading: productLoading, error: productError } = useGetProductById(id);
     const product = productData?.product || null;
 
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [activeTab, setActiveTab] = useState("SPECIFICATION");
     const [reviewFilter, setReviewFilter] = useState("all");
     const [showReviewForm, setShowReviewForm] = useState(false);
@@ -99,12 +101,38 @@ const ProductDetailPage = () => {
         return (sum / combinedReviews.length).toFixed(1);
     }, [combinedReviews]);
 
-    const stockValue = Number(product?.stock) || 0;
+    const activeVariants = (product?.variants || []).filter((variant) => variant.active !== false);
+    const selectedVariant = activeVariants[selectedVariantIndex] || null;
+    const variantStockTotal = activeVariants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
+    const usesSharedStock = activeVariants.length > 0 && variantStockTotal === 0 && Number(product?.stock) > 0;
+    const stockValue = Number(selectedVariant && !usesSharedStock ? selectedVariant.stock : product?.stock) || 0;
     const isOutOfStock = stockValue <= 0;
 
+    const variantPrice = variant => {
+        const price = Number(variant.price);
+        const promotion = product?.promotion;
+        if (promotion?.discountType === "PERCENTAGE") return Math.max(0, price * (1 - promotion.discountValue / 100));
+        if (promotion?.discountType === "FIXED_AMOUNT") return Math.max(0, price - promotion.discountValue);
+        return price;
+    };
     const handleAddToCart = (itemToAdd = product, qty = quantity) => {
+        if (itemToAdd !== product && (itemToAdd?.variants || []).some(variant => variant.active !== false)) { navigate(`/product/${itemToAdd._id || itemToAdd.id}`); return; }
         if (!itemToAdd || (itemToAdd === product && isOutOfStock)) return;
-        dispatch(addToCart({ ...itemToAdd, quantity: qty }));
+        const variant = itemToAdd === product ? selectedVariant : null;
+        dispatch(addToCart({
+            ...itemToAdd,
+            quantity: qty,
+            ...(variant ? {
+                selectedVariant: variant,
+                variantId: variant._id,
+                variantName: variant.name,
+                price: Number(variant.price),
+                effectivePrice: variantPrice(variant),
+                stock: stockValue,
+                usesSharedStock,
+                image: product?.images?.[variant.imageIndex]?.filePath || product?.images?.[variant.imageIndex]?.url || product?.image,
+            } : {}),
+        }));
         toast.success(`Added ${itemToAdd.name} to cart!`);
     };
 
@@ -156,9 +184,9 @@ const ProductDetailPage = () => {
 
 
 
-    const effectivePrice = product?.effectivePrice !== undefined ? product.effectivePrice : product?.price || 35;
-    const originalPrice = product?.price || 35;
-    const isDiscounted = product?.effectivePrice !== undefined && product?.effectivePrice < product?.price;
+    const effectivePrice = selectedVariant ? variantPrice(selectedVariant) : product?.effectivePrice ?? product?.price;
+    const originalPrice = selectedVariant ? Number(selectedVariant.price) : product?.price;
+    const isDiscounted = effectivePrice < originalPrice;
 
     const breadcrumbItems = [
         { label: "Home", path: "/" },
@@ -193,12 +221,12 @@ const ProductDetailPage = () => {
     const nextFbt = () => setFbtIndex((prev) => Math.min(maxFbtIndex, prev + 1));
     const visibleFbt = fbtItems.slice(fbtIndex, fbtIndex + 2);
 
-    if (productLoading) {
+    if (productLoading || (!product && !productError)) {
         return (
             <div className="w-full min-h-[70vh] flex flex-col items-center justify-center bg-white">
                 <Loader2 className="animate-spin text-[#74AA34] mb-4" size={44} />
                 <p className="text-sm font-semibold text-gray-600">
-                    Loading medicine details...
+                    Loading product details...
                 </p>
             </div>
         );
@@ -207,18 +235,18 @@ const ProductDetailPage = () => {
     if (productError || !product) return <p role="alert" className="p-8">Could not load this product. <Link to="/products">Browse products</Link></p>;
 
     return (
-        <div className="bg-[#FAFBF9] min-h-screen text-[#1F2937] font-sans pb-16 selection:bg-[#74AA34]/20 selection:text-[#3E6913]">
+        <div className="bg-surface min-h-screen text-[#1F2937] font-sans pb-16 selection:bg-primary/20 selection:text-primary-dark">
             {/* Main Container */}
-            <div className="container mx-auto px-4 lg:px-8 py-5 max-w-[1240px]">
+            <div className="site-shell pt-8 sm:pt-9 lg:pt-10 pb-5">
                 {/* Breadcrumbs */}
-                <div className="text-xs sm:text-sm text-gray-500 mb-5">
+                <div className="text-xs sm:text-sm text-gray-500 mb-6 lg:mb-7">
                     <Breadcrumb items={breadcrumbItems} />
                 </div>
 
-                {/* Top Section: Main Product + Buy Info + More from our catalog */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Top Section: Main Product + Buy Info + Frequently Bought Together */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     {/* Left Column: Product Image Showcase */}
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-xs relative flex flex-col items-center justify-center min-h-[380px] group">
+                    <div className="lg:col-span-4 h-full bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-xs relative flex flex-col items-center min-h-[420px] group">
                         {/* Wishlist Button */}
                         <button
                             onClick={() => handleWishlist(product)}
@@ -235,13 +263,14 @@ const ProductDetailPage = () => {
                         </button>
 
                         {/* Product Image */}
-                        <div className="w-full flex flex-col items-center justify-center overflow-hidden">
+                        <div className="w-full flex-1 flex flex-col items-center justify-center overflow-hidden min-h-0">
                             {(() => {
                                 const images = product?.images?.length ? product.images : (product?.image ? [{ filePath: product.image }] : []);
-                                const mainImage = images[activeImageIndex] || images[0];
+                                const displayImageIndex = selectedVariant ? Number(selectedVariant.imageIndex || 0) : activeImageIndex;
+                                const mainImage = images[displayImageIndex] || images[0];
 
                                 return mainImage ? (
-                                    <div className="w-full aspect-square max-h-[300px] flex items-center justify-center">
+                                    <div className="w-full h-[260px] sm:h-[290px] flex items-center justify-center">
                                         <img
                                             src={mainImage.url || `${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${mainImage.filePath}`}
                                             alt={product?.name}
@@ -250,7 +279,7 @@ const ProductDetailPage = () => {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="w-full aspect-square max-h-[300px] flex items-center justify-center">
+                                    <div className="w-full h-[260px] sm:h-[290px] flex items-center justify-center">
                                         <div className="w-48 h-48 rounded-xl bg-[#F4F8EE] flex flex-col items-center justify-center text-[#74AA34]">
                                             <ShieldCheck size={48} className="stroke-[1.5]" />
                                             <span className="text-xs font-semibold mt-2">Product image unavailable</span>
@@ -282,14 +311,14 @@ const ProductDetailPage = () => {
                         </div>
 
                         {/* Security Tag */}
-                        <div className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                        <div className="mt-4 shrink-0 flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
                             <ShieldCheck size={14} className="text-[#74AA34]" />
                             <span>100% Genuine & Sealed Packaging</span>
                         </div>
                     </div>
 
                     {/* Middle Column: Product Details & Purchase Actions */}
-                    <div className="lg:col-span-4 bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-7 shadow-xs flex flex-col justify-between">
+                    <div className="lg:col-span-4 h-full min-h-[420px] bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-7 shadow-xs flex flex-col justify-between">
                         <div>
                             {/* Badges */}
                             {product?.badges && product.badges.length > 0 && (
@@ -305,7 +334,7 @@ const ProductDetailPage = () => {
                             {/* Product Title & Status */}
                             <div className="flex items-start justify-between gap-4 mb-2.5">
                                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
-                                    {product?.name || "Product"}
+                                    {product.name}
                                 </h1>
                                 {isOutOfStock && (
                                     <span className="shrink-0 bg-red-100 text-red-600 font-bold text-xs px-2.5 py-1 rounded-md border border-red-200 mt-1">
@@ -335,7 +364,7 @@ const ProductDetailPage = () => {
                             <div className="text-xs sm:text-sm text-gray-600 mb-4 flex items-center gap-4 flex-wrap">
                                 {product?.vendor && (
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg shrink-0">
-                                        <Box size={14} className="text-gray-400" />
+                                        <Package size={14} className="text-gray-400" />
                                         <span className="text-xs font-bold text-gray-700 tracking-wide">
                                             {typeof product.vendor === 'object' ? product.vendor.name : product.vendor}
                                         </span>
@@ -362,12 +391,9 @@ const ProductDetailPage = () => {
                             {/* Price Line */}
                             <div className="flex items-baseline gap-3 mb-4 pb-4 border-b border-gray-100">
                                 <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                                    {product?.minPrice && product?.maxPrice
-                                        ? `Rs. ${product.minPrice.toLocaleString()} - Rs. ${product.maxPrice.toLocaleString()}`
-                                        : `Rs. ${effectivePrice?.toLocaleString()}`
-                                    }
+                                    Rs. {effectivePrice?.toLocaleString()}
                                 </span>
-                                {isDiscounted && !product?.minPrice && (
+                                {isDiscounted && !selectedVariant && (
                                     <span className="text-sm text-gray-400 line-through font-medium">
                                         Rs. {originalPrice?.toLocaleString()}
                                     </span>
@@ -375,14 +401,37 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* In Stock Badge */}
-                            <div className="mb-5">
+                            {!isOutOfStock && <div className="mb-5">
                                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3E6913] bg-[#EDF6E5] px-3 py-1 rounded-full border border-[#D5EAC3]">
                                     <Check size={14} className="stroke-[3] text-[#74AA34]" />
                                     In Stock
                                 </span>
-                            </div>
+                            </div>}
 
                             <p className="mb-5 text-sm text-gray-600">Price is per listed item. Check the product packaging for pack contents.</p>
+                            {/* Pack / Option Selector */}
+                            {activeVariants.length > 0 && <div className="mb-5">
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                                    Choose Variant:
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {activeVariants.map((variant, variantIndex) => (
+                                        <button
+                                            key={variant._id || variant.name}
+                                            type="button"
+                                            onClick={() => { setSelectedVariantIndex(variantIndex); setQuantity(1); }}
+                                            className={`text-xs font-semibold py-2 px-3 rounded-lg border transition-all text-center ${selectedVariantIndex === variantIndex
+                                                    ? "bg-[#F4F8EE] border-[#74AA34] text-[#3E6913] shadow-xs"
+                                                    : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                                                }`}
+                                        >
+                                            <span className="block">{variant.name}</span>
+                                            {variant.color && <span className="block text-[10px] opacity-70 mt-0.5">{variant.color}</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            }
                         </div>
 
                         {/* Quantity Stepper & Add to Cart CTA */}
@@ -403,7 +452,7 @@ const ProductDetailPage = () => {
                                     </span>
                                     <button
                                         onClick={() => {
-                                            const maxStock = product?.stock || 1;
+                                            const maxStock = stockValue || 1;
                                             if (quantity < maxStock) {
                                                 setQuantity(quantity + 1);
                                             } else {
@@ -445,8 +494,8 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: More from our catalog */}
-                    <div className="lg:col-span-4 bg-[#F4F8EE] rounded-2xl border border-[#E0EED2] p-5 sm:p-6 shadow-xs flex flex-col justify-between min-h-[380px]">
+                    {/* Right Column: Frequently Bought Together */}
+                    <div className="lg:col-span-4 h-full min-h-[420px] bg-[#F4F8EE] rounded-2xl border border-[#E0EED2] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-sm sm:text-base font-bold text-gray-900">
@@ -592,7 +641,7 @@ const ProductDetailPage = () => {
 
                 {/* Specification & Medical Details Sections */}
                 <div className="bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-10 shadow-xs space-y-10">
-                    {product?.details && product.details.length > 0 ? (
+                    {product.details && product.details.length > 0 ? (
                         product.details.map((detail, idx) => (
                             <React.Fragment key={`dynamic-section-${idx}`}>
                                 {idx > 0 && <div className="border-t border-gray-100" />}
@@ -845,7 +894,7 @@ const ProductDetailPage = () => {
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 auto-rows-fr items-stretch gap-4">
                         {relatedProducts.map((relProd) => (
                             <ProductCard
                                 key={relProd._id || relProd.id}

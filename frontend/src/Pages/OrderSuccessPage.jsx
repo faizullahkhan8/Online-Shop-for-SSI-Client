@@ -55,19 +55,19 @@ const OrderSuccessPage = () => {
             {/* Background Blob Effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute top-40 right-10 w-[400px] h-[400px] bg-primary-pale/20 rounded-full blur-[80px] pointer-events-none" />
-            
-            <div className="container mx-auto px-4 relative z-10">
+
+            <div className="site-shell relative z-10">
                 <div className="max-w-3xl mx-auto">
-                    
+
                     {/* Header Card */}
                     <div className="bg-white rounded-t-3xl shadow-sm border border-gray-100 p-10 text-center relative overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-primary-light via-primary to-primary-dark" />
-                        
+
                         <div className="inline-flex items-center justify-center w-24 h-24 bg-primary-pale/30 rounded-full mb-6 relative">
                             <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-50" />
                             <PartyPopper size={48} className="text-primary relative z-10 drop-shadow-sm" />
                         </div>
-                        
+
                         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
                             Thank you for your order!
                         </h1>
@@ -88,7 +88,7 @@ const OrderSuccessPage = () => {
 
                     {/* Order Details Body */}
                     <div className="bg-white shadow-sm border-x border-b border-gray-100 p-8 md:p-10 rounded-b-3xl">
-                        
+
                         {/* Status Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 pb-10 border-b border-gray-100">
                             <InfoTile icon={<Truck size={20} />} label="Delivery Method" value={order.shippingMethod || "Standard"} />
@@ -128,15 +128,18 @@ const OrderSuccessPage = () => {
                                         {order.items?.map((item) => (
                                             <div key={item.product?._id || item.product} className="flex gap-4">
                                                 <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center p-2 border border-gray-100 shrink-0">
-                                                    <img 
-                                                        src={getImageUrl(item.product?.image || item.image)} 
-                                                        alt={item.name} 
+                                                    <img
+                                                        src={getImageUrl(item.product?.image || item.image)}
+                                                        alt={item.name}
                                                         className="w-full h-full object-contain mix-blend-multiply"
                                                         onError={(e) => handleImageError(e, "product")}
                                                     />
                                                 </div>
                                                 <div className="flex-1 flex flex-col justify-center">
                                                     <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.product?.name || item.name || "Product Item"}</p>
+                                                    {item.variantName && (
+                                                        <p className="text-xs font-semibold text-primary mt-0.5">{item.variantName}</p>
+                                                    )}
                                                     <p className="text-xs font-semibold text-gray-500 mt-0.5">Qty: {item.quantity}</p>
                                                 </div>
                                                 <div className="flex items-center">
@@ -147,7 +150,7 @@ const OrderSuccessPage = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    
+
                                     <div className="pt-4 border-t border-gray-100 space-y-3">
                                         <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
                                             <span>Subtotal</span>
@@ -186,7 +189,7 @@ const OrderSuccessPage = () => {
                                 </Button>
                             </Link>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>

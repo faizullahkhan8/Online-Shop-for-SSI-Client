@@ -39,7 +39,7 @@ const ContactPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
-            <main className="px-6 md:px-12 py-8 max-w-7xl mx-auto">
+            <main className="site-shell py-8">
                 <div className="mb-8 pb-4 border-b border-gray-200">
                     <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
                         Get In Touch
@@ -186,7 +186,7 @@ const ContactPage = () => {
             </main>
 
             <footer className="px-6 md:px-12 py-8 border-t border-gray-200 bg-white mt-12">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="site-shell flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col items-center md:items-start gap-2">
                         <div className="text-xl font-semibold text-gray-900">
                             Registry

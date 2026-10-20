@@ -22,6 +22,7 @@ import {
     LayoutTemplate,
     Building2,
     MessageSquare,
+    Settings as SettingsIcon,
 } from "lucide-react";
 
 import { useState, useEffect } from "react";
@@ -114,10 +115,10 @@ const AdminSidebar = ({ mobile = false, onNavigate }) => {
                         to={"/"}
                         className="flex items-center gap-3 animate-in fade-in duration-300"
                     >
-                        <img 
-                            src="/assets/images/zada-logo.webp" 
-                            alt="Zada Pharmacy" 
-                            className="h-8 w-auto object-contain" 
+                        <img
+                            src="/assets/images/zada-logo.webp"
+                            alt="Zada Pharmacy"
+                            className="h-8 w-auto object-contain"
                         />
                     </Link>
                 ) : (
@@ -367,6 +368,13 @@ const AdminSidebar = ({ mobile = false, onNavigate }) => {
                         icon={<MessageSquare size={18} />}
                     >
                         SMS Templates
+                    </MenuItem>
+
+                    <MenuItem
+                        component={<NavLink to="/admin-dashboard/settings" />}
+                        icon={<SettingsIcon size={18} />}
+                    >
+                        Settings
                     </MenuItem>
 
                     {/* Bottom Actions */}

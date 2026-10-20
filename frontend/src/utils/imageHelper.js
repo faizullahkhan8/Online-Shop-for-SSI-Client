@@ -1,11 +1,11 @@
 export const PLACEHOLDERS = {
-    product: "https://placehold.co/400x400/F2F8ED/7ec142?text=Product+Image",
+    product: "/assets/images/zada-logo.webp",
     banner: "https://placehold.co/1200x400/F2F8ED/7ec142?text=Banner+Image",
     carousel: "https://placehold.co/1200x600/F2F8ED/7ec142?text=Slide",
     avatar: "https://placehold.co/200x200/F2F8ED/7ec142?text=User",
     vendor: "https://placehold.co/200x200/F2F8ED/7ec142?text=Vendor",
     category: "https://placehold.co/300x300/F2F8ED/7ec142?text=Category",
-    default: "https://placehold.co/400x400/F2F8ED/7ec142?text=No+Image"
+    default: "/assets/images/zada-logo.webp"
 };
 
 export const getImageUrl = (img, type = "default") => {

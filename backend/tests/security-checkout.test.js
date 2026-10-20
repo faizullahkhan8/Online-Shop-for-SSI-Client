@@ -95,6 +95,47 @@ describe("P1 and P2 account, shopping, reporting, and socket regressions", { con
         await replica?.stop();
     });
 
+    it("merges variant checkout with authoritative pricing, atomic stock and once-only restoration", async () => {
+        const item = await product(3);
+        item.hasVariants = true;
+        item.variants = [{ name: "Small", price: 100, stock: 1 }, { name: "Large", price: 250, stock: 2 }];
+        await item.save();
+        const [small, large] = item.variants;
+        const lines = [{ product: String(item._id), variantId: String(small._id), quantity: 1 }, { product: String(item._id), variantId: String(large._id), quantity: 2 }];
+        assert.equal((await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(item) })).status, 400);
+        const key = randomUUID();
+        const body = orderPayload(item, { items: lines });
+        const placed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body, key });
+        assert.equal(placed.status, 201, JSON.stringify(placed.body));
+        assert.equal(placed.body.order.items.reduce((sum, line) => sum + line.totalAmount, 0), 600);
+        assert.equal((await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body, key })).status, 200);
+        let saved = await db.getLocalProductModel().findById(item._id);
+        assert.equal(saved.stock, 0); assert.deepEqual(saved.variants.map(v => v.stock), [0, 0]);
+        const cancelled = await Promise.all([1, 2].map(() => request(`/orders/${placed.body.order._id}/cancel`, { method: "PUT", cookie: customerAuth.cookie, body: {} })));
+        assert.ok(cancelled.every(result => result.status === 200));
+        saved = await db.getLocalProductModel().findById(item._id);
+        assert.equal(saved.stock, 3); assert.equal(saved.sold, 0); assert.deepEqual(saved.variants.map(v => v.stock), [1, 2]);
+    });
+
+    it("prevents competing variant oversells and rolls back an overdrawn shared stock order", async () => {
+        const item = await product(1);
+        item.variants = [{ name: "One", price: 120, stock: 1 }]; await item.save();
+        const body = orderPayload(item, { items: [{ product: String(item._id), variantId: String(item.variants[0]._id), quantity: 1 }] });
+        const results = await Promise.all([1, 2].map(() => request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body })));
+        assert.equal(results.filter(result => result.status === 201).length, 1);
+        const shared = await product(1);
+        shared.variants = [{ name: "Red", price: 100, stock: 0 }, { name: "Blue", price: 200, stock: 0 }]; await shared.save();
+        const lines = shared.variants.map(v => ({ product: String(shared._id), variantId: String(v._id), quantity: 1 }));
+        const failed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(shared, { items: lines }) });
+        assert.equal(failed.status, 409);
+        assert.equal((await db.getLocalProductModel().findById(shared._id)).stock, 1);
+        const placed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(shared, { items: [lines[0]] }) });
+        assert.equal(placed.status, 201); assert.equal(placed.body.order.items[0].usesSharedStock, true);
+        assert.equal((await request(`/orders/${placed.body.order._id}/cancel`, { method: "PUT", cookie: customerAuth.cookie, body: {} })).status, 200);
+        const saved = await db.getLocalProductModel().findById(shared._id);
+        assert.equal(saved.stock, 1); assert.deepEqual(saved.variants.map(v => v.stock), [0, 0]);
+    });
+
     it("keeps gateway credentials private and preserves passwords on unrelated admin saves", async () => {
         const payload = { taxAmount: 25, shippingFee: 120, shippingMethod: "standard",
             smsGatewayUsername: "synthetic-gateway-user", smsGatewayPassword: "synthetic-gateway-password",
@@ -727,6 +768,12 @@ describe("P1 and P2 account, shopping, reporting, and socket regressions", { con
                 assert.equal((await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify(fields) } })).status, 400);
             const edited = await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ stock: 5, sold: 999, price: 10 }) } });
             assert.equal(edited.status, 200); assert.equal(edited.body.product.stock, 5); assert.equal(edited.body.product.sold, 0);
+            for (const variant of [{ name: "Bad", price: -1, stock: 1 }, { name: "Bad", price: 5, stock: 0.5 }, { name: "Bad", price: "", stock: 1 }]) {
+                const rejectedVariant = await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ variants: [variant] }) } });
+                assert.equal(rejectedVariant.status, 400);
+            }
+            const variantEdit = await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ variants: [{ name: "Small", price: 10, stock: 2 }, { name: "Large", price: 20, stock: 3 }] }) } });
+            assert.equal(variantEdit.status, 200); assert.equal(variantEdit.body.product.stock, 5); assert.equal(variantEdit.body.product.price, 10); assert.equal(variantEdit.body.product.variants.length, 2); assert.equal(variantEdit.body.product.hasVariants, true);
             assert.equal((await request("/products/create", { method: "POST", cookie: adminAuth.cookie, body: {} })).status, 400);
             assert.equal((await request("/products/all?limit=0")).status, 400);
             assert.equal((await request("/products/all?page=-1")).status, 400);

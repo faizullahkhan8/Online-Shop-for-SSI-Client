@@ -5,8 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 import LoadingSpinner from "./Components/LoadingSpinner";
 import ScrollToTop from "./Components/ScrollToTop";
-import AboutPage from "./Pages/AboutUsPage";
-import AdminLayout from "./Layout/AdminLayout.jsx";
+const AboutPage = lazy(() => import("./Pages/AboutUsPage"));
+const AdminLayout = lazy(() => import("./Layout/AdminLayout.jsx"));
 
 const BaseLayout = lazy(() => import("./Layout/BaseLayout"));
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -23,12 +23,14 @@ const ContactUsPage = lazy(() => import("./Pages/ContactUsPage"));
 const PromotionsPage = lazy(() => import("./Pages/PromotionsPage.jsx"));
 const UploadPrescription = lazy(() => import("./Pages/UploadPrescription"));
 const StaffTreePage = lazy(() => import("./Pages/StaffTreePage"));
+const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 
 // Admin Pages
 const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
 const ProductsListPage = lazy(() => import("./Pages/Admin/ProductsListPage"));
 const AddProductPage = lazy(() => import("./Pages/Admin/AddProductPage"));
 const TaxShippingPage = lazy(() => import("./Pages/Admin/TaxShippingPage"));
+const SettingsPage = lazy(() => import("./Pages/Admin/SettingsPage"));
 const CategoriesListPage = lazy(() => import("./Pages/Admin/CategoriesListPage"));
 const VendorsListPage = lazy(() => import("./Pages/Admin/VendorsListPage"));
 const OrdersListPage = lazy(() => import("./Pages/Admin/OrdersListPage"));
@@ -121,6 +123,7 @@ const App = () => {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route path="*" element={<NotFoundPage />} />
                     </Route>
 
                     {/* Admin Routes */}
@@ -135,6 +138,7 @@ const App = () => {
                         <Route index element={<DashboardPage />} />
                         <Route path="products" element={<ProductsListPage />} />
                         <Route path="products/add" element={<AddProductPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
                         <Route path="settings/tax-shipping" element={<TaxShippingPage />} />
                         <Route path="categories" element={<CategoriesListPage />} />
                         <Route path="vendors" element={<VendorsListPage />} />
@@ -149,7 +153,7 @@ const App = () => {
                         <Route path="homepage-builder" element={<HomePageBuilderPage />} />
                         <Route path="staff-tree" element={<StaffTreeBuilderPage />} />
                         <Route path="sms-templates" element={<SmsTemplatesPage />} />
-                        
+
                         {/* Prescriptions Management */}
                         <Route path="prescriptions" element={<PrescriptionsListPage />} />
                     </Route>

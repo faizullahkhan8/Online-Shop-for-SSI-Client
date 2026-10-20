@@ -1,28 +1,56 @@
-import { HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { HelpCircle, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import SectionHeader from "./SectionHeader";
 
-const DEFAULT_FAQS = [
-    { q: "How fast is delivery?", a: "We deliver within 2 hours in major cities across Pakistan. Express delivery is available for urgent medications." },
-    { q: "Are your medicines authentic?", a: "Yes, we source 100% of our inventory directly from licensed pharmaceutical manufacturers and authorized distributors." },
-    { q: "Do I need a prescription?", a: "A valid prescription is required only for Rx (prescription) medicines. Over-the-counter (OTC) products can be purchased directly." },
-    { q: "What is your return policy?", a: "We offer a 7-day hassle-free return policy for sealed and undamaged products, excluding temperature-sensitive items." }
-];
+const FaqItem = ({ faq, isOpen, onToggle }) => {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-light transition-all duration-300 overflow-hidden">
+            <button
+                onClick={onToggle}
+                className="w-full p-5 sm:p-6 text-left flex items-start gap-3 cursor-pointer"
+            >
+                <HelpCircle size={18} className="text-primary shrink-0 mt-0.5" />
+                <span className="font-bold text-sm text-gray-900 flex-1">{faq.q}</span>
+                <ChevronDown
+                    size={16}
+                    className={`text-gray-400 shrink-0 mt-0.5 transition-transform duration-300 ${isOpen ? "rotate-180 text-primary" : ""}`}
+                />
+            </button>
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pl-[52px]">
+                            <p className="text-xs font-bold text-gray-500 leading-relaxed">{faq.a}</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
 
 const FaqSection = ({ config }) => {
-    const faqs = config.faqs?.length ? config.faqs : DEFAULT_FAQS;
+    const faqs = config.faqs || [];
+    const [openIndex, setOpenIndex] = useState(null);
+    if (faqs.length === 0) return null;
 
     return (
-        <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14">
+        <section className="site-shell mt-14">
             <SectionHeader title={config.title} subtitle={config.subtitle} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {faqs.map((faq, i) => (
-                    <div key={i} className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-light transition-all duration-300">
-                        <h4 className="font-black text-sm text-gray-900 mb-2.5 flex items-start gap-3">
-                            <HelpCircle size={18} className="text-primary shrink-0 mt-0.5" />
-                            {faq.q}
-                        </h4>
-                        <p className="text-xs font-bold text-gray-500 pl-7 leading-relaxed">{faq.a}</p>
-                    </div>
+                    <FaqItem
+                        key={i}
+                        faq={faq}
+                        isOpen={openIndex === i}
+                        onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+                    />
                 ))}
             </div>
         </section>

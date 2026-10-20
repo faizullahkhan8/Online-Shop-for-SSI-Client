@@ -42,7 +42,7 @@ const PromotionSection = () => {
     if (loading || deals.length === 0) return null;
 
     return (
-        <section className="container mx-auto px-4 py-6">
+        <section className="site-shell py-6">
             <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                 <div>
                     <h2 className="text-xl font-semibold text-gray-900">

@@ -137,7 +137,7 @@ const CheckoutPage = () => {
     // Calculate Advanced Shipping Fee
     useEffect(() => {
         if (!settingsLoaded) return;
-        
+
         let calculatedFee = baseShippingFee;
 
         if (advShippingConfig) {
@@ -164,7 +164,7 @@ const CheckoutPage = () => {
                     const ruleCity = normalizeCity(cr.city);
                     return currentCity === ruleCity || currentCity.includes(ruleCity) || ruleCity.includes(currentCity);
                 });
-                
+
                 if (matchedCity) {
                     calculatedFee = matchedCity.fee;
                 }
@@ -221,13 +221,13 @@ const CheckoutPage = () => {
         if (!user) return false;
         const dbAddr = user?.addresses?.[0];
         if (!dbAddr) return true;
-        
+
         // Normalize strings to compare
         const currentStreet = (formData.recipient.street || "").trim();
         const dbStreet = (dbAddr.street || "").trim();
-        
+
         if (currentStreet !== dbStreet) return true;
-        
+
         if (!samePosition(mapPosition, dbAddr)) return true;
 
         return false;
@@ -299,10 +299,10 @@ const CheckoutPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Filter out mock products (like "fbt-1" from Frequently Bought Together) 
+        // Filter out mock products (like "fbt-1" from Frequently Bought Together)
         // to prevent MongoDB cast errors on the backend
         const validItems = items.filter(item => /^[0-9a-fA-F]{24}$/.test(item._id));
-        
+
         if (validItems.length === 0) {
             alert("Your cart only contains mock products. Please add real products.");
             return;
@@ -310,6 +310,8 @@ const CheckoutPage = () => {
 
         const formattedItems = validItems.map((item) => ({
             product: item._id,
+            variantId: item.variantId,
+            variantName: item.variantName,
             quantity: item.quantity,
             price: item.price,
             totalAmount: item.totalPrice,
@@ -368,7 +370,7 @@ const CheckoutPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
-            <div className="container mx-auto px-4 max-w-[1200px]">
+            <div className="site-shell">
                 <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-8">
                     <Link to="/cart" className="hover:text-primary transition-colors flex items-center gap-1.5">
                         <ArrowLeft size={14} /> Back to Cart
@@ -419,7 +421,7 @@ const CheckoutPage = () => {
                                         onChange={handleChange}
                                         placeholder="03XX-XXXXXXX"
                                     />
-                                    
+
                                     {/* Map Picker */}
                                     <details className="md:col-span-2 rounded-xl border border-gray-200 p-3" open={advShippingConfig?.calculationMethod === "distance" || undefined}>
                                         <summary className="cursor-pointer py-2 text-sm font-semibold text-primary-dark">Choose a delivery pin on the map</summary>
@@ -558,7 +560,7 @@ const CheckoutPage = () => {
                             <h3 className="text-sm font-black uppercase tracking-widest text-primary-light mb-6">
                                 Order Summary
                             </h3>
-                            
+
                             <div className="space-y-4 mb-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                                 {items.map((item) => (
                                     <div key={item._id} className="flex justify-between items-start gap-4">
@@ -590,7 +592,7 @@ const CheckoutPage = () => {
                                     <span>Shipping</span>
                                     <span className="text-white">Rs {Number(formData.shippingFee || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
-                                
+
                                 <div className="flex justify-between items-end pt-4 border-t border-gray-700/50 mt-2">
                                     <span className="text-sm font-bold text-gray-300">
                                         Grand Total
@@ -659,7 +661,7 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             )}
-            
+
             {/* Full Screen Loading Overlay */}
             {isLoading && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">

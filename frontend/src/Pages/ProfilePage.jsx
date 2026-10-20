@@ -82,8 +82,8 @@ const ProfilePage = () => {
 
     return (
         <div className="bg-white min-h-screen pb-20">
-            <div className="container mx-auto px-4 max-w-5xl pt-6">
-                
+            <div className="site-shell pt-6">
+
                 {/* Breadcrumbs */}
                 <div className="text-sm font-medium mb-10 flex items-center gap-2">
                     <Link to="/" className="text-pink-500 hover:text-pink-600 transition-colors">Home</Link>
@@ -122,7 +122,7 @@ const ProfilePage = () => {
                         </div>
                         <span className="text-sm font-bold text-gray-700 text-center">Saved<br/>Wishlist</span>
                     </Link>
-                    <div 
+                    <div
                         onClick={() => document.getElementById('address-section').scrollIntoView({ behavior: 'smooth' })}
                         className="flex flex-col items-center justify-center p-6 border border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all group cursor-pointer"
                     >
@@ -162,7 +162,7 @@ const ProfilePage = () => {
                             Delivery Address
                             {isFetchingAddress && <Loader2 size={16} className="animate-spin text-primary" />}
                         </h3>
-                        
+
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-[13px] font-bold text-gray-900 ml-1">
@@ -233,7 +233,7 @@ const ProfilePage = () => {
                         >
                             {updateUserLoading ? <Loader2 size={18} className="animate-spin" /> : "SAVE CHANGES"}
                         </button>
-                        
+
                         <button
                             type="button"
                             onClick={handleLogout}

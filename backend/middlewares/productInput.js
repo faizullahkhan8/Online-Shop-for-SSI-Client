@@ -8,11 +8,28 @@ export const validateProductInput = asyncHandler(async (req, res, next) => {
     catch { throw new ErrorResponse("Invalid product data format", 400); }
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new ErrorResponse("Invalid product data format", 400);
     for (const field of ["minPrice", "maxPrice", "vendor"]) if (data[field] === "") data[field] = null;
-    req.body.data = JSON.stringify(data);
     const Product = getLocalProductModel();
     const current = req.params.id ? await Product.findById(req.params.id) : null;
     if (req.params.id && !current) throw new ErrorResponse("Product not found", 404);
     const merged = { ...(current?.toObject() || {}), ...data };
+    if (data.variants !== undefined && !Array.isArray(data.variants)) throw new ErrorResponse("Variants must be an array", 400);
+    if (Array.isArray(data.variants)) {
+        for (const variant of merged.variants) {
+            if (!variant || typeof variant.name !== "string" || !variant.name.trim()) throw new ErrorResponse("Variant name is required", 400);
+            for (const field of ["price", "stock", "lowStock", "imageIndex"]) {
+                const value = variant[field] ?? (field === "lowStock" ? 5 : field === "price" ? NaN : 0);
+                if (!["number", "string"].includes(typeof value) || value === "" || !Number.isFinite(Number(value)) || Number(value) < 0 || (field !== "price" && !Number.isSafeInteger(Number(value)))) throw new ErrorResponse(`Invalid variant ${field}`, 400);
+            }
+        }
+        const active = merged.variants.filter(variant => variant.active !== false);
+        merged.hasVariants = active.length > 0;
+        if (active.length) {
+            merged.price = Math.min(...active.map(variant => Number(variant.price)));
+            merged.stock = active.reduce((total, variant) => total + Number(variant.stock || 0), 0);
+        }
+        Object.assign(data, { hasVariants: merged.hasVariants, price: merged.price, stock: merged.stock });
+    }
+    req.body.data = JSON.stringify(data);
     for (const field of ["price", "stock", "lowStock", "minPrice", "maxPrice"]) {
         const value = merged[field];
         if (value == null && ["minPrice", "maxPrice"].includes(field)) continue;

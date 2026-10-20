@@ -1,4 +1,6 @@
 import axios from "axios"
+let onAuthFailure = () => {};
+export const setAuthFailureHandler = handler => { onAuthFailure = handler; };
 
 const apiClient = axios.create({
     baseURL: import.meta.env?.VITE_BACKEND_URL,
@@ -48,6 +50,7 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 isRefreshing = false;
                 processQueue(refreshError, null);
+                onAuthFailure();
                 return Promise.reject(refreshError);
             }
         }

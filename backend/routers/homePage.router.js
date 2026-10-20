@@ -6,7 +6,7 @@ import {
     resetHomePage,
 } from "../controllers/homePage.controller.js";
 
-import { upload, imagekitUpload } from "../middlewares/multer.middleware.js";
+import { upload, imagekitUploadTo } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.route("/reset").delete(isAuth, authorize("admin"), resetHomePage);
 
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 
-router.post("/upload-image", isAuth, authorize("admin"), upload.single("image"), imagekitUpload, (req, res) => {
+router.post("/upload-image", isAuth, authorize("admin"), upload.single("image"), imagekitUploadTo("/homepage"), (req, res) => {
     if (!req.image) return res.status(400).json({ success: false, message: "No image uploaded" });
     res.json({ success: true, url: req.image.filePath, fileId: req.image.fileId });
 });

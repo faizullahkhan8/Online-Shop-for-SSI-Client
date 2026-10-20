@@ -27,3 +27,12 @@ it("successful checkout consumes only purchased quantities and preserves other c
     assert.equal(state.items[0].quantity, 1); assert.equal(state.items[1].quantity, 1);
     assert.equal(state.totalAmount, 20); assert.equal(state.selectedTotalAmount, 10);
 });
+
+it("keeps variants separate and consumes only the purchased variant", () => {
+    let state = reducer(undefined, addToCart({ ...product, variantId: "red", quantity: 2 }));
+    state = reducer(state, addToCart({ ...product, variantId: "blue", price: 20, quantity: 1 }));
+    state = reducer(state, updateQuantity({ cartKey: "item-1:blue", quantity: 3 }));
+    state = reducer(state, consumeCheckoutItems({ items: [{ product: product._id, variantId: "red", quantity: 1 }] }));
+    assert.equal(state.items[0].quantity, 1); assert.equal(state.items[1].quantity, 3);
+    assert.equal(state.totalAmount, 70);
+});

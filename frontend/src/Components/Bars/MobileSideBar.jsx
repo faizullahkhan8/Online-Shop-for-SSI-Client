@@ -17,8 +17,10 @@ import {
     LogOut,
     FileText
 } from "lucide-react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useLogoutUser } from "../../api/hooks/user.api";
+import { logout } from "../../store/slices/authSlice";
 
 const MobileSideBar = ({
     isMenuOpen,
@@ -32,6 +34,17 @@ const MobileSideBar = ({
     onLoginClick,
 }) => {
     const { user } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { logoutUser } = useLogoutUser();
+
+    const handleSignOut = async () => {
+        const response = await logoutUser();
+        if (!response?.success) return;
+        dispatch(logout());
+        setIsMenuOpen(false);
+        navigate("/");
+    };
     const panelRef = useRef(null);
     useDialog(isMenuOpen, () => setIsMenuOpen(false), panelRef);
     if (!isMenuOpen) return null;
@@ -59,7 +72,7 @@ const MobileSideBar = ({
                         <button
                             aria-label="Close navigation menu"
                             onClick={() => setIsMenuOpen(false)}
-                            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
+                            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
                         >
                             <X size={20} />
                         </button>
@@ -67,7 +80,7 @@ const MobileSideBar = ({
 
                     {isAuthenticated ? (
                         <div className="flex items-center gap-4 mt-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
+                            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
                                 <User size={28} className="text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -109,7 +122,7 @@ const MobileSideBar = ({
                             </div>
                         </div>
                     )}
-                    
+
                     {/* Decorative Background Elements */}
                     <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
                     <div className="absolute top-10 -left-10 w-24 h-24 bg-primary/20 rounded-full blur-xl"></div>
@@ -197,7 +210,7 @@ const MobileSideBar = ({
                                 badge={cartCount}
                             />
                             {isAuthenticated && (
-                                <button onClick={() => { /* Implement if needed or use Header logic */ }} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors border-t border-gray-50 group">
+                                <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 transition-colors border-t border-gray-50 group cursor-pointer">
                                     <div className="w-8 h-8 rounded-lg bg-red-100 text-red-500 flex items-center justify-center">
                                         <LogOut size={16} />
                                     </div>
@@ -213,10 +226,10 @@ const MobileSideBar = ({
                 <div className="p-5 bg-white border-t border-gray-100 rounded-tl-3xl mt-auto">
                     <div className="flex items-center justify-between text-gray-400">
                         <div className="flex items-center gap-2">
-                            <img 
-                                src="/assets/images/zada-logo.webp" 
-                                alt="Zada Pharmacy" 
-                                className="h-6 w-auto object-contain" 
+                            <img
+                                src="/assets/images/zada-logo.webp"
+                                alt="Zada Pharmacy"
+                                className="h-6 w-auto object-contain"
                             />
                         </div>
                         <div className="flex gap-2 items-center bg-gray-50 px-2 py-1 rounded-md">

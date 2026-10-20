@@ -1,3 +1,5 @@
+import { setAuthFailureHandler } from "../api/apiClient.js";
+import { logout } from "./slices/authSlice";
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
@@ -34,3 +36,5 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
+
+setAuthFailureHandler(() => store.dispatch(logout()));

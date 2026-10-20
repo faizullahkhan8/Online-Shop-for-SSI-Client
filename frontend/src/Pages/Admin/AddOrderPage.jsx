@@ -98,6 +98,7 @@ const AddOrderPage = () => {
             const selectedProd = products.find((p) => p._id === value);
             if (selectedProd) setSelectedCatalog(previous => ({ ...previous, [value]: selectedProd }));
             item.product = value;
+            item.variantId = "";
             item.originalPrice = selectedProd?.price || 0;
             if (selectedProd?.effectivePrice < selectedProd?.price) {
                 item.discount = selectedProd.price - selectedProd.effectivePrice;
@@ -106,6 +107,14 @@ const AddOrderPage = () => {
                 item.discount = 0;
                 item.price = selectedProd?.price || 0;
             }
+        } else if (field === "variantId") {
+            const selectedProd = products.find(product => product._id === item.product);
+            const variant = selectedProd?.variants?.find(variant => variant._id === value);
+            item.variantId = value;
+            item.originalPrice = Number(variant?.price || 0);
+            const promotion = selectedProd?.promotion;
+            item.price = promotion?.discountType === "PERCENTAGE" ? Math.max(0, item.originalPrice * (1 - promotion.discountValue / 100)) : promotion?.discountType === "FIXED_AMOUNT" ? Math.max(0, item.originalPrice - promotion.discountValue) : item.originalPrice;
+            item.discount = item.originalPrice - item.price;
         } else if (field === "price") {
             item.price = value;
             item.discount = item.originalPrice - value;
@@ -221,6 +230,8 @@ const AddOrderPage = () => {
                                             }
                                         />
                                     </FormField>
+                                    {(products.find(product => product._id === item.product)?.variants || []).some(variant => variant.active !== false) && <FormField id={`variant-${index}`}><FieldLabel>Variant</FieldLabel><select id={`variant-${index}`} required value={item.variantId || ""} onChange={event => updateItem(index, "variantId", event.target.value)} className="w-full rounded-lg border border-gray-200 p-2"><option value="">Choose variant</option>{products.find(product => product._id === item.product).variants.filter(variant => variant.active !== false).map(variant => <option key={variant._id} value={variant._id}>{variant.name} — Rs {variant.price}</option>)}</select></FormField>}
+
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-medium text-gray-700">
                                             Original Price

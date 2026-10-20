@@ -13,7 +13,9 @@ import { useGetHomePage, useUpdateHomePage, useResetHomePage, useUploadHomePageI
 import { useGetAllVendors } from "../../api/hooks/vendor.api.js";
 import { useNavigate } from "react-router-dom";
 import HomePage from "../HomePage";
+import Footer from "../../Components/Home/Footer";
 import ProductSelector from "../../Components/Admin/ProductSelector";
+import { getImageUrl } from "../../utils/imageHelper";
 
 /* ─── Section Type Meta ────────────────────────────────────────────────── */
 const SECTION_META = {
@@ -42,6 +44,7 @@ const SECTION_META = {
     custom_html: { label: "Custom HTML Block", icon: "🖥️", color: "bg-gray-100 text-gray-700", category: "Utility" },
     whatsapp_fab: { label: "WhatsApp FAB", icon: "💬", color: "bg-green-100 text-green-700", category: "Utility" },
     spacer: { label: "Spacer / Divider", icon: "➖", color: "bg-gray-100 text-gray-500", category: "Utility" },
+    footer: { label: "Global Footer", icon: "🦶", color: "bg-gray-800 text-white", category: "Utility" },
 };
 
 const ALL_SECTION_TYPES = Object.keys(SECTION_META);
@@ -51,7 +54,7 @@ const SECTION_DEFAULTS = {
     hero: { config: {} },
     top_micro_bar: { config: { textLeft: "Express 2-Hour Delivery in Karachi, Lahore & Islamabad", textMiddle: "100% Genuine & Licensed", phone: "(021) 111-633-422", bgColor: "#1E5128", textColor: "#D5EAC3", style: "classic" } },
     announcement_bar: { config: { text: "Free delivery on orders above Rs. 999!", bgColor: "#1e4d28", textColor: "#FFFFFF", link: "/products", linkText: "Shop Now" } },
-    trust_badges: { config: { badges: [{ icon: "ShieldCheck", title: "100% Genuine", desc: "Licensed pharmacy sourcing" }, { icon: "Truck", title: "2-Hour Delivery", desc: "Major cities covered" }] } },
+    trust_badges: { config: { badges: [{ icon: "ShieldCheck", image: "", imagekitFileId: "", title: "100% Genuine", desc: "Licensed pharmacy sourcing" }, { icon: "Truck", image: "", imagekitFileId: "", title: "2-Hour Delivery", desc: "Major cities covered" }] } },
     stats_counter: { config: { stats: [{ value: "50K+", label: "Happy Customers" }, { value: "2 hrs", label: "Avg. Delivery" }] } },
     categories: { config: { title: "Browse Categories", subtitle: "Quick Access", ctaText: "All Products", ctaLink: "/products" } },
     ribbon: { config: { title: "Everyday Must-Haves", subtitle: "Essential Picks", ctaText: "View All", ctaLink: "/products", productSource: "top_sellers", productCount: 6 } },
@@ -63,7 +66,7 @@ const SECTION_DEFAULTS = {
     mid_banners: { config: { banners: [{ badge: "Category", title: "Banner Title", desc: "Description.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#1B3B5F", bgTo: "#2B5B8F", badgeColor: "#BAE6FD" }, { badge: "Category", title: "Banner Title 2", desc: "Description.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#5B2A36", bgTo: "#8C3A4F", badgeColor: "#FECACA" }] } },
     single_mid_banner: { config: { badge: "Special Offer", title: "Full Width Banner", desc: "Great for big announcements.", ctaText: "Shop Now", ctaLink: "/products", bgFrom: "#1e4d28", bgTo: "#4d8d3a", badgeColor: "#dcfce7", image: "", imagekitFileId: "" } },
     featured_category: { config: { badge: "Featured", title: "Category Title", desc: "Description here.", ctaText: "Shop Now", ctaLink: "/products", bgColor: "#1E3A5F", image: "" } },
-    conditions: { config: { title: "Care By Condition", subtitle: "Health Concerns", conditions: [{ name: "Condition Name", desc: "Description", icon: "Activity" }] } },
+    conditions: { config: { title: "Care By Condition", subtitle: "Health Concerns", conditions: [{ name: "Condition Name", desc: "Description", icon: "Activity", image: "", imagekitFileId: "", link: "/products" }] } },
     testimonials: { config: { title: "What Our Customers Say", subtitle: "Reviews", testimonials: [{ name: "Customer Name", rating: 5, comment: "Great service!", city: "Karachi" }] } },
     app_download: { config: { title: "Download & Get\n10% Off", subtitle: "Track orders, set reminders.", appStoreLink: "#", playStoreLink: "#", qrCodeLink: "", rating: "4.9", reviewCount: "50K+" } },
     newsletter: { config: { title: "Stay Informed", subtitle: "Subscribe for deals & tips.", placeholder: "Enter your email", ctaText: "Subscribe", bgColor: "#ebf7d9" } },
@@ -73,6 +76,40 @@ const SECTION_DEFAULTS = {
     custom_html: { config: { html: "<!-- Add your custom HTML here -->", label: "Custom Block" } },
     whatsapp_fab: { config: { phoneNumber: "+923001234567", message: "Hello! I need help with my order.", position: "right" } },
     spacer: { config: { height: 40, showDivider: false, dividerColor: "#E5E7EB" } },
+    footer: { config: {
+        copyright: "© 2026 Zada Online Pharmacy. All rights reserved.",
+        description: "Your trusted online pharmacy for genuine medicines, wellness essentials and personal care products delivered with care.",
+        categoriesLinksTitle: "Shop",
+        quickLinksTitle: "Company",
+        supportLinksTitle: "Help & Account",
+        categoriesLinks: [
+            { name: "All Products", path: "/products" },
+            { name: "Promotions", path: "/promotions" },
+            { name: "Upload Prescription", path: "/upload-prescription" }
+        ],
+        quickLinks: [
+            { name: "About Us", path: "/about-us" },
+            { name: "Our Team", path: "/our-team" },
+            { name: "Contact Us", path: "/contact-us" }
+        ],
+        supportLinks: [
+            { name: "Shopping Cart", path: "/cart" },
+            { name: "Wishlist", path: "/wishlist" },
+            { name: "My Orders", path: "/orders" },
+            { name: "My Profile", path: "/profile" }
+        ],
+        socialLinks: [{ platform: "Facebook", url: "#", color: "hover:bg-[#1877F2]" }],
+        trustBadges: [
+            { icon: "ShieldCheck", title: "Genuine Products", desc: "Trusted pharmacy sourcing" },
+            { icon: "Truck", title: "Fast Delivery", desc: "Service across major cities" },
+            { icon: "Clock", title: "Easy Ordering", desc: "Shop online at any time" },
+            { icon: "HelpCircle", title: "Customer Support", desc: "Help when you need it" }
+        ],
+        policyLinks: [],
+        licenseTitle: "Genuine & Licensed",
+        licenseText: "Quality-focused pharmacy service with responsible product information.",
+        contact: { phone: "(021) 111-633-422", email: "", address: "Karachi, Pakistan" }
+    }},
 };
 
 /* ─── Section Edit Forms ─────────────────────────────────────────────── */
@@ -156,7 +193,7 @@ const ImageField = ({
             });
         };
         img.onerror = () => setDetectedDimensions(null);
-        img.src = value;
+        img.src = getImageUrl(value);
     }, [value]);
 
     const handleFileChange = async (e) => {
@@ -225,7 +262,7 @@ const ImageField = ({
             {value && (
                 <div className="mt-2.5 h-24 w-40 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group shadow-2xs">
                     <img
-                        src={value}
+                        src={getImageUrl(value)}
                         alt="preview"
                         className="h-full w-full object-contain"
                         onError={(e) => (e.target.style.display = "none")}
@@ -325,11 +362,19 @@ const EditForm = ({ section, onChange }) => {
                                     <Trash2 size={13} />
                                 </button>
                             </div>
+                            <ImageField
+                                label="Badge Image"
+                                value={badge.image}
+                                fileId={badge.imagekitFileId}
+                                recommendedSize="600 × 600 px"
+                                aspectRatio="1:1"
+                                onChange={(image, imagekitFileId) => set("badges", cfg.badges.map((b, idx) => idx === i ? { ...b, image, imagekitFileId } : b))}
+                            />
                             <TextField label="Title" value={badge.title} onChange={v => set("badges", cfg.badges.map((b, idx) => idx === i ? { ...b, title: v } : b))} />
                             <TextField label="Description" value={badge.desc} onChange={v => set("badges", cfg.badges.map((b, idx) => idx === i ? { ...b, desc: v } : b))} />
                         </div>
                     ))}
-                    <button onClick={() => set("badges", [...(cfg.badges || []), { icon: "ShieldCheck", title: "New Badge", desc: "Description" }])}
+                    <button onClick={() => set("badges", [...(cfg.badges || []), { icon: "ShieldCheck", image: "", imagekitFileId: "", title: "New Badge", desc: "Description" }])}
                         className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Badge
                     </button>
@@ -470,14 +515,14 @@ const EditForm = ({ section, onChange }) => {
                                     <ColorField label="Badge Color" value={banner.badgeColor} onChange={v => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, badgeColor: v } : b))} />
                                     <ColorField label="Gradient From" value={banner.bgFrom} onChange={v => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, bgFrom: v } : b))} />
                                     <ColorField label="Gradient To" value={banner.bgTo} onChange={v => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, bgTo: v } : b))} />
-                                    <ImageField 
-                                        label="Banner Image (Optional)" 
-                                        value={banner.image} 
+                                    <ImageField
+                                        label="Banner Image (Optional)"
+                                        value={banner.image}
                                         fileId={banner.imagekitFileId}
                                         recommendedSize="600 × 300 px"
                                         aspectRatio="2:1 (Side-by-side banner)"
                                         formatHint="WebP, PNG, JPG (Max 2MB)"
-                                        onChange={(url, fileId) => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, image: url, imagekitFileId: fileId } : b))} 
+                                        onChange={(url, fileId) => set("banners", cfg.banners.map((b, idx) => idx === i ? { ...b, image: url, imagekitFileId: fileId } : b))}
                                     />
                                 </>
                             )}
@@ -497,14 +542,14 @@ const EditForm = ({ section, onChange }) => {
                     <ColorField label="Badge Color" value={cfg.badgeColor} onChange={v => set("badgeColor", v)} />
                     <ColorField label="Gradient From" value={cfg.bgFrom} onChange={v => set("bgFrom", v)} />
                     <ColorField label="Gradient To" value={cfg.bgTo} onChange={v => set("bgTo", v)} />
-                    <ImageField 
-                        label="Full-Width Banner Image (Optional)" 
-                        value={cfg.image} 
+                    <ImageField
+                        label="Full-Width Banner Image (Optional)"
+                        value={cfg.image}
                         fileId={cfg.imagekitFileId}
                         recommendedSize="1200 × 350 px"
                         aspectRatio="3.4:1 (Ultra-wide desktop banner)"
                         formatHint="WebP, PNG, JPG (Max 2MB)"
-                        onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }} 
+                        onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }}
                     />
                 </div>
             );
@@ -569,14 +614,14 @@ const EditForm = ({ section, onChange }) => {
                     <TextField label="CTA Text" value={cfg.ctaText} onChange={v => set("ctaText", v)} />
                     <TextField label="CTA Link" value={cfg.ctaLink} onChange={v => set("ctaLink", v)} />
                     <ColorField label="Background Color" value={cfg.bgColor} onChange={v => set("bgColor", v)} />
-                    <ImageField 
-                        label="Featured Graphic / Banner Image (Optional)" 
-                        value={cfg.image} 
+                    <ImageField
+                        label="Featured Graphic / Banner Image (Optional)"
+                        value={cfg.image}
                         fileId={cfg.imagekitFileId}
                         recommendedSize="500 × 500 px"
                         aspectRatio="1:1 (Square)"
                         formatHint="Transparent PNG, WebP, JPG"
-                        onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }} 
+                        onChange={(url, fileId) => { set("image", url); set("imagekitFileId", fileId); }}
                     />
                 </div>
             );
@@ -593,11 +638,20 @@ const EditForm = ({ section, onChange }) => {
                                 <span className="text-xs font-bold text-gray-500">Condition {i + 1}</span>
                                 <button aria-label="Delete item" onClick={() => set("conditions", cfg.conditions.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
+                            <ImageField
+                                label="Condition Image"
+                                value={cond.image}
+                                fileId={cond.imagekitFileId}
+                                recommendedSize="700 × 700 px"
+                                aspectRatio="1:1"
+                                onChange={(image, imagekitFileId) => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, image, imagekitFileId } : c))}
+                            />
                             <TextField label="Name" value={cond.name} onChange={v => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, name: v } : c))} />
                             <TextField label="Description" value={cond.desc} onChange={v => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, desc: v } : c))} />
+                            <TextField label="Link" value={cond.link} onChange={v => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, link: v } : c))} placeholder="/products?category=..." />
                         </div>
                     ))}
-                    <button onClick={() => set("conditions", [...(cfg.conditions || []), { name: "New Condition", desc: "Description", icon: "Activity" }])}
+                    <button onClick={() => set("conditions", [...(cfg.conditions || []), { name: "New Condition", desc: "Description", icon: "Activity", image: "", imagekitFileId: "", link: "/products" }])}
                         className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:border-primary-light hover:text-primary transition-colors flex items-center justify-center gap-1">
                         <Plus size={13} /> Add Condition
                     </button>
@@ -682,8 +736,8 @@ const EditForm = ({ section, onChange }) => {
             );
 
         case "brands": {
-            const currentSources = cfg.sources || (cfg.source ? [cfg.source] : ["manual"]);
-            
+            const currentSources = cfg.sources || (cfg.source ? [cfg.source] : (cfg.brands ? ["manual"] : []));
+
             const toggleSource = (src) => {
                 if (currentSources.includes(src)) {
                     set("sources", currentSources.filter(s => s !== src));
@@ -692,16 +746,7 @@ const EditForm = ({ section, onChange }) => {
                 }
             };
 
-            const DEFAULT_BRANDS = [
-                { name: "GSK Healthcare", abbr: "GSK" },
-                { name: "Abbott Laboratories", abbr: "ABT" },
-                { name: "Bayer Pharma", abbr: "BAY" },
-                { name: "Reckitt Benckiser", abbr: "RKT" },
-                { name: "Pfizer Health", abbr: "PFZ" },
-                { name: "Sanofi Pasteur", abbr: "SNF" },
-                { name: "Getz Pharma", abbr: "GTZ" },
-            ];
-            const manualBrands = cfg.brands !== undefined ? cfg.brands : DEFAULT_BRANDS;
+            const manualBrands = cfg.brands || [];
             const selectedVendorIds = cfg.selectedVendors || [];
             const selectedVendors = dbVendors.filter(v => selectedVendorIds.includes(v._id));
 
@@ -711,7 +756,7 @@ const EditForm = ({ section, onChange }) => {
                         <button onClick={() => setBrandUI({ ...brandUI, isOpen: false })} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-900 mb-4 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg w-max transition-colors">
                             ← Back to Brands List
                         </button>
-                        
+
                         <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
                             <button onClick={() => setBrandUI({ ...brandUI, tab: "vendors" })} className={`flex-1 text-xs font-bold py-2 rounded-md transition-colors ${brandUI.tab === "vendors" ? "bg-white shadow-sm text-primary" : "text-gray-500 hover:text-gray-700"}`}>
                                 From Directory
@@ -737,7 +782,7 @@ const EditForm = ({ section, onChange }) => {
                                                             onChange={() => {
                                                                 if (isSelected) set("selectedVendors", selectedVendorIds.filter(id => id !== vendor._id));
                                                                 else set("selectedVendors", [...selectedVendorIds, vendor._id]);
-                                                                
+
                                                                 // Also make sure 'vendors' is in sources if they select one
                                                                 if (!isSelected && !currentSources.includes("vendors")) {
                                                                     set("sources", [...currentSources, "vendors"]);
@@ -766,11 +811,11 @@ const EditForm = ({ section, onChange }) => {
                                 <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-4">
                                     {brandUI.editingManualIdx !== null ? "Edit Custom Brand" : "Add Custom Brand"}
                                 </h4>
-                                
+
                                 {(() => {
                                     const idx = brandUI.editingManualIdx;
                                     const brand = idx !== null ? manualBrands[idx] : { name: "", abbr: "", image: "", imagekitFileId: "" };
-                                    
+
                                     const updateField = (key, val) => {
                                         if (idx !== null) {
                                             set("brands", manualBrands.map((b, i) => i === idx ? { ...b, [key]: val } : b));
@@ -794,13 +839,13 @@ const EditForm = ({ section, onChange }) => {
                                                     <FieldControl value={brand.abbr} onChange={e => updateField("abbr", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all text-center" placeholder="ACM" />
                                                 </FormField>
                                             </div>
-                                            <ImageField 
-                                                label="Brand Logo Image" 
-                                                value={brand.image} 
+                                            <ImageField
+                                                label="Brand Logo Image"
+                                                value={brand.image}
                                                 fileId={brand.imagekitFileId}
-                                                recommendedSize="240 × 120 px"
-                                                aspectRatio="2:1 (Horizontal Logo)"
-                                                formatHint="Transparent PNG / SVG / WebP"
+                                                recommendedSize="640 × 480 px"
+                                                aspectRatio="4:3 (Brand Card Artwork)"
+                                                formatHint="White background with centered brand artwork"
                                                 onChange={(url, fileId) => {
                                                     if (idx !== null) {
                                                         set("brands", manualBrands.map((b, i) => i === idx ? { ...b, image: url, imagekitFileId: fileId } : b));
@@ -825,9 +870,9 @@ const EditForm = ({ section, onChange }) => {
                 <div className="animate-in fade-in duration-200">
                     <TextField label="Section Title" value={cfg.title} onChange={v => set("title", v)} />
                     <TextField label="Subtitle" value={cfg.subtitle} onChange={v => set("subtitle", v)} />
-                    
+
                     <SectionDivider label="Added Brands" />
-                    
+
                     <div className="grid grid-cols-2 gap-3 mb-4">
                         {/* Render Manual Brands */}
                         {manualBrands.map((brand, i) => (
@@ -840,8 +885,8 @@ const EditForm = ({ section, onChange }) => {
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
-                                <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center mb-2 overflow-hidden border border-gray-100 p-1">
-                                    {brand.image ? <img src={brand.image} className="w-full h-full object-contain" /> : <span className="text-[10px] font-bold text-gray-400">{brand.abbr || "NA"}</span>}
+                                <div className="w-full aspect-[4/3] rounded-xl bg-gray-50 flex items-center justify-center mb-2 overflow-hidden border border-gray-100">
+                                    {brand.image ? <img src={getImageUrl(brand.image, "vendor")} alt={`${brand.name} preview`} className="w-full h-full object-cover" /> : <span className="text-[10px] font-bold text-gray-400">{brand.abbr || "NA"}</span>}
                                 </div>
                                 <span className="text-xs font-semibold text-gray-800 text-center line-clamp-1">{brand.name || "Unnamed"}</span>
                                 <span className="text-[9px] font-bold text-primary bg-primary-pale px-1.5 rounded uppercase mt-1">Custom</span>
@@ -863,7 +908,7 @@ const EditForm = ({ section, onChange }) => {
                                 <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-1.5 rounded uppercase mt-1">Vendor</span>
                             </div>
                         ))}
-                        
+
                         <button onClick={() => setBrandUI({ isOpen: true, tab: "vendors", editingManualIdx: null })}
                             className="flex flex-col items-center justify-center gap-2 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl h-[120px] text-gray-400 hover:text-primary hover:border-primary-light hover:bg-primary-pale transition-colors">
                             <Plus size={20} />
@@ -942,6 +987,102 @@ const EditForm = ({ section, onChange }) => {
                 </div>
             );
 
+        case "footer":
+            const renderLinkList = (listKey, titleKey, defaultTitle, label) => (
+                <div className="mb-4 border border-gray-100 rounded-xl p-3 bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-bold text-gray-700">{label} Configuration</label>
+                    </div>
+                    <div className="mb-3">
+                        <input type="text" placeholder="Section Heading (e.g. Categories)" value={cfg[titleKey] !== undefined ? cfg[titleKey] : defaultTitle} onChange={e => set(titleKey, e.target.value)} className="w-full text-xs font-bold p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                    </div>
+                    {(cfg[listKey] || []).map((link, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                            <input type="text" placeholder="Name" value={link.name} onChange={e => set(listKey, cfg[listKey].map((l, idx) => idx === i ? { ...l, name: e.target.value } : l))} className="w-1/2 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                            <input type="text" placeholder="Path" value={link.path} onChange={e => set(listKey, cfg[listKey].map((l, idx) => idx === i ? { ...l, path: e.target.value } : l))} className="w-1/2 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                            <button onClick={() => set(listKey, cfg[listKey].filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1"><Trash2 size={13} /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => set(listKey, [...(cfg[listKey] || []), { name: "New Link", path: "/" }])} className="text-xs text-primary font-bold mt-1">
+                        + Add {label} Link
+                    </button>
+                </div>
+            );
+
+            return (
+                <div className="space-y-4">
+                    <TextField label="Copyright Text" value={cfg.copyright} onChange={v => set("copyright", v)} />
+                    <TextField label="Footer Description" value={cfg.description} onChange={v => set("description", v)} multiline />
+                    <TextField label="License Title" value={cfg.licenseTitle} onChange={v => set("licenseTitle", v)} />
+                    <TextField label="License Text" value={cfg.licenseText} onChange={v => set("licenseText", v)} />
+
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                        <label className="block text-xs font-bold text-gray-700 mb-3">Contact Info</label>
+                        <TextField label="Phone" value={cfg.contact?.phone} onChange={v => set("contact", { ...cfg.contact, phone: v })} />
+                        <TextField label="Email" value={cfg.contact?.email} onChange={v => set("contact", { ...cfg.contact, email: v })} />
+                        <TextField label="Address" value={cfg.contact?.address} onChange={v => set("contact", { ...cfg.contact, address: v })} />
+                    </div>
+
+                    {renderLinkList("categoriesLinks", "categoriesLinksTitle", "Shop", "Shop Links")}
+                    {renderLinkList("quickLinks", "quickLinksTitle", "Company", "Company Links")}
+                    {renderLinkList("supportLinks", "supportLinksTitle", "Help & Account", "Help & Account Links")}
+                    {renderLinkList("policyLinks", "policyLinksTitle", "Policies", "Policy Links")}
+
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50 mb-4">
+                        <label className="block text-xs font-bold text-gray-700 mb-2">Social Links</label>
+                        {(cfg.socialLinks || []).map((link, i) => (
+                            <div key={i} className="flex gap-2 mb-2 items-center">
+                                <select
+                                    value={link.platform}
+                                    onChange={e => {
+                                        const newPlatform = e.target.value;
+                                        let defaultColor = link.color;
+                                        if (newPlatform === "Facebook") defaultColor = "hover:bg-[#1877F2]";
+                                        else if (newPlatform === "Instagram") defaultColor = "hover:bg-[#E1306C]";
+                                        else if (newPlatform === "Twitter") defaultColor = "hover:bg-[#1DA1F2]";
+                                        else if (newPlatform === "Youtube") defaultColor = "hover:bg-[#FF0000]";
+                                        else if (newPlatform === "Linkedin") defaultColor = "hover:bg-[#0A66C2]";
+                                        set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, platform: newPlatform, color: defaultColor } : l));
+                                    }}
+                                    className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white"
+                                >
+                                    <option value="New" disabled>Select Platform</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Twitter">Twitter / X</option>
+                                    <option value="Youtube">Youtube</option>
+                                    <option value="Linkedin">LinkedIn</option>
+                                </select>
+                                <input type="text" placeholder="URL" value={link.url} onChange={e => set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, url: e.target.value } : l))} className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                                <input type="text" placeholder="Color Class (e.g. hover:bg-[#1877F2])" value={link.color} onChange={e => set("socialLinks", cfg.socialLinks.map((l, idx) => idx === i ? { ...l, color: e.target.value } : l))} className="w-1/3 text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary bg-white" />
+                                <button onClick={() => set("socialLinks", cfg.socialLinks.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600 px-1"><Trash2 size={13} /></button>
+                            </div>
+                        ))}
+                        <button onClick={() => set("socialLinks", [...(cfg.socialLinks || []), { platform: "Facebook", url: "#", color: "hover:bg-[#1877F2]" }])} className="text-xs text-primary font-bold mt-1">
+                            + Add Social Link
+                        </button>
+                    </div>
+
+                    <div className="border border-gray-100 rounded-xl p-3 bg-gray-50 mb-4">
+                        <label className="block text-xs font-bold text-gray-700 mb-2">Trust Badges</label>
+                        {(cfg.trustBadges || []).map((badge, i) => (
+                            <div key={i} className="border border-gray-200 rounded-lg p-2 mb-2 bg-white flex gap-2 flex-col">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-xs font-bold text-gray-500">Badge {i + 1}</span>
+                                    <button onClick={() => set("trustBadges", cfg.trustBadges.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                </div>
+                                <input type="text" placeholder="Icon (lucide icon name e.g. Truck)" value={badge.icon} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, icon: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                                <input type="text" placeholder="Title" value={badge.title} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, title: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                                <input type="text" placeholder="Description" value={badge.desc} onChange={e => set("trustBadges", cfg.trustBadges.map((b, idx) => idx === i ? { ...b, desc: e.target.value } : b))} className="w-full text-xs p-2 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                            </div>
+                        ))}
+                        <button onClick={() => set("trustBadges", [...(cfg.trustBadges || []), { icon: "Check", title: "New Badge", desc: "" }])} className="text-xs text-primary font-bold mt-1">
+                            + Add Trust Badge
+                        </button>
+                    </div>
+                </div>
+            );
+
         default:
             return (
                 <div className="p-4 text-xs text-gray-400 text-center border border-dashed border-gray-200 rounded-xl">
@@ -985,8 +1126,8 @@ const MiniPreview = ({ section }) => {
                 <div className="grid grid-cols-2 gap-2">
                     {(cfg.badges || []).slice(0, 4).map((b, i) => (
                         <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-2.5 flex items-center gap-2 shadow-sm">
-                            <div className="w-7 h-7 rounded-lg bg-green-100 text-green-600 flex items-center justify-center shrink-0">
-                                <Shield size={13} />
+                            <div className="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center shrink-0 overflow-hidden">
+                                {b.image ? <img src={getImageUrl(b.image)} alt="" className="w-full h-full object-cover" /> : <Shield size={13} />}
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-900 leading-none">{b.title}</p>
@@ -1093,9 +1234,11 @@ const MiniPreview = ({ section }) => {
 
             {section.type === "brands" && (
                 <div className="grid grid-cols-4 gap-1.5">
-                    {(cfg.brands || []).slice(0, 7).map((b, i) => (
+                    {(cfg.brands || []).slice(0, 8).map((b, i) => (
                         <div key={i} className="bg-white border-2 border-gray-100 rounded-2xl p-2 text-center shadow-sm">
-                            <div className="w-7 h-7 bg-green-50 text-green-700 rounded-lg flex items-center justify-center font-extrabold text-[9px] mx-auto mb-1">{b.abbr}</div>
+                            <div className="w-full aspect-[4/3] bg-green-50 text-green-700 rounded-lg flex items-center justify-center font-extrabold text-[9px] mx-auto mb-1 overflow-hidden">
+                                {b.image ? <img src={getImageUrl(b.image, "vendor")} alt={`${b.name} preview`} className="w-full h-full object-cover" /> : b.abbr}
+                            </div>
                             <p className="text-[8px] text-gray-500 leading-tight">{b.name}</p>
                         </div>
                     ))}
@@ -1178,7 +1321,7 @@ const HomePageBuilderPage = () => {
     const [sections, setSections] = useState([]);
     const [activeIdx, setActiveIdx] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    
+
     // Panel widths
     const [leftWidth, setLeftWidth] = useState(256);
     const [centerWidth, setCenterWidth] = useState(384);
@@ -1230,6 +1373,9 @@ const HomePageBuilderPage = () => {
                 if (safeLayout.length > 0) {
                     setActiveIdx(0);
                 }
+            } else {
+                setSections([]);
+                setActiveIdx(null);
             }
         }
     }, [homePageData, homePageLoading]);
@@ -1396,7 +1542,7 @@ const HomePageBuilderPage = () => {
             <div className="flex flex-1 overflow-hidden">
 
                 {/* LEFT: Sections List */}
-                <div 
+                <div
                     style={{ width: leftWidth }}
                     className="bg-white flex flex-col overflow-hidden shrink-0">
                     <div className="px-3 py-2.5 border-b border-gray-100">
@@ -1456,7 +1602,7 @@ const HomePageBuilderPage = () => {
                 </div>
 
                 {/* Left Resizer */}
-                <div 
+                <div
                     className="w-1.5 hover:w-2 bg-gray-200 hover:bg-primary cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
                     onMouseDown={(e) => {
                         e.preventDefault();
@@ -1468,7 +1614,7 @@ const HomePageBuilderPage = () => {
                 </div>
 
                 {/* CENTER: Edit Form */}
-                <div 
+                <div
                     style={{ width: centerWidth }}
                     className="flex flex-col bg-white overflow-hidden shrink-0">
                     {activeSection ? (
@@ -1518,7 +1664,7 @@ const HomePageBuilderPage = () => {
                 </div>
 
                 {/* Center Resizer */}
-                <div 
+                <div
                     className="w-1.5 hover:w-2 bg-gray-200 hover:bg-primary cursor-col-resize transition-colors shrink-0 z-10 flex items-center justify-center relative -mx-[1px]"
                     onMouseDown={(e) => {
                         e.preventDefault();
@@ -1541,6 +1687,7 @@ const HomePageBuilderPage = () => {
                     <div className="flex-1 overflow-y-auto">
                         <div className="w-full bg-white min-h-full pb-32">
                             <HomePage previewSections={sections} activePreviewIdx={activeIdx} />
+                            <Footer previewSections={sections} />
                         </div>
                     </div>
                 </div>

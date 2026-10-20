@@ -47,7 +47,13 @@ const VendorsListPage = () => {
         imagePreview: null,
     });
 
-    const { data: vendorsData, loading: getAllVendorsLoading, getAllVendors } = useGetAllVendors();
+    const {
+        getAllVendors: fetchVendors,
+        data: vendorsData,
+        loading: getAllVendorsLoading,
+        error: getAllVendorsError,
+    } = useGetAllVendors();
+    const getAllVendors = fetchVendors;
     const vendors = vendorsData?.vendors || [];
     const { createVendor, loading: creating } = useCreateVendor();
     const { deleteVendor, loading: deleteVendorLoading } = useDeleteVendor();
@@ -139,18 +145,18 @@ const VendorsListPage = () => {
         });
     };
 
-    const filteredVendors = vendors.filter(v => 
-        v.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredVendors = vendors.filter(v =>
+        (v.name || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <div className="bg-[#FAFBF9] min-h-screen font-sans selection:bg-primary/10 selection:text-primary pb-12">
             <div className="p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto space-y-6">
-                
+
                 {/* ── HEADER ───────────────────────────────────────────────────────── */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-                    
+
                     <div className="relative z-10">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 rounded-lg bg-primary-pale/30 flex items-center justify-center border border-primary-pale/50">
@@ -192,9 +198,9 @@ const VendorsListPage = () => {
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div className="relative w-full max-w-sm">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search vendors..." 
+                        <input
+                            type="text"
+                            placeholder="Search vendors..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
@@ -222,6 +228,20 @@ const VendorsListPage = () => {
                                         <td colSpan="3" className="p-8 text-center text-gray-400">
                                             <Loader size={24} className="animate-spin mx-auto mb-2 text-primary" />
                                             <p className="text-sm">Loading vendors...</p>
+                                        </td>
+                                    </tr>
+                                ) : getAllVendorsError ? (
+                                    <tr>
+                                        <td colSpan="3" className="p-8 text-center">
+                                            <Building2 size={32} className="mx-auto mb-3 text-red-300" />
+                                            <p className="text-sm font-semibold text-gray-800">Vendors could not be loaded.</p>
+                                            <button
+                                                type="button"
+                                                onClick={fetchVendors}
+                                                className="mt-3 text-sm font-semibold text-primary hover:text-primary-dark"
+                                            >
+                                                Try again
+                                            </button>
                                         </td>
                                     </tr>
                                 ) : filteredVendors.length === 0 ? (
@@ -282,7 +302,7 @@ const VendorsListPage = () => {
                 {vendorModal.isOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4">
                         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
-                            
+
                             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                                 <h2 className="text-lg font-bold text-gray-900">
                                     {vendorModal.isEditing ? "Edit Vendor" : "Add Vendor"}
@@ -297,7 +317,7 @@ const VendorsListPage = () => {
 
                             <div className="p-6 overflow-y-auto">
                                 <form id="vendorForm" onSubmit={handleSave} className="flex flex-col gap-5">
-                                    
+
                                     {/* Image Upload Box */}
                                     <div className="flex flex-col items-center">
                                         <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:border-primary hover:text-primary hover:bg-primary/5 transition-all relative overflow-hidden group bg-gray-50">
@@ -349,7 +369,7 @@ const VendorsListPage = () => {
                                         placeholder="e.g. GSK Pharma"
                                         className="bg-gray-50"
                                     />
-                                    
+
                                     <FormField>
                                         <FieldLabel className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 block">Description</FieldLabel>
                                         <FieldControl as="textarea"

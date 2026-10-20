@@ -1,3 +1,4 @@
+import { allowedOrigins } from "./utils/allowedOrigins.js";
 import { securityConfigIssues } from "./utils/securityConfig.js";
 import { safeError } from "./utils/safeLog.js";
 import express from "express";
@@ -44,7 +45,7 @@ app.use(cookieParser());
 // CORS alone does not prevent cross-site form submissions with session cookies.
 app.use((req, res, next) => {
     if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-        const allowed = [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean);
+        const allowed = allowedOrigins();
         if ((req.headers.origin && !allowed.includes(req.headers.origin)) ||
             (!req.headers.origin && req.headers["sec-fetch-site"] === "cross-site"))
             return next(new ErrorResponse("Untrusted request origin", 403));
@@ -53,7 +54,7 @@ app.use((req, res, next) => {
 });
 app.use(
     cors({
-        origin: [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean),
+        origin: allowedOrigins(),
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         credentials: true,
     }),

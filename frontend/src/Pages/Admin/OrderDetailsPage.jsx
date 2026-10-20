@@ -293,6 +293,13 @@ const OrderDetails = () => {
                                                                 }
                                                             </p>
 
+                                                            {item.variantName && (
+                                                                <span className="inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary-dark">
+                                                                    {item.variantName}
+                                                                    {item.variantSku ? ` · ${item.variantSku}` : ""}
+                                                                </span>
+                                                            )}
+
                                                             {item.status ===
                                                                 "cancelled" && (
                                                                 <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">

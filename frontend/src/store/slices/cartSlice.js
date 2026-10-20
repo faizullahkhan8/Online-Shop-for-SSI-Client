@@ -21,13 +21,18 @@ const cartSlice = createSlice({
                     ? newItem.effectivePrice
                     : newItem.price;
             if (!Number.isFinite(Number(priceToUse)) || Number(priceToUse) < 0) return;
+            const cartKey = newItem.variantId ? `${newItem._id}:${newItem.variantId}` : newItem._id;
             const existingItem = state.items.find(
-                (item) => item._id === newItem._id,
+                (item) => (item.cartKey || item._id) === cartKey,
             );
             if (!existingItem) {
                 const finalQty = newItem.stock !== undefined && qty > newItem.stock ? newItem.stock : qty;
                 state.items.push({
                     _id: newItem._id,
+                    cartKey,
+                    variantId: newItem.variantId,
+                    variantName: newItem.variantName,
+                    selectedVariant: newItem.selectedVariant,
                     name: newItem.name,
                     price: priceToUse,
                     originalPrice: newItem.price,
@@ -57,10 +62,11 @@ const cartSlice = createSlice({
             );
         },
         removeFromCart: (state, action) => {
-            const { _id } = action.payload;
-            const existingItem = state.items.find((item) => item._id === _id);
+            const { _id, cartKey } = action.payload;
+            const key = cartKey || _id;
+            const existingItem = state.items.find((item) => (item.cartKey || item._id) === key);
             if (existingItem) {
-                state.items = state.items.filter((item) => item._id !== _id);
+                state.items = state.items.filter((item) => (item.cartKey || item._id) !== key);
                 state.totalAmount = state.items.reduce(
                     (total, item) => total + item.totalPrice,
                     0,
@@ -73,10 +79,11 @@ const cartSlice = createSlice({
             }
         },
         updateQuantity: (state, action) => {
-            const { _id } = action.payload;
+            const { _id, cartKey } = action.payload;
             const quantity = Number(action.payload.quantity);
             if (!Number.isSafeInteger(quantity) || quantity < 1) return;
-            const existingItem = state.items.find((item) => item._id === _id);
+            const key = cartKey || _id;
+            const existingItem = state.items.find((item) => (item.cartKey || item._id) === key);
             if (existingItem && quantity > 0) {
                 const finalQty = existingItem.stock !== undefined && quantity > existingItem.stock
                     ? existingItem.stock
@@ -100,8 +107,9 @@ const cartSlice = createSlice({
             state.selectedTotalAmount = 0;
         },
         toggleItemSelection: (state, action) => {
-            const { _id } = action.payload;
-            const item = state.items.find((item) => item._id === _id);
+            const { _id, cartKey } = action.payload;
+            const key = cartKey || _id;
+            const item = state.items.find((item) => (item.cartKey || item._id) === key);
             if (item) {
                 item.selected = !item.selected;
                 state.selectedTotalAmount = state.items.reduce(
@@ -120,7 +128,7 @@ const cartSlice = createSlice({
         },
         consumeCheckoutItems: (state, action) => {
             for (const purchased of action.payload.items) {
-                const item = state.items.find(entry => entry._id === String(purchased.product));
+                const item = state.items.find(entry => entry._id === String(purchased.product?._id || purchased.product) && String(entry.variantId || "") === String(purchased.variantId || ""));
                 if (!item || !Number.isSafeInteger(purchased.quantity) || purchased.quantity < 1) continue;
                 item.quantity = Math.max(0, item.quantity - purchased.quantity);
                 item.totalPrice = item.price * item.quantity;
@@ -132,7 +140,7 @@ const cartSlice = createSlice({
         removeSelectedItems: (state, action) => {
             const { productIds } = action.payload;
             state.items = state.items.filter(
-                (item) => !productIds.includes(item._id),
+                (item) => !productIds.includes(item.cartKey || item._id),
             );
             state.totalAmount = state.items.reduce(
                 (total, item) => total + item.totalPrice,

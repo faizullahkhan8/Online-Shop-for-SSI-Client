@@ -107,14 +107,14 @@ export const handleOptionalBackgroundRemoval = async (req, res, next) => {
     }
 };
 
-export const imagekitUpload = async (req, res, next) => {
+export const imagekitUploadTo = (folder = "/products") => async (req, res, next) => {
     const files = req.files || (req.file ? [req.file] : []);
     if (files.length === 0) {
         return next();
     }
 
     try {
-        const results = await uploadImageBatch(files, imagekit.files);
+        const results = await uploadImageBatch(files, imagekit.files, folder);
 
         req.uploadedImages = results.map((result) => ({
             fileId: result.fileId,
@@ -136,3 +136,5 @@ export const imagekitUpload = async (req, res, next) => {
         });
     }
 };
+
+export const imagekitUpload = imagekitUploadTo("/products");

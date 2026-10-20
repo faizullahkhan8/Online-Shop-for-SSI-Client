@@ -2,7 +2,7 @@ import { useAddressLookup } from "../../hooks/useAddressLookup.js";
 import { QueryError } from "../../UI/QueryState";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useEffect, useState } from "react";
-import { Truck, Receipt, Save, Loader2, CreditCard, Plus, Trash2, Image as ImageIcon, MapPin, MessageSquare } from "lucide-react";
+import { Truck, Receipt, Save, Loader2, CreditCard, Plus, Trash2, Image as ImageIcon, MapPin } from "lucide-react";
 import Input from "../../UI/Input.jsx";
 import Select from "../../UI/Select.jsx";
 import { useGetSettings, useUpdateSettings, useSmsTools } from "../../api/hooks/settings.api";
@@ -41,7 +41,7 @@ const TaxShippingSettings = () => {
         smsProvider: "sms_gate",
         smsFields: {},
     });
-    
+
     const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
     const handleDetectLocation = () => {
@@ -272,7 +272,7 @@ const TaxShippingSettings = () => {
                         <Truck size={16} className="text-primary" />
                         Shipping Calculation Rules
                     </h3>
-                    
+
                     <div className="space-y-6">
                         <FormField className="space-y-1.5">
                             <FieldLabel className="text-sm font-medium text-gray-700">Calculation Method</FieldLabel>
@@ -308,8 +308,8 @@ const TaxShippingSettings = () => {
                                             <MapPin size={16} className="text-primary" />
                                             Set Store Location (Origin point)
                                         </label>
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={handleDetectLocation}
                                             disabled={isDetectingLocation}
                                             className="text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale hover:bg-primary-light px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
@@ -403,7 +403,7 @@ const TaxShippingSettings = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Conditional Override Config */}
                         <div className="bg-primary-pale/50 border border-blue-100 p-4 rounded-xl space-y-4 mt-6">
                             <div className="flex items-center justify-between">
@@ -489,7 +489,7 @@ const TaxShippingSettings = () => {
                                 >
                                     <Trash2 size={14} />
                                 </button>
-                                
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mr-10">
                                     <FormField className="space-y-1.5">
                                         <FieldLabel className="text-xs font-medium text-gray-700">Method Title</FieldLabel>
@@ -553,7 +553,7 @@ const TaxShippingSettings = () => {
                                 </div>
                             </div>
                         ))}
-                        
+
                         {(!form.paymentMethods || form.paymentMethods.length === 0) && (
                             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
                                 <p className="text-sm text-gray-500">No custom payment methods added.</p>

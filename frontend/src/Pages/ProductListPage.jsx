@@ -13,10 +13,13 @@ import ProductCard from "../Components/ProductCard.jsx";
 import ProductListItem from "../Components/ProductListItem";
 import Pagination from "../Components/Pagination";
 import { useGetAllProducts } from "../api/hooks/product.api";
+import useScrollReveal from "../hooks/useScrollReveal";
 
 const ProductListPage = () => {
     const [viewMode, setViewMode] = useState("grid");
+    const productsGridRef = useRef(null);
     const [searchParams, setSearchParams] = useSearchParams();
+    useScrollReveal(productsGridRef);
 
     const page = parseInt(searchParams.get("page") || "1");
     const searchQuery = searchParams.get("search");
@@ -51,7 +54,7 @@ const ProductListPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-screen">
-            <div className="container mx-auto px-4 lg:px-8 py-6 lg:py-8">
+            <div className="site-shell py-6 lg:py-8">
                 <div className="mb-6">
                     <div className="flex items-end justify-between gap-3 pb-4 border-b border-gray-200">
                         <div>
@@ -139,6 +142,7 @@ const ProductListPage = () => {
                             </div>
                         ) : (
                             <div
+                                ref={productsGridRef}
                                 className={
                                     viewMode === "grid"
                                         ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-5"

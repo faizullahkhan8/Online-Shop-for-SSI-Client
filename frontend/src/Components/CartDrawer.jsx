@@ -96,10 +96,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
                     ) : (
                         <div className="space-y-4">
                             {cartItems.map((item) => (
-                                <div key={item._id} className="flex gap-4 p-3 bg-white border border-gray-100 rounded-xl hover:border-primary-light transition-colors group relative">
-                                    <button 
+                                <div key={item.cartKey || item._id} className="flex gap-4 p-3 bg-white border border-gray-100 rounded-xl hover:border-primary-light transition-colors group relative">
+                                    <button
                                         aria-label={`Remove ${item.name} from cart`}
-                                        onClick={() => handleRemoveItem(item._id)}
+                                        onClick={() => handleRemoveItem(item.cartKey || item._id)}
                                         className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-100"
                                     >
                                         <Trash2 size={12} />
@@ -123,12 +123,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                         <Link to={`/product/${item._id}`} onClick={onClose} className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug hover:text-primary transition-colors">
                                             {item.name}
                                         </Link>
+                                        {item.variantName && <span className="text-[11px] font-bold text-primary">{item.variantName}</span>}
                                         <div className="flex items-center justify-between mt-2">
                                             <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 h-7 overflow-hidden">
                                                 <button
                                                     type="button"
                                                     aria-label={`Decrease quantity of ${item.name}`}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity, -1, item.stock)}
+                                                    onClick={() => handleQuantityChange(item.cartKey || item._id, item.quantity, -1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
                                                     <Minus size={12} />
@@ -139,7 +140,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                                 <button
                                                     type="button"
                                                     aria-label={`Increase quantity of ${item.name}`}
-                                                    onClick={() => handleQuantityChange(item._id, item.quantity, 1, item.stock)}
+                                                    onClick={() => handleQuantityChange(item.cartKey || item._id, item.quantity, 1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
                                                     <Plus size={12} />

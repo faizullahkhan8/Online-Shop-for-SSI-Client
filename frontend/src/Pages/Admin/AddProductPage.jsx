@@ -1,4 +1,3 @@
-import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import Input from "../../UI/Input.jsx";
@@ -41,6 +40,8 @@ const INITAIL_STATE = {
     category: "",
     stock: "",
     lowStock: "",
+    hasVariants: false,
+    variants: [],
     badges: [],
     image: null,
     images: [],
@@ -54,7 +55,14 @@ const AddProduct = () => {
     const parseProductFromParams = () => {
         try {
             const raw = searchParams.get("product");
-            return raw ? JSON.parse(raw) : INITAIL_STATE;
+            if (!raw) return INITAIL_STATE;
+            const parsed = JSON.parse(raw);
+            return {
+                ...INITAIL_STATE,
+                ...parsed,
+                category: parsed.category?._id || parsed.category || "",
+                vendor: parsed.vendor?._id || parsed.vendor || "",
+            };
         } catch {
             return INITAIL_STATE;
         }
@@ -73,7 +81,7 @@ const AddProduct = () => {
     const { updateProduct, loading: updateProductLoading } = useUpdateProduct();
 
     const { data: vendorsData } = useGetAllVendors();
-    
+
     useEffect(() => {
         if (vendorsData?.success) {
             setVendors(vendorsData.vendors);
@@ -103,9 +111,9 @@ const AddProduct = () => {
         const { id, value, files, type } = e.target;
         if (type === "file") {
             const newFiles = Array.from(files);
-            setProductData((prev) => ({ 
-                ...prev, 
-                images: [...(prev.images || []), ...newFiles] 
+            setProductData((prev) => ({
+                ...prev,
+                images: [...(prev.images || []), ...newFiles]
             }));
         } else {
             setProductData((prev) => {
@@ -136,6 +144,49 @@ const AddProduct = () => {
                 return { ...prev, badges: currentBadges.filter((b) => b !== badgeName) };
             }
             return { ...prev, badges: [...currentBadges, badgeName] };
+        });
+    };
+
+    const addVariant = () => {
+        setProductData((prev) => ({
+            ...prev,
+            hasVariants: true,
+            variants: [...(prev.variants || []), {
+                name: "", color: "", sku: "", price: prev.price || "",
+                stock: 0, lowStock: 5, imageIndex: (prev.variants || []).length,
+                active: true,
+            }],
+        }));
+    };
+
+    const updateVariant = (index, field, value) => {
+        setProductData((prev) => {
+            const variants = [...(prev.variants || [])];
+            variants[index] = { ...variants[index], [field]: value };
+            const active = variants.filter((variant) => variant.active !== false);
+            const prices = active.map((variant) => Number(variant.price)).filter(Number.isFinite);
+            const totalStock = active.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
+            return {
+                ...prev,
+                variants,
+                price: prices.length ? Math.min(...prices) : prev.price,
+                stock: totalStock,
+            };
+        });
+    };
+
+    const removeVariant = (index) => {
+        setProductData((prev) => {
+            const variants = (prev.variants || []).filter((_, variantIndex) => variantIndex !== index);
+            const active = variants.filter((variant) => variant.active !== false);
+            const prices = active.map((variant) => Number(variant.price)).filter(Number.isFinite);
+            return {
+                ...prev,
+                variants,
+                hasVariants: variants.length > 0,
+                price: prices.length ? Math.min(...prices) : prev.price,
+                stock: active.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0),
+            };
         });
     };
 
@@ -208,11 +259,11 @@ const AddProduct = () => {
                 <div className="lg:col-span-7 space-y-6">
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 space-y-5">
                         {/* Product Name */}
-                        <FormField id="name">
-                            <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                        <div>
+                            <label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                 <Hash size={14} className="text-primary" />
                                 Product Name
-                            </FieldLabel>
+                            </label>
                             <Input
                                 type="text"
                                 id="name"
@@ -222,16 +273,16 @@ const AddProduct = () => {
                                 onChange={handleChange}
                                 required
                             />
-                        </FormField>
-                        
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Slug */}
-                            <FormField id="slug">
+                            <div>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <FieldLabel className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <label htmlFor="slug" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                                         <Hash size={14} className="text-primary" />
                                         Slug (URL)
-                                    </FieldLabel>
+                                    </label>
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -253,14 +304,14 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </FormField>
-                            
+                            </div>
+
                             {/* Vendor */}
-                            <FormField id="vendor">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <div>
+                                <label htmlFor="vendor" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Box size={14} className="text-primary" />
                                     Vendor
-                                </FieldLabel>
+                                </label>
                                 <Select
                                     id="vendor"
                                     value={productData?.vendor?._id || productData?.vendor || ""}
@@ -278,16 +329,16 @@ const AddProduct = () => {
                                     ]}
                                     className="w-full"
                                 />
-                            </FormField>
+                            </div>
                         </div>
 
                         {/* Product Type & Category */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField id="productType">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Layers size={14} className="text-primary" />
                                     Product Type
-                                </FieldLabel>
+                                </label>
                                 <Input
                                     type="text"
                                     id="productType"
@@ -296,19 +347,50 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </FormField>
+                            </div>
                         </div>
 
                         {/* Pricing */}
-                        <div className="grid grid-cols-3 gap-4">
-                            <FormField id="price">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                        <div className="pt-2 border-t border-gray-100">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <label className="text-sm font-semibold text-gray-800">Product Variants</label>
+                                    <p className="text-xs text-gray-500 mt-0.5">Add colours, scents or pack options under one product.</p>
+                                </div>
+                                <button type="button" onClick={addVariant} className="px-3 py-2 rounded-lg bg-primary-pale text-primary-dark text-xs font-bold hover:bg-primary hover:text-white transition-colors">
+                                    + Add Variant
+                                </button>
+                            </div>
+                            {(productData.variants || []).length > 0 && (
+                                <div className="space-y-3">
+                                    {productData.variants.map((variant, index) => (
+                                        <div key={index} className="grid grid-cols-2 sm:grid-cols-7 gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                                            <Input type="text" value={variant.name} aria-label="Variant name" placeholder="Variant name" onChange={(e) => updateVariant(index, "name", e.target.value)} required />
+                                            <Input type="text" value={variant.color} aria-label="Variant colour" placeholder="Colour" onChange={(e) => updateVariant(index, "color", e.target.value)} />
+                                            <Input type="text" value={variant.sku} aria-label="Variant SKU" placeholder="SKU" onChange={(e) => updateVariant(index, "sku", e.target.value)} />
+                                            <Input type="number" value={variant.price} aria-label="Variant price" min="0" step="0.01" placeholder="Price" onChange={(e) => updateVariant(index, "price", e.target.value)} required />
+                                            <Input type="number" value={variant.stock} aria-label="Variant stock" min="0" step="1" placeholder="Stock" onChange={(e) => updateVariant(index, "stock", e.target.value)} required />
+                                            <select aria-label="Variant image" value={variant.imageIndex} onChange={(e) => updateVariant(index, "imageIndex", Number(e.target.value))} className="rounded-lg border border-gray-200 px-2 text-xs bg-white">
+                                                {(productData.images || []).map((_, imageIndex) => <option key={imageIndex} value={imageIndex}>Image {imageIndex + 1}</option>)}
+                                            </select>
+                                            <button type="button" onClick={() => removeVariant(index)} className="rounded-lg border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50">Remove</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pricing */}
+                        {(productData.variants || []).length === 0 ? (
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label htmlFor="price" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign
                                         size={14}
                                         className="text-primary"
                                     />
                                     Price (Rs)
-                                </FieldLabel>
+                                </label>
                                 <Input
                                     type="number"
                                     id="price"
@@ -319,47 +401,28 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </FormField>
-                            <FormField id="minPrice">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-primary" />
-                                    Min Price
-                                </FieldLabel>
-                                <Input
-                                    type="number"
-                                    id="minPrice"
-                                    value={productData?.minPrice}
-                                    placeholder="Optional"
-                                    className="w-full"
-                                    onChange={handleChange}
-                                />
-                            </FormField>
-                            <FormField id="maxPrice">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                                    <DollarSign size={14} className="text-primary" />
-                                    Max Price
-                                </FieldLabel>
-                                <Input
-                                    type="number"
-                                    id="maxPrice"
-                                    value={productData?.maxPrice}
-                                    placeholder="Optional"
-                                    className="w-full"
-                                    onChange={handleChange}
-                                />
-                            </FormField>
+                            </div>
                         </div>
+                        ) : (
+                            <div className="rounded-xl border border-primary/20 bg-primary-pale/30 px-4 py-3 text-sm text-gray-700">
+                                Variant price range is calculated automatically: <span className="font-bold text-primary-dark">Rs {Math.min(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()} – Rs {Math.max(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()}</span>
+                            </div>
+                        )}
 
                         {/* Stock Quantity */}
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField id="stock">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            {["minPrice", "maxPrice"].map(field => <div key={field}><label htmlFor={field} className="block text-sm font-medium mb-1.5">{field === "minPrice" ? "Min Price" : "Max Price"}</label><Input id={field} type="number" min="0" step="0.01" value={productData[field] ?? ""} placeholder="Optional" onChange={handleChange} /></div>)}
+                        </div>
+                        <div className={`grid ${(productData.variants || []).length === 0 ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
+                            {(productData.variants || []).length === 0 && (
+                            <div>
+                                <label htmlFor="stock" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Boxes
                                         size={16}
                                         className="text-primary"
                                     />
                                     Stock Quantity
-                                </FieldLabel>
+                                </label>
                                 <Input
                                     type="number"
                                     id="stock"
@@ -369,12 +432,13 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </FormField>
-                            <FormField id="lowStock">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            </div>
+                            )}
+                            <div>
+                                <label htmlFor="lowStock" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Box size={14} className="text-primary" />
                                     Low Stock
-                                </FieldLabel>
+                                </label>
                                 <Input
                                     type="number"
                                     id="lowStock"
@@ -384,16 +448,16 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </FormField>
+                            </div>
                         </div>
 
                         {/* Category */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-[-10px]">
-                            <FormField id="category">
-                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <div>
+                                <label htmlFor="category" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Layers size={14} className="text-primary" />
                                     Category
-                                </FieldLabel>
+                                </label>
                                 <Select
                                     placeholder="Select category"
                                     id="category"
@@ -409,7 +473,7 @@ const AddProduct = () => {
                                     }))}
                                     className="w-full"
                                 />
-                            </FormField>
+                            </div>
                         </div>
 
                         {/* Badges */}
@@ -457,11 +521,11 @@ const AddProduct = () => {
                             <label className="text-sm font-medium text-gray-700">
                                 Product Image
                             </label>
-                            <FormField className="flex items-center gap-2">
-                                <FieldLabel className="text-xs font-medium text-gray-600">
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="remove-background" className="text-xs font-medium text-gray-600">
                                     Remove BG
-                                </FieldLabel>
-                                <FieldControl
+                                </label>
+                                <input id="remove-background"
                                     type="checkbox"
                                     checked={productData?.isRemoveBg}
                                     onChange={(e) =>
@@ -472,7 +536,7 @@ const AddProduct = () => {
                                     }
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
-                            </FormField>
+                            </div>
                         </div>
                         <div className="space-y-4">
                             <label
@@ -519,10 +583,10 @@ const AddProduct = () => {
                                         return (
                                             <div key={idx} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group bg-gray-50">
                                                 <img src={imgUrl} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
-                                                <button aria-label="Remove item"
+                                                <button aria-label="Remove image"
                                                     type="button"
                                                     onClick={() => removeImage(idx)}
-                                                    className="absolute top-1.5 right-1.5 bg-white/90 text-red-500 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 shadow-sm"
+                                                    className="absolute top-1.5 right-1.5 bg-white/90 text-red-500 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-red-50 shadow-sm"
                                                 >
                                                     <X size={14} />
                                                 </button>

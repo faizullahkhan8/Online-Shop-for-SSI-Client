@@ -15,7 +15,7 @@ const WishlistPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
-            <div className="container mx-auto px-4 lg:px-8 max-w-[1200px]">
+            <div className="site-shell">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                     <div>

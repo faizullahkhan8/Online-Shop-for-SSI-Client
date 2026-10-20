@@ -13,7 +13,6 @@ const wishlistSlice = createSlice({
         },
         toggleWishlist: (state, action) => {
             const product = action.payload;
-            console.log(product, state.items);
             const existingIndex = state.items.findIndex((item) => {
                 const a = item._id || item.id;
                 const b = product._id || product.id;

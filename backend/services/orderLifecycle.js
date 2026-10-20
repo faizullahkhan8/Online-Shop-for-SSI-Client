@@ -24,8 +24,15 @@ export async function changeOrder(id, actor, action, data = {}) {
             const targets = item ? [item] : order.items.filter(line => line.status !== "cancelled");
             let removed = 0;
             for (const line of targets) {
-                const result = await getLocalProductModel().updateOne({ _id: line.product },
-                    { $inc: { stock: line.quantity, sold: -line.quantity } }, { session });
+                const variantStock = line.variantId && !line.usesSharedStock;
+                const product = await getLocalProductModel().findById(line.product).session(session);
+                if (!product) throw new ErrorResponse("Cannot restore stock: product missing", 409);
+                const variant = variantStock ? product.variants.id(line.variantId) : null;
+                if (variantStock && !variant) throw new ErrorResponse("Cannot restore stock: ordered variant missing", 409);
+                const result = await getLocalProductModel().updateOne(
+                    { _id: line.product, ...(variantStock ? { "variants._id": line.variantId } : {}) },
+                    { $inc: { stock: variant?.active === false ? 0 : line.quantity, sold: -Math.min(product.sold, line.quantity),
+                        ...(variantStock ? { "variants.$.stock": line.quantity } : {}) } }, { session });
                 if (!result.matchedCount) throw new ErrorResponse("Cannot restore stock: product missing", 409);
                 line.status = "cancelled";
                 line.cancellationReason = typeof data.reason === "string" ? data.reason.slice(0, 1000) : "Cancelled";

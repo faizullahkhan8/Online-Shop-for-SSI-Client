@@ -30,6 +30,8 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
     };
 
     const handleAddToCart = (item) => {
+        if ((item.variants || []).some(variant => variant.active !== false)) { onClose(); navigate(`/product/${item._id || item.id}`); return; }
+        if (!(Number(item.stock) > 0)) return;
         dispatch(addToCart({ ...item, quantity: 1 }));
         handleRemoveItem(item); // Optional: remove from wishlist after adding to cart
         toast.success("Added to cart!");
@@ -103,7 +105,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
 
                                 return (
                                 <div key={item._id || item.id} className="flex gap-4 p-3 bg-white border border-gray-100 rounded-xl hover:border-red-200 transition-colors group relative">
-                                    <button 
+                                    <button
                                         aria-label={`Remove ${item.name} from wishlist`}
                                         onClick={() => handleRemoveItem(item)}
                                         className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-100"

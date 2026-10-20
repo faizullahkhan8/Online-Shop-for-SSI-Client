@@ -19,19 +19,6 @@ import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const RECENT_SEARCHES_KEY = "zada_recent_searches";
 
-// Curated default trending search terms
-const DEFAULT_TRENDING_SEARCHES = [
-    "Centrum",
-    "Surbex Z",
-    "Panadol",
-    "Vitamin D",
-    "Omega 3",
-    "Nutrifactor",
-    "Face Wash",
-    "Baby Diapers",
-    "Calcium",
-];
-
 const SearchModal = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const inputRef = useRef(null);
@@ -167,7 +154,7 @@ const SearchModal = ({ isOpen, onClose }) => {
     const matchingSuggestions = useMemo(() => {
         if (!debouncedQuery) return [];
         const suggestions = new Set();
-        
+
         // Add direct product title variations
         searchResults.forEach((p) => {
             if (p.name) {
@@ -345,7 +332,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                             )}
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                            {(debouncedQuery ? matchingSuggestions : DEFAULT_TRENDING_SEARCHES).map(
+                            {(debouncedQuery ? matchingSuggestions : trendingProducts.map(product => product.name).filter(Boolean)).map(
                                 (item, idx) => (
                                     <button
                                         key={idx}
@@ -388,8 +375,13 @@ const SearchModal = ({ isOpen, onClose }) => {
                         ) : displayProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                                 {displayProducts.slice(0, 8).map((product) => {
-                                    const hasDiscount =
-                                        product.maxPrice && product.maxPrice > product.price;
+                                    const variantPrices = (product.variants || [])
+                                        .filter((variant) => variant.active !== false)
+                                        .map((variant) => Number(variant.price))
+                                        .filter(Number.isFinite);
+                                    const lowestPrice = variantPrices.length ? Math.min(...variantPrices) : Number(product.price);
+                                    const highestPrice = variantPrices.length ? Math.max(...variantPrices) : lowestPrice;
+                                    const hasDiscount = Number.isFinite(product.effectivePrice) && product.effectivePrice < lowestPrice;
                                     return (
                                         <div
                                             key={product._id || product.id}
@@ -413,11 +405,11 @@ const SearchModal = ({ isOpen, onClose }) => {
                                                 </h5>
                                                 <div className="flex items-baseline gap-1.5 mt-1">
                                                     <span className="text-xs font-extrabold text-red-600">
-                                                        Rs. {product.price?.toLocaleString()}
+                                                        Rs. {(hasDiscount ? product.effectivePrice : lowestPrice).toLocaleString()}{!hasDiscount && highestPrice > lowestPrice ? ` – ${highestPrice.toLocaleString()}` : ""}
                                                     </span>
                                                     {hasDiscount && (
                                                         <span className="text-xs text-gray-400 line-through">
-                                                            Rs. {product.maxPrice?.toLocaleString()}
+                                                            Rs. {lowestPrice.toLocaleString()}
                                                         </span>
                                                     )}
                                                 </div>

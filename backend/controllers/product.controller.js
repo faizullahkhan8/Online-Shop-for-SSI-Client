@@ -14,11 +14,8 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
     if (!ProductModel)
         return next(new ErrorResponse("Product model not found", 500));
 
-    let data;
-    try { data = JSON.parse(req.body?.data); }
-    catch { return next(new ErrorResponse("Invalid product data format", 400)); }
-    if (!data || typeof data !== "object" || Array.isArray(data)) return next(new ErrorResponse("Invalid product data format", 400));
-    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock } = data;
+    const data = JSON.parse(req.body.data);
+    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock, hasVariants, variants } = data;
 
     if (typeof name !== "string" || !name.trim() || !category || [price, stock, lowStock].some(value => value === undefined || value === null || value === ""))
         return next(new ErrorResponse("All fields are required except description", 400));
@@ -52,6 +49,8 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
         category,
         stock,
         lowStock,
+        hasVariants,
+        variants,
         image: req.uploadedImages[0]?.filePath || "",
         imagekitFileId: req.uploadedImages[0]?.fileId || "",
         images: req.uploadedImages,
@@ -254,18 +253,38 @@ export const updateProduct = expressAsyncHandler(async (req, res, next) => {
     }
 
     if (!updateData || typeof updateData !== "object" || Array.isArray(updateData)) return next(new ErrorResponse("Invalid product data format", 400));
-    const editable = ["name", "slug", "productType", "vendor", "price", "minPrice", "maxPrice", "description", "details", "badges", "category", "stock", "lowStock", "images", "image", "imagekitFileId"];
+    const editable = ["variants", "hasVariants", "name", "slug", "productType", "vendor", "price", "minPrice", "maxPrice", "description", "details", "badges", "category", "stock", "lowStock", "images", "image", "imagekitFileId"];
     updateData = Object.fromEntries(Object.entries(updateData).filter(([key]) => editable.includes(key)));
     if (updateData.images !== undefined && !Array.isArray(updateData.images)) return next(new ErrorResponse("Images must be an array", 400));
     if (req.uploadedImages && req.uploadedImages.length > 0) {
         if (!updateData.images) updateData.images = [];
         // Optional: you could delete removed images from ImageKit here by comparing product.images and updateData.images
         updateData.images.push(...req.uploadedImages);
-        
+
         // Backward compatibility
         updateData.imagekitFileId = updateData.images[0]?.fileId || "";
         updateData.image = updateData.images[0]?.filePath || "";
     }
+
+    if (Array.isArray(updateData.variants)) {
+        const activeVariants = updateData.variants.filter((variant) => variant.active !== false);
+        const variantPrices = activeVariants
+            .filter((variant) => variant.price !== "" && variant.price !== null && variant.price !== undefined)
+            .map((variant) => Number(variant.price))
+            .filter(Number.isFinite);
+        if (variantPrices.length !== activeVariants.length) {
+            return next(new ErrorResponse("Every active variant must have a valid price", 400));
+        }
+        updateData.hasVariants = activeVariants.length > 0;
+        if (activeVariants.length > 0) {
+            updateData.price = Math.min(...variantPrices);
+            updateData.stock = activeVariants.reduce(
+                (sum, variant) => sum + (Number(variant.stock) || 0),
+                0,
+            );
+        }
+    }
+
 
     const updatedProduct = await ProductModel.findByIdAndUpdate(
         id,

@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from "react";
 import {
     Heart,
     Star,
@@ -5,16 +6,16 @@ import {
     ArrowRight,
     ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
-import { toggleWishlist } from "../store/slices/wishlistSlice";
 import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
-import { handleImageError } from "../utils/imageHelper";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const ProductListItem = ({ product }) => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { data } = useGetWishlist();
     const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
@@ -22,20 +23,18 @@ const ProductListItem = ({ product }) => {
 
     const productId = product?._id || product?.id;
 
-    const matchId = (a, b) => {
-        if (!a || !b) return false;
-        const aval = a._id || a.id || a;
-        const bval = b._id || b.id || b;
-        return aval.toString() === bval.toString();
-    };
+    const isInWishlist = useMemo(() => {
+        if (!wishlistItems?.length || !productId) return false;
+        return wishlistItems.some((i) => {
+            const id = i._id || i.id || i;
+            return id?.toString() === productId?.toString();
+        });
+    }, [wishlistItems, productId]);
 
-    const isInWishlist = !!wishlistItems.find((i) => matchId(i, product));
-
-    const handleWishlist = async (e) => {
+    const handleWishlist = useCallback(async (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!productId) return;
-
         try {
             if (isInWishlist) {
                 await removeFromWishlist(productId);
@@ -47,18 +46,19 @@ const ProductListItem = ({ product }) => {
         } catch {
             // Error is handled by mutation
         }
-    };
+    }, [productId, isInWishlist, addToWishlist, removeFromWishlist]);
 
     const stock = Number(product?.stock) || 0;
     const isOutOfStock = stock <= 0;
 
-    const handleAddToCart = (e) => {
+    const handleAddToCart = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!product || isOutOfStock) return;
+        if ((product.variants || []).some(variant => variant.active !== false)) { navigate(`/product/${productId}`); return; }
         dispatch(addToCart({ ...product, quantity: 1 }));
         toast.success(`${product?.name || "Product"} added to cart!`);
-    };
+    }, [product, productId, isOutOfStock, dispatch, navigate]);
 
     const rawPrice = Number(product?.price || 0);
     const rawEffectivePrice =
@@ -73,21 +73,11 @@ const ProductListItem = ({ product }) => {
     const ratingVal = Number(product?.rating || 5);
     const roundedRating = Math.min(5, Math.max(1, Math.round(ratingVal)));
 
-    const getImageUrl = (img) => {
-        if (!img) return "https://placehold.co/300x300/F4F8EE/74AA34?text=Zada";
-        if (img.startsWith("http://") || img.startsWith("https://")) return img;
-        const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
-        if (endpoint) {
-            return `${endpoint.replace(/\/+$/, "")}/${img.replace(/^\/+/, "")}`;
-        }
-        return img;
-    };
-
     const imageSrc = getImageUrl(product?.image);
 
     return (
-        <div className="group bg-white border border-gray-200/90 rounded-2xl p-4 flex flex-col md:flex-row gap-5 hover:border-[#74AA34]/50 hover:shadow-md transition-all relative">
-            <div className="w-full md:w-48 h-48 bg-[#FAFBF9] rounded-xl flex-shrink-0 flex items-center justify-center relative p-3 overflow-hidden border border-gray-100/90">
+        <div className="group bg-white border border-gray-200/90 rounded-2xl p-4 flex flex-col md:flex-row gap-5 hover:border-primary/50 hover:shadow-md transition-all relative">
+            <div className="w-full md:w-48 h-48 bg-primary-pale rounded-xl flex-shrink-0 flex items-center justify-center relative p-3 overflow-hidden border border-gray-100/90">
                 <Link to={`/product/${productId}`} className="w-full h-full flex items-center justify-center">
                     <img
                         src={imageSrc}
@@ -122,7 +112,7 @@ const ProductListItem = ({ product }) => {
                                 {product?.category?.name || "Healthcare"}
                             </span>
                             <Link to={`/product/${productId}`}>
-                                <h3 className="text-base font-bold text-gray-900 group-hover:text-[#74AA34] transition-colors mt-1">
+                                <h3 className="text-base font-bold text-gray-900 group-hover:text-primary transition-colors mt-1">
                                     {product?.name || "Healthcare Product"}
                                 </h3>
                             </Link>
@@ -170,10 +160,10 @@ const ProductListItem = ({ product }) => {
 
                 <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#EDF6E5] rounded-md border border-[#D5EAC3]">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary-pale rounded-md border border-primary-light">
                             <ShieldCheck
                                 size={13}
-                                className="text-[#74AA34]"
+                                className="text-primary"
                             />
                             <span className="text-xs font-bold text-[#3E6913]">
                                 100% Genuine
@@ -193,7 +183,7 @@ const ProductListItem = ({ product }) => {
                     <div className="flex items-center gap-2.5">
                         <Link
                             to={`/product/${productId}`}
-                            className="flex items-center gap-1 text-xs font-bold text-[#74AA34] hover:text-[#3E6913] uppercase tracking-wider transition-colors group/link"
+                            className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark uppercase tracking-wider transition-colors group/link"
                         >
                             Details
                             <ArrowRight
@@ -208,7 +198,7 @@ const ProductListItem = ({ product }) => {
                             className={`flex items-center gap-1.5 text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition-all shadow-2xs ${
                                 isOutOfStock
                                     ? "bg-gray-300 cursor-not-allowed"
-                                    : "bg-[#74AA34] hover:bg-[#629329] active:bg-[#527E23] cursor-pointer"
+                                    : "bg-primary hover:bg-primary-dark active:bg-primary-deep cursor-pointer"
                             }`}
                         >
                             <ShoppingCart size={14} />
@@ -221,4 +211,4 @@ const ProductListItem = ({ product }) => {
     );
 };
 
-export default ProductListItem;
+export default memo(ProductListItem);

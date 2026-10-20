@@ -74,7 +74,7 @@ const RecursiveMenuNode = ({ category, onClose }) => {
                 <span className="truncate">{category.name}</span>
                 {hasSubs && <ChevronRight size={13} className="text-gray-400 shrink-0" />}
             </Link>
-            
+
             {hasSubs && isHovered && (
                 <div className="absolute top-0 left-full -mt-[1px] ml-0 min-w-[200px] bg-white border border-gray-100 shadow-xl py-1 z-50">
                     {category.children.map(child => (
@@ -143,16 +143,7 @@ const Header = () => {
                 });
             };
             mapMenuKeys(dynamicMenu);
-            
-            if (dynamicMenu.length === 0) {
-                 dynamicMenu.push({
-                     name: "Special Offers",
-                     path: "/promotions",
-                     isHighlight: true,
-                     children: [],
-                 });
-            }
-            
+
             setMegaMenuData(dynamicMenu);
         }
     }, [menuData]);
@@ -205,7 +196,7 @@ const Header = () => {
             {/* ── 1. TOP MICRO BAR */}
             {topBarConfig ? (
                 <div style={{ backgroundColor: topBarConfig.bgColor, color: topBarConfig.textColor }} className="py-1.5 transition-colors">
-                    <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
+                    <div className="site-shell">
                         {topBarConfig.style === "marquee" ? (
                             <div className="marquee-container overflow-hidden w-full flex items-center">
                                 <div className="animate-marquee flex items-center gap-8 whitespace-nowrap text-xs font-bold tracking-wide">
@@ -237,36 +228,18 @@ const Header = () => {
                         )}
                     </div>
                 </div>
-            ) : (
-                <div className="bg-primary-dark text-white py-1.5">
-                    <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs font-medium text-primary-pale">
-                            <Clock size={12} className="text-primary-light shrink-0" />
-                            <span>Express 2-Hour Delivery in Karachi, Lahore &amp; Islamabad</span>
-                        </div>
-                        <div className="hidden sm:flex items-center divide-x divide-white/20 text-xs font-medium text-primary-pale">
-                            <span className="flex items-center gap-1.5 pr-4">
-                                <ShieldCheck size={12} className="text-primary-light" />
-                                100% Genuine &amp; Licensed
-                            </span>
-                            <a href="tel:021111633422" className="flex items-center gap-1.5 pl-4 hover:text-white transition-colors">
-                                <PhoneCall size={11} /> (021) 111-633-422
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
+            ) : null}
 
             {/* ── 2. MAIN HEADER BAR */}
-            <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-2.5">
+            <div className="site-shell py-2.5">
                 <div className="flex items-center gap-4 lg:gap-6">
 
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-                        <img 
-                            src="/assets/images/zada-logo.webp" 
-                            alt="Zada Pharmacy" 
-                            className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
+                        <img
+                            src="/assets/images/zada-logo.webp"
+                            alt="Zada Pharmacy"
+                            className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
                         />
                     </Link>
 
@@ -299,9 +272,9 @@ const Header = () => {
 
                     {/* Right Actions */}
                     <div className="hidden md:flex items-center gap-1 ml-auto shrink-0">
-                        <Link to="/upload-prescription" className="hidden xl:inline-flex items-center gap-1.5 mr-2 px-3 py-1.5 rounded-lg bg-primary-pale text-primary-dark hover:bg-primary hover:text-white border border-primary-light text-xs font-bold transition-all">
-                            <FileText size={13} /> Upload Rx
-                        </Link>
+                        <div className="hidden xl:block mr-2">
+                            <NavIcon to="/upload-prescription" icon={<FileText size={18} />} label="Upload Rx" />
+                        </div>
                         <NavIcon onClick={() => setIsWishlistOpen(true)} icon={<Heart size={18} />} label="Wishlist" />
                         <NavIcon onClick={() => setIsOrdersOpen(true)} icon={<Package size={18} />} label="Orders" />
                         <NavIcon onClick={() => setIsCartOpen(true)} icon={<ShoppingCart size={18} />} label="Cart" badge={cartCount} />
@@ -309,34 +282,50 @@ const Header = () => {
 
                         {isAuthenticated ? (
                             <div className="relative">
-                                <button className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-lg border border-gray-200 hover:border-primary/50 hover:bg-gray-50 transition-all cursor-pointer" onClick={() => setUserDropDownOpen(!userDropDownOpen)}>
-                                    <div className="w-7 h-7 rounded-lg bg-primary-pale text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                                        {user?.name ? user.name.charAt(0).toUpperCase() : <User size={14} />}
+                                <button className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-sm bg-white hover:bg-primary-pale/40 transition-all cursor-pointer group" onClick={() => setUserDropDownOpen(!userDropDownOpen)}>
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                                        {user?.name ? user.name.charAt(0).toUpperCase() : <User size={15} />}
                                     </div>
-                                    <span className="text-xs font-semibold text-gray-700 hidden lg:block max-w-[72px] truncate">{user?.name?.split(" ")[0] || "Account"}</span>
-                                    <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 ${userDropDownOpen ? "rotate-180" : ""}`} />
+                                    <div className="hidden lg:flex flex-col items-start leading-none">
+                                        <span className="text-[10px] text-gray-400 font-medium">Account</span>
+                                        <span className="text-[12px] font-bold text-gray-800 max-w-[72px] truncate">{user?.name?.split(" ")[0] || "User"}</span>
+                                    </div>
+                                    <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 group-hover:text-primary ${userDropDownOpen ? "rotate-180 text-primary" : ""}`} />
                                 </button>
                                 {userDropDownOpen && (
                                     <>
                                         <div onClick={() => setUserDropDownOpen(false)} className="fixed inset-0 z-40" />
-                                        <div className="absolute top-full right-0 mt-2 w-52 rounded-xl bg-white shadow-xl border border-gray-100 p-1.5 z-50">
-                                            <div className="px-3 py-2 mb-1">
-                                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
-                                                <p className="text-xs font-bold text-gray-900 truncate mt-0.5">{user?.name || "User"}</p>
+                                        <div className="absolute top-full right-0 mt-3 w-64 rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden z-50">
+                                            {/* Profile Header */}
+                                            <div className="bg-gradient-to-br from-primary to-primary-dark px-4 py-4 text-white">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-black text-lg shrink-0 border border-white/30">
+                                                        {user?.name ? user.name.charAt(0).toUpperCase() : <User size={18} />}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[11px] text-white/70 font-medium">Signed in as</p>
+                                                        <p className="text-sm font-bold truncate">{user?.name || "User"}</p>
+                                                        <p className="text-[10px] text-white/60 truncate mt-0.5">{user?.email || ""}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="border-t border-gray-100 pt-1">
-                                                <Link to="/profile" className="flex gap-2 items-center text-xs font-semibold text-gray-700 hover:text-primary hover:bg-primary-pale px-3 py-2 rounded-lg transition-colors" onClick={() => setUserDropDownOpen(false)}>
-                                                    <User size={14} /> My Profile
+                                            {/* Menu Items */}
+                                            <div className="p-2">
+                                                <Link to="/profile" className="flex gap-3 items-center text-xs font-semibold text-gray-700 hover:text-primary hover:bg-primary-pale px-3 py-2.5 rounded-xl transition-colors group" onClick={() => setUserDropDownOpen(false)}>
+                                                    <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-primary-pale flex items-center justify-center shrink-0 transition-colors"><User size={14} /></span>
+                                                    <span>My Profile</span>
                                                 </Link>
                                                 {role === "admin" && (
-                                                    <Link to="/admin-dashboard" className="flex gap-2 items-center text-xs font-semibold text-gray-700 hover:text-primary hover:bg-primary-pale px-3 py-2 rounded-lg transition-colors" onClick={() => setUserDropDownOpen(false)}>
-                                                        <LayoutDashboard size={14} /> Admin Dashboard
+                                                    <Link to="/admin-dashboard" className="flex gap-3 items-center text-xs font-semibold text-gray-700 hover:text-primary hover:bg-primary-pale px-3 py-2.5 rounded-xl transition-colors group" onClick={() => setUserDropDownOpen(false)}>
+                                                        <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-primary-pale flex items-center justify-center shrink-0 transition-colors"><LayoutDashboard size={14} /></span>
+                                                        <span>Admin Dashboard</span>
                                                     </Link>
                                                 )}
                                             </div>
-                                            <div className="border-t border-gray-100 pt-1 mt-1">
-                                                <button onClick={handleSignOut} className="w-full flex gap-2 items-center text-xs font-semibold text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors cursor-pointer">
-                                                    <LogOut size={14} /> Sign Out
+                                            <div className="border-t border-gray-100 p-2">
+                                                <button onClick={handleSignOut} className="w-full flex gap-3 items-center text-xs font-semibold text-red-500 hover:bg-red-50 px-3 py-2.5 rounded-xl transition-colors cursor-pointer group">
+                                                    <span className="w-7 h-7 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center shrink-0 transition-colors"><LogOut size={14} /></span>
+                                                    <span>Sign Out</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -374,7 +363,7 @@ const Header = () => {
 
             {/* ── 3. MEGA NAV STRIP */}
             <div className="hidden md:block border-t border-gray-100 bg-white relative z-40">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <nav className="flex flex-wrap items-center justify-start gap-y-1">
                         {megaMenuData.map((cat) => {
                             const isActive = activeMegaMenu === cat.name;
@@ -385,22 +374,21 @@ const Header = () => {
                                     <Link
                                         to={cat.path}
                                         className={`flex items-center gap-1 px-2 lg:px-3 py-2.5 text-[12px] font-bold whitespace-nowrap transition-all border-b-2 ${cat.isHighlight
-                                                ? "text-red-500 hover:text-red-600 border-transparent"
-                                                : isActive || isCurrent
-                                                    ? "text-primary border-primary"
-                                                    : "text-gray-600 hover:text-primary border-transparent hover:border-primary/30"
+                                            ? "text-red-500 hover:text-red-600 border-transparent"
+                                            : isActive || isCurrent
+                                                ? "text-primary border-primary"
+                                                : "text-gray-600 hover:text-primary border-transparent hover:border-primary/30"
                                             }`}
                                     >
                                         {cat.name}
                                         {hasSubs && <ChevronDown size={12} className={`transition-transform duration-200 ${isActive ? "rotate-180 text-primary" : "text-gray-400"}`} />}
                                     </Link>
-                                    
+
                                     {/* ── Level 1 Dropdown ── */}
                                     {hasSubs && (
-                                        <div 
-                                            className={`absolute top-full left-0 mt-0 min-w-[220px] bg-white border border-gray-100 shadow-2xl py-1 z-50 transition-all duration-200 origin-top ${
-                                                isActive ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2 pointer-events-none"
-                                            }`}
+                                        <div
+                                            className={`absolute top-full left-0 mt-0 min-w-[220px] bg-white border border-gray-100 shadow-2xl py-1 z-50 transition-all duration-200 origin-top ${isActive ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2 pointer-events-none"
+                                                }`}
                                             onMouseLeave={() => setActiveMegaMenu(null)}
                                         >
                                             {cat.children.map(child => (
@@ -418,32 +406,32 @@ const Header = () => {
             <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
             <OrdersDrawer isOpen={isOrdersOpen} onClose={() => setIsOrdersOpen(false)} />
-            
-            <SearchModal 
-                isOpen={isSearchModalOpen} 
-                onClose={() => setIsSearchModalOpen(false)} 
+
+            <SearchModal
+                isOpen={isSearchModalOpen}
+                onClose={() => setIsSearchModalOpen(false)}
             />
 
             {isRegisterOpen && <RegisterModal
-                isOpen={isRegisterOpen} 
+                isOpen={isRegisterOpen}
                 onClose={() => {
                     setIsRegisterOpen(false);
                     setUnverifiedUserId(null);
-                }} 
-                onSwitchToLogin={() => { 
-                    setIsRegisterOpen(false); 
+                }}
+                onSwitchToLogin={() => {
+                    setIsRegisterOpen(false);
                     setUnverifiedUserId(null);
-                    setIsLoginOpen(true); 
+                    setIsLoginOpen(true);
                 }}
                 initialUserId={unverifiedUserId}
             />}
 
             {isLoginOpen && <LoginModal
-                isOpen={isLoginOpen} 
-                onClose={() => setIsLoginOpen(false)} 
-                onSwitchToRegister={() => { 
-                    setIsLoginOpen(false); 
-                    setIsRegisterOpen(true); 
+                isOpen={isLoginOpen}
+                onClose={() => setIsLoginOpen(false)}
+                onSwitchToRegister={() => {
+                    setIsLoginOpen(false);
+                    setIsRegisterOpen(true);
                 }}
                 onRequireVerification={(userId) => {
                     setIsLoginOpen(false);

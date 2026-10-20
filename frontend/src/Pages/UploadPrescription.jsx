@@ -27,7 +27,7 @@ import { loginSuccess } from "../store/slices/authSlice";
 const UploadPrescription = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [file, setFile] = useState(null);
-    
+
     const { uploadPrescription, loading } = useUploadPrescription();
     const { updateUser } = useUpdateUser();
     const navigate = useNavigate();
@@ -36,7 +36,7 @@ const UploadPrescription = () => {
 
     const [name, setName] = useState(user?.name || "");
     const [phone, setPhone] = useState(user?.phone || "");
-    
+
     // Auto-fill from DB address if available
     const [addressText, setAddressText] = useState(() => {
         if (user?.addresses?.[0]) {
@@ -45,7 +45,7 @@ const UploadPrescription = () => {
         }
         return "";
     });
-    
+
     const [mapPosition, setMapPosition] = useState(() => validPosition(user?.addresses?.[0]));
     const [resolvedAddress, setResolvedAddress] = useState(null);
     const savedText = [user?.addresses?.[0]?.street, user?.addresses?.[0]?.city, user?.addresses?.[0]?.country].filter(Boolean).join(", ");
@@ -80,13 +80,13 @@ const UploadPrescription = () => {
         if (!user) return false;
         const dbAddr = user?.addresses?.[0];
         if (!dbAddr) return true;
-        
+
         // Normalize text to compare
         const dbAddrText = [dbAddr.street, dbAddr.city, dbAddr.country].filter(Boolean).join(", ").trim();
         const currentText = (addressText || "").trim();
-        
+
         if (currentText !== dbAddrText) return true;
-        
+
         if (!samePosition(mapPosition, dbAddr)) return true;
 
         return false;
@@ -122,7 +122,7 @@ const UploadPrescription = () => {
                 const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                 setUploadProgress(percentCompleted);
             });
-            
+
             if (response?.success) {
                 toast.success("Prescription submitted successfully!");
                 navigate("/");
@@ -170,13 +170,13 @@ const UploadPrescription = () => {
         <div className="bg-gray-50 min-h-[85vh] pb-20">
             {/* Header Section */}
             <div className="bg-white border-b border-gray-200 pt-6 pb-10">
-                <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
+                <div className="site-shell">
                     <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">
                         <Link to="/" className="hover:text-primary transition-colors">Home</Link>
                         <ChevronRight size={14} />
                         <span className="text-primary-dark">Prescription</span>
                     </div>
-                    
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
@@ -193,23 +193,23 @@ const UploadPrescription = () => {
                 </div>
             </div>
 
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-8 mt-8">
+            <div className="site-shell mt-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    
+
                     {/* Left Column: Upload & Guidelines */}
                     <div className="lg:col-span-6 space-y-6">
-                        
+
                         {/* The Uploader Box */}
                         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                             <h2 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
                                 1. Upload Document
                             </h2>
-                            
+
                             {!imagePreview ? (
                                 <div className="w-full relative border-2 border-dashed border-primary-light bg-primary-pale/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center group transition-colors hover:bg-primary-pale/60 min-h-[300px]">
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
+                                    <input
+                                        type="file"
+                                        accept="image/*"
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         onChange={handleFileChange}
                                     />
@@ -224,8 +224,8 @@ const UploadPrescription = () => {
                             ) : (
                                 <div className="w-full relative rounded-2xl overflow-hidden border-2 border-primary shadow-sm bg-gray-50 flex items-center justify-center min-h-[300px] p-2">
                                     <img src={imagePreview} alt="Prescription" className="max-h-[400px] w-auto object-contain rounded-xl" />
-                                    
-                                    <button 
+
+                                    <button
                                         onClick={handleRemove}
                                         className="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-red-500 hover:text-white hover:bg-red-500 transition-colors z-20 cursor-pointer"
                                         title="Remove Image"
@@ -269,7 +269,7 @@ const UploadPrescription = () => {
                             <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
                                 2. Delivery Details
                             </h2>
-                            
+
                             <div className="space-y-5">
                                 {/* Name Input */}
                                 <FormField className="flex flex-col gap-2">
@@ -277,7 +277,7 @@ const UploadPrescription = () => {
                                         <User size={14} className="text-primary" /> Full Name
                                     </FieldLabel>
                                     <FieldControl
-                                        type="text" 
+                                        type="text"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Enter your full name"
@@ -291,7 +291,7 @@ const UploadPrescription = () => {
                                         <Phone size={14} className="text-primary" /> Phone Number
                                     </FieldLabel>
                                     <FieldControl
-                                        type="tel" 
+                                        type="tel"
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                         placeholder="03XX-XXXXXXX"
@@ -347,19 +347,19 @@ const UploadPrescription = () => {
                             </div>
 
                             <div className="mt-8 border-t-2 border-dashed border-gray-100 pt-6">
-                                <button 
+                                <button
                                     onClick={handlePlaceOrder}
                                     disabled={loading || !imagePreview}
                                     className={`w-full relative overflow-hidden py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-md flex justify-center items-center gap-2 cursor-pointer ${
-                                        !imagePreview 
-                                            ? "bg-gray-100 text-gray-400 shadow-none cursor-not-allowed" 
+                                        !imagePreview
+                                            ? "bg-gray-100 text-gray-400 shadow-none cursor-not-allowed"
                                             : "bg-primary text-white hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5"
                                     }`}
                                 >
                                     {/* Progress Bar Background Fill */}
                                     {loading && uploadProgress > 0 && (
-                                        <div 
-                                            className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out" 
+                                        <div
+                                            className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out"
                                             style={{ width: `${uploadProgress}%` }}
                                         />
                                     )}
@@ -367,11 +367,11 @@ const UploadPrescription = () => {
                                     <div className="relative z-10 flex items-center gap-2">
                                         {loading ? (
                                             <>
-                                                <Loader size={18} className="animate-spin" /> 
-                                                {uploadProgress > 0 && uploadProgress < 100 
-                                                    ? `Uploading ${uploadProgress}%` 
-                                                    : uploadProgress === 100 
-                                                        ? "Processing..." 
+                                                <Loader size={18} className="animate-spin" />
+                                                {uploadProgress > 0 && uploadProgress < 100
+                                                    ? `Uploading ${uploadProgress}%`
+                                                    : uploadProgress === 100
+                                                        ? "Processing..."
                                                         : "Starting..."}
                                             </>
                                         ) : (
@@ -410,17 +410,17 @@ const UploadPrescription = () => {
                             >
                                 {/* Progress Bar */}
                                 {loading && uploadProgress > 0 && (
-                                    <div 
-                                        className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out" 
+                                    <div
+                                        className="absolute top-0 left-0 h-full bg-primary-dark opacity-50 transition-all duration-300 ease-out"
                                         style={{ width: `${uploadProgress}%` }}
                                     />
                                 )}
                                 <div className="relative z-10 flex items-center justify-center gap-2">
                                     {loading ? (
                                         <>
-                                            <Loader size={18} className="animate-spin" /> 
-                                            {uploadProgress > 0 && uploadProgress < 100 
-                                                ? `Uploading ${uploadProgress}%` 
+                                            <Loader size={18} className="animate-spin" />
+                                            {uploadProgress > 0 && uploadProgress < 100
+                                                ? `Uploading ${uploadProgress}%`
                                                 : "Processing..."}
                                         </>
                                     ) : (

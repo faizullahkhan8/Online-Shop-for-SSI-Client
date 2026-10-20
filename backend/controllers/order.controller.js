@@ -99,7 +99,8 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                 !Number.isSafeInteger(quantity) || quantity <= 0) {
                 throw new ErrorResponse("Item quantity must be a positive integer", 400);
             }
-            const id = String(item.product).toLowerCase();
+            if (item.variantId != null && !/^[0-9a-fA-F]{24}$/.test(String(item.variantId))) throw new ErrorResponse("Invalid variant ID", 400);
+            const id = String(item.product).toLowerCase() + (item.variantId ? `:${String(item.variantId).toLowerCase()}` : "");
             const combined = (quantities.get(id) || 0) + quantity;
             if (!Number.isSafeInteger(combined)) throw new ErrorResponse("Invalid quantity", 400);
             quantities.set(id, combined);
@@ -116,16 +117,25 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
             }
             const normalizedItems = [];
             // A stable ordering also reduces contention for multi-product orders.
-            for (const [productId, quantity] of [...quantities].sort()) {
+            for (const [lineKey, quantity] of [...quantities].sort()) {
+                const [productId, variantId] = lineKey.split(":");
                 const product = await ProductModel.findById(productId).session(session);
                 if (!product) throw new ErrorResponse("Product not found", 404);
-                if (product.stock < quantity) {
+                const activeVariants = product.variants.filter(variant => variant.active !== false);
+                const selectedVariant = variantId ? product.variants.id(variantId) : null;
+                if (variantId && (!selectedVariant || selectedVariant.active === false)) throw new ErrorResponse("Selected variant is unavailable", 400);
+                if (activeVariants.length && !selectedVariant) throw new ErrorResponse("Choose a product variant", 400);
+                const usesSharedStock = Boolean(selectedVariant && activeVariants.every(variant => variant.stock === 0) && product.stock > 0);
+                const availableStock = selectedVariant && !usesSharedStock ? selectedVariant.stock : product.stock;
+                if (availableStock < quantity) {
                     throw new ErrorResponse(`Insufficient stock for ${product.name}`, 400);
                 }
-                const { price } = await getEffectivePrice(product._id, product.price, { session });
+                const basePrice = selectedVariant ? selectedVariant.price : product.price;
+                const { price } = await getEffectivePrice(product._id, basePrice, { session });
                 nonNegativeAmount(price, "Product price");
-                normalizedItems.push({ product: productId, quantity, price: money(price),
-                    originalPrice: product.price, totalAmount: money(price * quantity) });
+                normalizedItems.push({ product: productId, variantId: selectedVariant?._id,
+                    variantName: selectedVariant?.name || "", variantSku: selectedVariant?.sku || "", usesSharedStock,
+                    quantity, price: money(price), originalPrice: basePrice, totalAmount: money(price * quantity) });
             }
             const subtotal = money(normalizedItems.reduce((sum, item) => sum + item.totalAmount, 0));
             const settings = await SettingsModel.findOne().session(session).lean() || {};
@@ -146,9 +156,12 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                 status, grandTotal });
             await candidate.validate();
             for (const item of normalizedItems) {
+                const variantStock = item.variantId && !item.usesSharedStock;
                 const updated = await ProductModel.findOneAndUpdate(
-                    { _id: item.product, stock: { $gte: item.quantity } },
-                    { $inc: { stock: -item.quantity, sold: item.quantity } },
+                    { _id: item.product, stock: { $gte: item.quantity }, ...(variantStock ? {
+                        variants: { $elemMatch: { _id: item.variantId, active: { $ne: false }, stock: { $gte: item.quantity } } }
+                    } : {}) },
+                    { $inc: { stock: -item.quantity, sold: item.quantity, ...(variantStock ? { "variants.$.stock": -item.quantity } : {}) } },
                     { session, returnDocument: "after" },
                 );
                 if (!updated) throw new ErrorResponse("Stock changed. Please refresh your cart", 409);

@@ -6,10 +6,19 @@ const productSchema = new Schema(
         name: { type: String, required: true },
         slug: { type: String, unique: true, sparse: true },
         productType: { type: String, default: "" },
-        vendor: { 
-            type: SchemaTypes.ObjectId, 
-            ref: "Vendor", 
-            default: null 
+        brand: { type: String, default: "" },
+        shortDescription: { type: String, default: "" },
+        packSize: { type: String, default: "" },
+        tags: [{ type: String }],
+        seoTitle: { type: String, default: "" },
+        metaDescription: { type: String, default: "" },
+        searchKeywords: [{ type: String }],
+        researchSources: [{ type: String }],
+        imageSources: [{ type: String }],
+        vendor: {
+            type: SchemaTypes.ObjectId,
+            ref: "Vendor",
+            default: null
         },
         price: { type: Number, required: true, min: 0, validate: Number.isFinite },
         minPrice: { type: Number },
@@ -31,6 +40,19 @@ const productSchema = new Schema(
         },
         stock: { type: Number, required: true, min: 0, validate: Number.isSafeInteger },
         lowStock: { type: Number, required: true, min: 0, validate: Number.isSafeInteger },
+        hasVariants: { type: Boolean, default: false },
+        variants: [
+            {
+                name: { type: String, required: true },
+                color: { type: String, default: "" },
+                sku: { type: String, default: "" },
+                price: { type: Number, required: true, min: 0, validate: Number.isFinite },
+                stock: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
+                lowStock: { type: Number, default: 5, min: 0, validate: Number.isSafeInteger },
+                imageIndex: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
+                active: { type: Boolean, default: true },
+            },
+        ],
         // Legacy single image support
         image: { type: String, required: false },
         imagekitFileId: { type: String, required: false },

@@ -1,3 +1,4 @@
+import { allowedOrigins } from "../utils/allowedOrigins.js";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
 import { connectToDB, getLocalUserModel } from "./localDb.js";
@@ -28,17 +29,12 @@ export const SOCKET_EVENTS = {
 
 /**
  * Initialize Socket.io with the HTTP Server
- * @param {import("http").Server} httpServer 
+ * @param {import("http").Server} httpServer
  */
 export const initSocket = (httpServer) => {
     io = new Server(httpServer, {
         cors: {
-            origin: [
-                process.env.FRONTEND_URL,
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://127.0.0.1:5173"
-            ].filter(Boolean),
+            origin: allowedOrigins(),
             methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
             credentials: true,
         },
@@ -145,7 +141,7 @@ export const getIO = () => {
 
 /**
  * Notify all admins of a newly placed order
- * @param {Object} order 
+ * @param {Object} order
  */
 export const emitNewOrder = (order) => {
     if (!io) return;
@@ -158,7 +154,7 @@ export const emitNewOrder = (order) => {
 
 /**
  * Notify admin and customer of an order status change
- * @param {Object} order 
+ * @param {Object} order
  */
 export const emitOrderStatusUpdate = (order) => {
     if (!io) return;
@@ -180,7 +176,7 @@ export const emitOrderStatusUpdate = (order) => {
 
 /**
  * Notify all admins of a new prescription upload
- * @param {Object} prescription 
+ * @param {Object} prescription
  */
 export const emitNewPrescription = (prescription) => {
     if (!io) return;
@@ -193,7 +189,7 @@ export const emitNewPrescription = (prescription) => {
 
 /**
  * Notify admin and customer of prescription status change
- * @param {Object} prescription 
+ * @param {Object} prescription
  */
 export const emitPrescriptionStatusUpdate = (prescription) => {
     if (!io) return;

@@ -1,215 +1,132 @@
-import { useGetAllCategories } from "../../api/hooks/category.api";
 import {
-    Facebook,
-    Twitter,
-    Linkedin,
-    Instagram,
-    Youtube,
-    PhoneCall,
-    Mail,
-    MapPin,
-    ShieldCheck,
-    Truck,
-    Clock,
-    RotateCcw,
-    HeartPulse,
-    ArrowRight,
-    ChevronRight,
+    ArrowUpRight, Clock, Facebook, HeartPulse, HelpCircle, Instagram,
+    Linkedin, Link as LinkIcon, Mail, MapPin, PhoneCall, RotateCcw,
+    ShieldCheck, Truck, Twitter, Youtube,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useGetAllCategories } from "../../api/hooks/category.api";
+import { useGetHomePage } from "../../api/hooks/homePage.api";
 
-/* ─── Data ─────────────────────────────────────────────────── */
+const ICON_MAP = { Truck, Clock, RotateCcw, ShieldCheck, HelpCircle, Facebook, Instagram, Twitter, Youtube, Linkedin, Link: LinkIcon };
 
-const quickLinks = [
-    { name: "About Zada", path: "/about-us" },
-    { name: "Our team", path: "/our-team" },
-    { name: "Contact us", path: "/contact-us" },
-];
+const DynamicIcon = ({ name, ...props }) => {
+    const IconComponent = ICON_MAP[name] || ShieldCheck;
+    return <IconComponent {...props} />;
+};
 
-const supportLinks = [
-    { name: "Delivery questions", path: "/contact-us" },
-    { name: "Returns & support", path: "/contact-us" },
-    { name: "Order history", path: "/orders" },
-];
-
-const socialLinks = [
-    { icon: <Facebook size={15} />, label: "Facebook", href: "#", color: "hover:bg-[#1877F2]" },
-    { icon: <Instagram size={15} />, label: "Instagram", href: "#", color: "hover:bg-[#E1306C]" },
-    { icon: <Twitter size={15} />, label: "Twitter / X", href: "#", color: "hover:bg-[#1DA1F2]" },
-    { icon: <Linkedin size={15} />, label: "LinkedIn", href: "#", color: "hover:bg-[#0A66C2]" },
-    { icon: <Youtube size={15} />, label: "YouTube", href: "#", color: "hover:bg-[#FF0000]" },
-].filter(social => /^https:\/\//.test(social.href));
-
-const trustBadges = [
-    { icon: <Truck size={18} />, title: "Free Delivery", desc: "Orders above Rs 999" },
-    { icon: <Clock size={18} />, title: "2-Hour Express", desc: "Major cities" },
-    { icon: <RotateCcw size={18} />, title: "Easy Returns", desc: "7-day policy" },
-    { icon: <ShieldCheck size={18} />, title: "100% Genuine", desc: "Licensed pharmacy" },
-];
-
-/* ─── Footer Link Item ──────────────────────────────────────── */
 const FooterLink = ({ to, children }) => (
     <li>
-        <Link
-            to={to}
-            className="flex items-center gap-2 text-gray-400 hover:text-primary text-xs font-bold transition-colors group"
-        >
-            <ChevronRight size={12} className="opacity-0 -ml-3 group-hover:opacity-100 group-hover:ml-0 transition-all shrink-0 text-primary" />
+        <Link to={to || "/"} className="group inline-flex items-center gap-2 text-sm font-medium text-white/62 transition-colors hover:text-[#cbea9d]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#9fca69]/35 transition-all group-hover:bg-[#bce384] group-hover:shadow-[0_0_0_4px_rgba(188,227,132,0.1)]" />
             {children}
         </Link>
     </li>
 );
 
-/* ─── Column Heading ─────────────────────────────────────────── */
-const ColHeading = ({ children }) => (
-    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white mb-5">
-        {children}
-    </h4>
+const ColumnHeading = ({ children }) => (
+    <h3 className="mb-5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#bce384]">{children}</h3>
 );
 
-/* ─── Footer Component ──────────────────────────────────────── */
-const Footer = () => {
-    const { data } = useGetAllCategories();
-    const categoriesLinks = (data?.categories || []).filter(category => !category.parentId && category.isActive !== false).map(category => ({ name: category.name, path: `/products?category=${category._id}` }));
-    return (
-        <footer className="w-full bg-gray-950 text-white mt-14">
+const Footer = ({ previewSections }) => {
+    const { data } = useGetHomePage();
+    const { data: categoryData } = useGetAllCategories();
+    const sections = previewSections || data?.sections || [];
+    const footerSection = sections.find((section) => section.type === "footer");
 
-            {/* ── Trust Badges Strip ──────────────────────────────── */}
-            <div className="bg-gray-900 border-b border-gray-800">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-5">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-                        {trustBadges.map((badge, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shrink-0 shadow-inner">
-                                    {badge.icon}
+    if (!footerSection || footerSection.isVisible === false) return null;
+
+    const config = footerSection.config || {};
+    const contact = config.contact || {};
+    const socialLinks = (config.socialLinks || []).filter(social => typeof social.url === "string" && /^https:\/\//.test(social.url));
+    const categoryLinks = config.categoriesLinks?.length ? config.categoriesLinks : (categoryData?.categories || []).filter(category => !category.parentId && category.isActive !== false).map(category => ({ name: category.name, path: `/products?category=${category._id}` }));
+    const phoneHref = contact.phone?.replace(/[^+\d]/g, "") || "";
+
+    return (
+        <footer className="mt-16 w-full overflow-hidden bg-[#102b1a] text-white">
+            {(config.trustBadges || []).length > 0 && (
+                <div className="border-b border-white/10 bg-[#173923]">
+                    <div className="site-shell grid grid-cols-1 divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+                        {(config.trustBadges || []).map((badge, index) => (
+                            <div key={`${badge.title}-${index}`} className="flex min-h-24 items-center gap-4 px-1 py-5 sm:px-5 lg:px-6 first:pl-0 last:pr-0">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#bce384]/25 bg-[#bce384]/10 text-[#cbea9d]">
+                                    <DynamicIcon name={badge.icon} size={20} strokeWidth={1.8} />
                                 </div>
-                                <div>
-                                    <p className="text-[12px] font-black text-white leading-tight uppercase tracking-wider">{badge.title}</p>
-                                    <p className="text-xs font-bold text-gray-400 mt-0.5">{badge.desc}</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold leading-snug text-white">{badge.title}</p>
+                                    <p className="mt-1 text-xs leading-snug text-white/48">{badge.desc}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* ── Main Footer Grid ─────────────────────────────────── */}
-            <div className="max-w-[1400px] mx-auto px-4 lg:px-8 pt-16 pb-12">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
-
-                    {/* Brand Column — spans 4 cols */}
-                    <div className="lg:col-span-4 space-y-6">
-                        {/* Logo */}
-                        <Link to="/" className="inline-flex items-center justify-center group mb-2 bg-white px-5 py-2.5 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
-                            <img 
-                                src="/assets/images/zada-logo.webp" 
-                                alt="Zada Pharmacy" 
-                                className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
-                            />
+            <div className="site-shell py-12 sm:py-14 lg:py-16">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-12 lg:gap-x-10">
+                    <div className="col-span-2 md:col-span-5 lg:col-span-4">
+                        <Link to="/" aria-label="Zada Pharmacy home" className="inline-flex rounded-2xl bg-white px-5 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.16)] transition-transform hover:-translate-y-0.5">
+                            <img src="/assets/images/zada-logo.webp" alt="Zada Pharmacy" className="h-11 w-auto object-contain sm:h-12" />
+                        </Link>
+                        {config.description && <p className="mt-6 max-w-md text-sm leading-6 text-white/58">{config.description}</p>}
+                        <Link to="/upload-prescription" className="mt-6 inline-flex items-center gap-3 rounded-xl border border-[#bce384]/20 bg-[#bce384]/10 px-4 py-3 text-sm font-bold text-[#d9f3b5] transition-colors hover:bg-[#bce384]/16">
+                            <HeartPulse size={18} /> Upload Prescription <ArrowUpRight size={15} className="ml-1" />
                         </Link>
 
-                        {/* Description */}
-                        <p className="text-xs font-bold text-gray-400 leading-relaxed max-w-sm">
-                            Pakistan's most trusted licensed online pharmacy. Delivering authentic medicines with 2-hour doorstep service across major cities.
-                        </p>
-
-                        {/* Contact Info */}
-                        <div className="space-y-3.5 text-xs font-bold text-gray-300">
-                            <a href="tel:021111633422" className="flex items-center gap-3 hover:text-primary transition-colors group">
-                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                                    <PhoneCall size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
-                                </div>
-                                (021) 111-633-422
-                            </a>
-                            <a href="mailto:support@zada.pk" className="flex items-center gap-3 hover:text-primary transition-colors group">
-                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                                    <Mail size={14} className="text-gray-400 group-hover:text-primary transition-colors" />
-                                </div>
-                                support@zada.pk
-                            </a>
-                            <div className="flex items-start gap-3 text-gray-400">
-                                <div className="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
-                                    <MapPin size={14} className="text-gray-500" />
-                                </div>
-                                <span className="pt-1">Main Commercial Area, Karachi & Lahore, Pakistan</span>
+                        {socialLinks.length > 0 && (
+                            <div className="mt-7 flex flex-wrap gap-2.5">
+                                {socialLinks.map((social, index) => {
+                                    const platform = social.platform?.toLowerCase() || "";
+                                    let iconName = "Link";
+                                    if (platform.includes("facebook")) iconName = "Facebook";
+                                    if (platform.includes("instagram")) iconName = "Instagram";
+                                    if (platform.includes("twitter") || platform === "x") iconName = "Twitter";
+                                    if (platform.includes("youtube")) iconName = "Youtube";
+                                    if (platform.includes("linkedin")) iconName = "Linkedin";
+                                    const isExternal = social.url?.startsWith("http");
+                                    return (
+                                        <a key={`${social.platform}-${index}`} href={social.url || "#"} aria-label={social.platform} target={isExternal ? "_blank" : undefined} rel={isExternal ? "noreferrer" : undefined} className={`flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/60 transition-all hover:-translate-y-0.5 hover:text-white ${social.color || ""}`}>
+                                            <DynamicIcon name={iconName} size={17} />
+                                        </a>
+                                    );
+                                })}
                             </div>
-                        </div>
-
-                        {/* Social Icons */}
-                        {socialLinks.length > 0 && <div>
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 mb-3">Follow Us</p>
-                            <div className="flex gap-2.5">
-                                {socialLinks.map((s, i) => (
-                                    <a
-                                        key={i}
-                                        href={s.href}
-                                        aria-label={s.label}
-                                        className={`w-9 h-9 rounded-xl bg-gray-800 text-gray-400 flex items-center justify-center transition-all duration-300 hover:text-white hover:scale-110 shadow-sm ${s.color}`}
-                                    >
-                                        {s.icon}
-                                    </a>
-                                ))}
-                            </div>
-                        </div>}
+                        )}
                     </div>
 
-                    {/* Categories — spans 2 cols */}
-                    <div className="lg:col-span-2">
-                        <ColHeading>Categories</ColHeading>
-                        <ul className="space-y-3">
-                            {categoriesLinks.map((link, i) => (
-                                <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
-                            ))}
+                    <div className="col-span-1 md:col-span-2">
+                        <ColumnHeading>{config.categoriesLinksTitle || "Shop"}</ColumnHeading>
+                        <ul className="space-y-3.5">{categoryLinks.map((link, index) => <FooterLink key={`${link.path}-${index}`} to={link.path}>{link.name}</FooterLink>)}</ul>
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                        <ColumnHeading>{config.quickLinksTitle || "Company"}</ColumnHeading>
+                        <ul className="space-y-3.5">{(config.quickLinks || []).map((link, index) => <FooterLink key={`${link.path}-${index}`} to={link.path}>{link.name}</FooterLink>)}</ul>
+                    </div>
+                    <div className="col-span-2 md:col-span-3 lg:col-span-4 lg:pl-4">
+                        <ColumnHeading>{config.supportLinksTitle || "Help & Account"}</ColumnHeading>
+                        <ul className="grid grid-cols-2 gap-x-6 gap-y-3.5 sm:grid-cols-1">
+                            {(config.supportLinks || []).map((link, index) => <FooterLink key={`${link.path}-${index}`} to={link.path}>{link.name}</FooterLink>)}
                         </ul>
-                    </div>
 
-                    {/* Quick Links — spans 2 cols */}
-                    <div className="lg:col-span-2">
-                        <ColHeading>Quick Links</ColHeading>
-                        <ul className="space-y-3">
-                            {quickLinks.map((link, i) => (
-                                <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Support — spans 2 cols */}
-                    <div className="lg:col-span-2">
-                        <ColHeading>Support</ColHeading>
-                        <ul className="space-y-3">
-                            {supportLinks.map((link, i) => (
-                                <FooterLink key={i} to={link.path}>{link.name}</FooterLink>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Newsletter — spans 2 cols */}
-                    <div className="lg:col-span-2">
-                        <ColHeading>Need help?</ColHeading>
-                        <p className="text-xs font-bold text-gray-400 mb-5 leading-relaxed">
-                            Ask our pharmacy team about products, delivery, or an existing order.
-                        </p>
-                        <Link to="/contact-us" className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-4 py-3 rounded-xl transition-colors">Contact our team <ArrowRight size={16} /></Link>
-
-                        {/* Trust badge */}
-                        <div className="mt-6 p-4 rounded-2xl bg-gray-900 border border-gray-800 flex items-start gap-3">
-                            <HeartPulse size={20} className="text-primary shrink-0 mt-0.5" />
-                            <div className="text-xs leading-snug">
-                                <span className="font-black text-white block mb-1 uppercase tracking-wider">Licensed</span>
-                                <span className="font-bold text-gray-500">Registered with DRAP, Pakistan</span>
-                            </div>
+                        <div className="mt-7 space-y-3 border-t border-white/10 pt-6">
+                            {contact.phone && <a href={`tel:${phoneHref}`} className="flex items-center gap-3 text-sm text-white/62 hover:text-[#cbea9d]"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#bce384]"><PhoneCall size={16} /></span>{contact.phone}</a>}
+                            {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-3 text-sm text-white/62 hover:text-[#cbea9d]"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#bce384]"><Mail size={16} /></span><span className="break-all">{contact.email}</span></a>}
+                            {contact.address && <div className="flex items-start gap-3 text-sm leading-5 text-white/50"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#bce384]"><MapPin size={16} /></span><span className="pt-2">{contact.address}</span></div>}
                         </div>
                     </div>
                 </div>
+
+                {config.licenseTitle && (
+                    <div className="mt-12 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3"><ShieldCheck size={21} className="shrink-0 text-[#bce384]" /><p className="text-sm font-bold text-white">{config.licenseTitle}</p></div>
+                        {config.licenseText && <p className="text-xs leading-5 text-white/48 sm:text-right">{config.licenseText}</p>}
+                    </div>
+                )}
             </div>
 
-            {/* ── Bottom Bar ───────────────────────────────────────── */}
-            <div className="border-t border-gray-800 bg-black/40">
-                <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-xs font-bold text-gray-500 text-center md:text-left tracking-wide">
-                        © {new Date().getFullYear()} Zada Online Pharmacy. All Rights Reserved.
-                    </p>
-                    <Link to="/contact-us" className="text-sm text-gray-300 hover:text-white">Questions? Contact us</Link>
+            <div className="border-t border-white/10 bg-[#0b2113]">
+                <div className="site-shell flex flex-col items-center justify-between gap-4 py-5 sm:flex-row">
+                    <p className="text-center text-xs text-white/42 sm:text-left">{config.copyright}</p>
+                    {(config.policyLinks || []).length > 0 && <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-white/48">{(config.policyLinks || []).map((link, index) => <Link key={`${link.path}-${index}`} to={link.path || "/"} className="transition-colors hover:text-[#cbea9d]">{link.name}</Link>)}</div>}
                 </div>
             </div>
         </footer>

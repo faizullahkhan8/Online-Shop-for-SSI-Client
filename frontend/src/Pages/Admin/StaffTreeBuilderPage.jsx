@@ -4,6 +4,7 @@ import { useGetStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "../
 import LoadingSpinner from "../../Components/LoadingSpinner";
 import { Plus, Edit2, Trash2, X, Save } from "lucide-react";
 import { getImageUrl } from "../../utils/imageHelper";
+import TeamHeroEditor from "../../Components/Admin/TeamHeroEditor";
 import LexicalEditor from "../../Components/LexicalEditor";
 
 const StaffTreeBuilderPage = () => {
@@ -50,7 +51,7 @@ const StaffTreeBuilderPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formDataPayload = new FormData();
-        
+
         const payloadData = {
             name: formData.name,
             role: formData.role,
@@ -99,23 +100,23 @@ const StaffTreeBuilderPage = () => {
                 <div key={node._id} className="mb-3 relative">
                     {/* Rounded Elbow connecting from spine to this card */}
                     {depth > 0 && (
-                        <div 
-                            className="absolute border-b-2 border-l-2 border-gray-300 rounded-bl-xl z-[-1]" 
-                            style={{ 
-                                left: `${depth * 48 - 12}px`, 
+                        <div
+                            className="absolute border-b-2 border-l-2 border-gray-300 rounded-bl-xl z-[-1]"
+                            style={{
+                                left: `${depth * 48 - 12}px`,
                                 width: '12px',
                                 top: '24px',
                                 height: '12px'
-                            }} 
+                            }}
                         />
                     )}
-                    
+
                     {/* Vertical line continuing down to the NEXT sibling */}
                     {depth > 0 && !isLast && (
-                        <div 
+                        <div
                             className="absolute bg-gray-300 z-[-1]"
-                            style={{ 
-                                left: `${depth * 48 - 12}px`, 
+                            style={{
+                                left: `${depth * 48 - 12}px`,
                                 width: '2px',
                                 top: '36px',
                                 bottom: '-36px'
@@ -123,13 +124,13 @@ const StaffTreeBuilderPage = () => {
                         />
                     )}
 
-                    <div 
+                    <div
                         className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-primary-light transition-all relative z-10 w-full max-w-2xl"
                         style={{ marginLeft: `${depth * 48}px` }}
                     >
                         <div className="flex items-center gap-4">
-                            <img 
-                                src={getImageUrl(node.image) || "https://placehold.co/100x100?text=User"} 
+                            <img
+                                src={getImageUrl(node.image) || "https://placehold.co/100x100?text=User"}
                                 alt={node.name}
                                 className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0 relative z-10"
                             />
@@ -150,14 +151,14 @@ const StaffTreeBuilderPage = () => {
                     {node.children && node.children.length > 0 && (
                         <div className="mt-3 relative">
                             {/* Vertical line dropping from this parent down to its FIRST child's elbow */}
-                            <div 
-                                className="absolute bg-gray-300 z-[-1]" 
-                                style={{ 
+                            <div
+                                className="absolute bg-gray-300 z-[-1]"
+                                style={{
                                     left: `${depth * 48 + 36}px`,
                                     width: '2px',
                                     top: '-12px',
                                     height: '36px'
-                                }} 
+                                }}
                             />
                             <div className="relative z-10">
                                 {renderTree(node.children, depth + 1)}
@@ -183,6 +184,8 @@ const StaffTreeBuilderPage = () => {
                     <Plus size={16} /> Add Staff Node
                 </button>
             </div>
+
+            <TeamHeroEditor />
 
             {getLoading ? (
                 <LoadingSpinner />

@@ -1,10 +1,10 @@
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { safeError } from "../utils/safeLog.js";
 
-export async function uploadImageBatch(files, client) {
+export async function uploadImageBatch(files, client, folder = "/products") {
     const results = await Promise.allSettled(files.map(file => client.upload({
         file: file.buffer.toString("base64"), fileName: file.originalname,
-        folder: "/products", useUniqueFileName: true,
+        folder, useUniqueFileName: true,
     })));
     if (results.some(result => result.status === "rejected")) {
         await Promise.all(results.filter(result => result.status === "fulfilled").map(async result => {

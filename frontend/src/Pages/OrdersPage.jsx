@@ -64,7 +64,7 @@ const OrdersPage = () => {
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
-            <div className="container mx-auto px-4 lg:px-8 max-w-[1200px]">
+            <div className="site-shell">
                 <CancellationModal
                     isOpen={cancelModal.isOpen}
                     onClose={handleCloseCancelModal}
