@@ -1,10 +1,11 @@
 import axios from "axios"
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL,
+    baseURL: import.meta.env?.VITE_BACKEND_URL,
     headers: {
         "Content-Type": "application/json"
     },
+    timeout: 60000,
     withCredentials: true
 })
 
@@ -24,8 +25,9 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.data?.message === "Access token expired" && !originalRequest._retry) {
+        if (error.response?.data?.message === "Access token expired" && originalRequest && !originalRequest._retry && !originalRequest.url?.includes("/users/getAccessToken")) {
 
+            originalRequest._retry = true;
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });

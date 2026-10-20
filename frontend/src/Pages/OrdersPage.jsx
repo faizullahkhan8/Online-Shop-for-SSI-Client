@@ -1,3 +1,4 @@
+import { QueryError } from "../UI/QueryState";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGetUserOrders } from "../api/hooks/orders.api";
@@ -14,7 +15,7 @@ import { useCancelOrder } from "../api/hooks/orders.api.js";
 import { getImageUrl } from "../utils/imageHelper";
 
 const OrdersPage = () => {
-    const { data, isLoading: loading } = useGetUserOrders();
+    const { data, loading: loading, error: queryError } = useGetUserOrders();
     const orders = data?.orders || [];
 
     const getStatusStyles = (status) => {
@@ -58,6 +59,8 @@ const OrdersPage = () => {
 
         handleCloseCancelModal();
     };
+
+    if (queryError) return <QueryError />;
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
@@ -153,7 +156,7 @@ const OrdersPage = () => {
                                                 </button>
                                             )}
                                             <span
-                                                className={`px-3 py-1 rounded-lg text-[10px] uppercase tracking-widest font-black border ${getStatusStyles(order.status)}`}
+                                                className={`px-3 py-1 rounded-lg text-xs uppercase tracking-widest font-black border ${getStatusStyles(order.status)}`}
                                             >
                                                 {order.status}
                                             </span>
@@ -191,7 +194,7 @@ const OrdersPage = () => {
                                                         Qty: {item.quantity}
                                                     </span>
                                                     <div className="w-1 h-1 bg-gray-300 rounded-full" />
-                                                    <span className={`text-[10px] font-black uppercase tracking-wider ${item.status === 'cancelled' ? 'text-red-500' : 'text-primary'}`}>
+                                                    <span className={`text-xs font-black uppercase tracking-wider ${item.status === 'cancelled' ? 'text-red-500' : 'text-primary'}`}>
                                                         {item.status === 'cancelled' ? 'Cancelled' : 'Fulfilled'}
                                                     </span>
                                                 </div>

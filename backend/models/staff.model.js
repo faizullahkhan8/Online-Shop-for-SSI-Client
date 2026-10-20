@@ -1,4 +1,5 @@
 import { Schema, SchemaTypes } from "mongoose";
+import { safeHtml } from "../utils/safeHtml.js";
 
 const staffSchema = new Schema(
     {
@@ -10,6 +11,7 @@ const staffSchema = new Schema(
         },
         description: {
             type: String,
+            set: safeHtml,
             default: "",
         },
         image: { type: String, default: "" },

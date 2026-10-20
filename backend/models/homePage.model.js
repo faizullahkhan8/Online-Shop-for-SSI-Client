@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { safeContentTree } from "../utils/safeHtml.js";
 
 const homePageSchema = new Schema(
     {
@@ -38,7 +39,7 @@ const homePageSchema = new Schema(
                 isVisible: { type: Boolean, default: true },
                 order: { type: Number, default: 0 },
                 // Flexible config — stores any section's settings as mixed
-                config: { type: Schema.Types.Mixed, default: {} },
+                config: { type: Schema.Types.Mixed, default: {}, set: safeContentTree },
             },
         ],
     },

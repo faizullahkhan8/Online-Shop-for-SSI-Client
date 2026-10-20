@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
+import { useState } from "react";
 import {
     useGetAllVendors,
     useDeleteVendor,
@@ -23,6 +24,7 @@ import {
 import DeleteDialog from "../../UI/DialogBox.jsx";
 import Input from "../../UI/Input.jsx";
 import Button from "../../UI/Button.jsx";
+import { toast } from "react-toastify";
 
 const INITIAL_STATE = {
     name: "",
@@ -45,7 +47,7 @@ const VendorsListPage = () => {
         imagePreview: null,
     });
 
-    const { data: vendorsData, loading: getAllVendorsLoading } = useGetAllVendors();
+    const { data: vendorsData, loading: getAllVendorsLoading, getAllVendors } = useGetAllVendors();
     const vendors = vendorsData?.vendors || [];
     const { createVendor, loading: creating } = useCreateVendor();
     const { deleteVendor, loading: deleteVendorLoading } = useDeleteVendor();
@@ -165,7 +167,7 @@ const VendorsListPage = () => {
 
                     <div className="flex items-center gap-3 relative z-10">
                         <Button
-                            onClick={fetchVendors}
+                            onClick={() => { void getAllVendors().catch(() => toast.error("Unable to refresh vendors. Try again.")); }}
                             disabled={getAllVendorsLoading}
                             variant="outline"
                             className="flex items-center gap-2 !px-4 !py-2.5 !rounded-xl !text-sm bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300 text-gray-700 shadow-sm"
@@ -205,7 +207,7 @@ const VendorsListPage = () => {
 
                 {/* ── DATA LIST ────────────────────────────────────────────────────── */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div role="region" aria-label="Vendors table" tabIndex={0} className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -254,13 +256,13 @@ const VendorsListPage = () => {
                                             </td>
                                             <td className="p-4 text-right pr-6">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
+                                                    <button aria-label="Edit"
                                                         onClick={() => openEditModal(vendor)}
                                                         className="p-1.5 text-blue-500 bg-primary-pale hover:bg-primary-light rounded-lg transition-colors border border-blue-100"
                                                     >
                                                         <Edit size={16} />
                                                     </button>
-                                                    <button
+                                                    <button aria-label="Delete item"
                                                         onClick={() => setDeleteModal({ isOpen: true, vendorId: vendor._id })}
                                                         className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
                                                     >
@@ -285,7 +287,7 @@ const VendorsListPage = () => {
                                 <h2 className="text-lg font-bold text-gray-900">
                                     {vendorModal.isEditing ? "Edit Vendor" : "Add Vendor"}
                                 </h2>
-                                <button
+                                <button aria-label="Close"
                                     onClick={() => setVendorModal({ ...vendorModal, isOpen: false })}
                                     className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
@@ -309,7 +311,7 @@ const VendorsListPage = () => {
                                             ) : (
                                                 <>
                                                     <UploadCloud size={24} className="mb-1" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Logo</span>
+                                                    <span className="text-xs font-bold uppercase tracking-wider">Logo</span>
                                                 </>
                                             )}
                                             <input
@@ -348,15 +350,15 @@ const VendorsListPage = () => {
                                         className="bg-gray-50"
                                     />
                                     
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 block">Description</label>
-                                        <textarea
+                                    <FormField>
+                                        <FieldLabel className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 block">Description</FieldLabel>
+                                        <FieldControl as="textarea"
                                             className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 bg-gray-50 transition-all min-h-[100px] resize-none"
                                             placeholder="Write a short description about this vendor..."
                                             value={vendorModal.data.description}
                                             onChange={(e) => setVendorModal((prev) => ({ ...prev, data: { ...prev.data, description: e.target.value } }))}
                                         />
-                                    </div>
+                                    </FormField>
                                 </form>
                             </div>
 

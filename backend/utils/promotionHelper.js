@@ -6,17 +6,19 @@ import { getLocalPromotionModel } from "../config/localDb.js";
  * @param {number} basePrice - The original price of the product.
  * @returns {Promise<{price: number, promotion: object|null}>} - The effective price and the promotion details.
  */
-export const getEffectivePrice = async (productId, basePrice) => {
+export const getEffectivePrice = async (productId, basePrice, { session } = {}) => {
     const PromotionModel = getLocalPromotionModel();
     if (!PromotionModel) return { price: basePrice, promotion: null };
 
     const now = new Date();
     // Find an active promotion that contains this product
-    const activePromotion = await PromotionModel.findOne({
+    const query = PromotionModel.findOne({
         products: productId,
         startTime: { $lte: now },
         endTime: { $gte: now },
     });
+    if (session) query.session(session);
+    const activePromotion = await query;
 
     if (!activePromotion) {
         return { price: basePrice, promotion: null };

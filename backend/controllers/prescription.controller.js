@@ -1,3 +1,5 @@
+import { profileAddresses } from "../utils/profileAddresses.js";
+import { safeError } from "../utils/safeLog.js";
 import expressAsyncHandler from "express-async-handler";
 import { getLocalPrescriptionModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
@@ -25,11 +27,20 @@ export const markPrescriptionViewed = expressAsyncHandler(async (req, res, next)
     try {
         emitPrescriptionStatusUpdate(prescription);
     } catch (socketErr) {
-        console.error("[Socket.io] Failed to emit prescription view update:", socketErr);
+        safeError("[Socket.io] Failed to emit prescription view update:", socketErr);
     }
     
     res.status(200).json({ success: true, message: "Marked as viewed" });
 });
+
+export const validatePrescriptionLocation = (req, res, next) => {
+    try {
+        const [address] = profileAddresses([{ lat: req.body.address_lat, lng: req.body.address_lng }]);
+        if (address.lat === undefined || address.lng === undefined) throw new Error();
+        req.body.address_lat = address.lat; req.body.address_lng = address.lng;
+        next();
+    } catch { next(new ErrorResponse("A valid map location is required", 400)); }
+};
 
 // @desc    Upload a new prescription
 // @route   POST /api/prescriptions
@@ -44,7 +55,7 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
 
     const { name, phone, address_text, address_lat, address_lng, notes } = req.body;
 
-    if (!name || !phone || !address_lat || !address_lng) {
+    if (!name || !phone || address_lat == null || address_lng == null) {
         return next(new ErrorResponse("Name, phone, and map location are required", 400));
     }
 
@@ -65,7 +76,7 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
     try {
         emitNewPrescription(prescription);
     } catch (socketErr) {
-        console.error("[Socket.io] Failed to emit new prescription:", socketErr);
+        safeError("[Socket.io] Failed to emit new prescription:", socketErr);
     }
 
     // Send SMS
@@ -138,7 +149,7 @@ export const updatePrescriptionStatus = expressAsyncHandler(async (req, res, nex
     try {
         emitPrescriptionStatusUpdate(prescription);
     } catch (socketErr) {
-        console.error("[Socket.io] Failed to emit prescription status update:", socketErr);
+        safeError("[Socket.io] Failed to emit prescription status update:", socketErr);
     }
 
     // Send SMS

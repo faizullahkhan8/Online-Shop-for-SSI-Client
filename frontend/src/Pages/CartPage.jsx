@@ -152,7 +152,7 @@ const CartPage = () => {
                                         
                                         {item.stock < item.quantity && (
                                             <div className="mb-2">
-                                                <span className="text-[10px] font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-widest">
+                                                <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase tracking-widest">
                                                     Partially Backordered
                                                 </span>
                                                 <p className="text-xs font-bold text-amber-500 mt-1">
@@ -174,7 +174,7 @@ const CartPage = () => {
 
                                         <div className="flex flex-wrap items-center gap-4">
                                             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 h-10 overflow-hidden shadow-inner">
-                                                <button
+                                                <button aria-label="Decrease quantity"
                                                     disabled={!item.selected}
                                                     onClick={() => handleQuantityChange(item._id, item.quantity - 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
@@ -184,7 +184,7 @@ const CartPage = () => {
                                                 <span className="w-12 h-full flex items-center justify-center text-sm font-black text-gray-900 bg-white border-x border-gray-200 shadow-sm z-10">
                                                     {item.quantity}
                                                 </span>
-                                                <button
+                                                <button aria-label="Add item"
                                                     disabled={!item.selected}
                                                     onClick={() => handleQuantityChange(item._id, item.quantity + 1, item.stock)}
                                                     className="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-white hover:text-primary transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"

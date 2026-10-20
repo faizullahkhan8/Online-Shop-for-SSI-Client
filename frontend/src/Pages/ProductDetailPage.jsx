@@ -1,3 +1,5 @@
+import { safeHtml } from "../utils/safeHtml";
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
     Heart,
@@ -13,6 +15,7 @@ import {
     Truck,
     Clock,
     MessageSquare,
+    Box,
 } from "lucide-react";
 import { useParams, Link } from "react-router-dom";
 import Breadcrumb from "../Components/Breadcrumb";
@@ -32,11 +35,10 @@ import { toast } from "react-toastify";
 
 const ProductDetailPage = () => {
     const { id } = useParams();
-    const { data: productData, isLoading: productLoading } = useGetProductById(id);
+    const { data: productData, loading: productLoading, error: productError } = useGetProductById(id);
     const product = productData?.product || null;
 
     const [quantity, setQuantity] = useState(1);
-    const [selectedPack, setSelectedPack] = useState("1 Strip (10 Tablets)");
     const [activeTab, setActiveTab] = useState("SPECIFICATION");
     const [reviewFilter, setReviewFilter] = useState("all");
     const [showReviewForm, setShowReviewForm] = useState(false);
@@ -68,96 +70,8 @@ const ProductDetailPage = () => {
 
     const isInWishlist = !!wishlistItems.find((item) => matchId(item, product));
 
-    // Frequently bought together items
-    const fbtItems = useMemo(() => {
-        const otherProducts = allProducts.filter((p) => (p._id || p.id) !== id);
-        if (otherProducts.length >= 2) {
-            return otherProducts;
-        }
-        // Fallback default bundle products if database has few products
-        return [
-            {
-                _id: "fbt-1",
-                name: "Panadol Extra Tablets 500mg/65mg (1 Strip)",
-                price: 75,
-                effectivePrice: 65,
-                image: product?.image || "",
-                brand: "GSK",
-                rating: 5,
-            },
-            {
-                _id: "fbt-2",
-                name: "Disprin Tablets 300mg (1 Strip = 10 Tablets)",
-                price: 55,
-                effectivePrice: 48,
-                image: product?.image || "",
-                brand: "Reckitt",
-                rating: 5,
-            },
-            {
-                _id: "fbt-3",
-                name: "Panadol CF Day & Night Tablets",
-                price: 120,
-                effectivePrice: 110,
-                image: product?.image || "",
-                brand: "GSK",
-                rating: 4.8,
-            },
-        ];
-    }, [allProducts, id, product]);
-
-    // Related products
-    const relatedProducts = useMemo(() => {
-        const filtered = allProducts.filter((p) => (p._id || p.id) !== id);
-        if (filtered.length > 0) return filtered.slice(0, 6);
-        return [
-            {
-                _id: "rel-1",
-                name: "Panadol Suspension 120ml (Strawberry Flavor)",
-                price: 135,
-                effectivePrice: 120,
-                rating: 5,
-                image: product?.image || "",
-                sold: 45,
-            },
-            {
-                _id: "rel-2",
-                name: "Panadol Drops 20ml for Infants",
-                price: 110,
-                effectivePrice: 98,
-                rating: 5,
-                image: product?.image || "",
-                sold: 62,
-            },
-            {
-                _id: "rel-3",
-                name: "Panadol Extra 500mg (2 Strips = 20 Tablets)",
-                price: 150,
-                effectivePrice: 130,
-                rating: 5,
-                image: product?.image || "",
-                sold: 89,
-            },
-            {
-                _id: "rel-4",
-                name: "Panadol Baby & Infant Oral Suspension 60ml",
-                price: 95,
-                effectivePrice: 85,
-                rating: 4.9,
-                image: product?.image || "",
-                sold: 30,
-            },
-            {
-                _id: "rel-5",
-                name: "Panadol Children's Syrup Paracetamol 100ml",
-                price: 140,
-                effectivePrice: 125,
-                rating: 5,
-                image: product?.image || "",
-                sold: 74,
-            },
-        ];
-    }, [allProducts, id, product]);
+    const fbtItems = useMemo(() => allProducts.filter(p => (p._id || p.id) !== id), [allProducts, id]);
+    const relatedProducts = useMemo(() => allProducts.filter(p => (p._id || p.id) !== id).slice(0, 6), [allProducts, id]);
 
     const combinedReviews = useMemo(() => {
         return reviews && reviews.length > 0 ? reviews : [];
@@ -233,7 +147,6 @@ const ProductDetailPage = () => {
             setNewComment("");
             setNewRating(5);
             setShowReviewForm(false);
-            getReviews(id);
         }
     };
 
@@ -251,10 +164,10 @@ const ProductDetailPage = () => {
         { label: "Home", path: "/" },
         { label: "Products", path: "/products" },
         {
-            label: product?.category?.name || "Baby Care",
-            path: `/products?category=${product?.category?.name || "all"}`,
+            label: product?.category?.name || "Products",
+            path: `/products?category=${product?.category?._id || ""}`,
         },
-        { label: product?.name || "Panadol Tablets 500mg (1 Strip = 10 Tablets)" },
+        { label: product?.name || "Product" },
     ];
 
     const tabList = useMemo(() => {
@@ -264,13 +177,7 @@ const ProductDetailPage = () => {
                 label: detail.title.toUpperCase(),
             }));
         }
-        return [
-            { id: "SPECIFICATION", label: "SPECIFICATION" },
-            { id: "USAGE_SAFETY", label: "USAGE AND SAFETY" },
-            { id: "PRECAUTIONS", label: "PRECAUTIONS" },
-            { id: "WARNINGS", label: "WARNINGS" },
-            { id: "ADDITIONAL_INFO", label: "ADDITIONAL INFORMATION" },
-        ];
+        return [{ id: "product-information", label: "PRODUCT INFORMATION" }];
     }, [product]);
 
     useEffect(() => {
@@ -280,7 +187,7 @@ const ProductDetailPage = () => {
         }
     }, [tabList, activeTab]);
 
-    // Carousel navigation for Frequently Bought Together
+    // Carousel navigation for More from our catalog
     const maxFbtIndex = Math.max(0, fbtItems.length - 2);
     const prevFbt = () => setFbtIndex((prev) => Math.max(0, prev - 1));
     const nextFbt = () => setFbtIndex((prev) => Math.min(maxFbtIndex, prev + 1));
@@ -297,6 +204,8 @@ const ProductDetailPage = () => {
         );
     }
 
+    if (productError || !product) return <p role="alert" className="p-8">Could not load this product. <Link to="/products">Browse products</Link></p>;
+
     return (
         <div className="bg-[#FAFBF9] min-h-screen text-[#1F2937] font-sans pb-16 selection:bg-[#74AA34]/20 selection:text-[#3E6913]">
             {/* Main Container */}
@@ -306,7 +215,7 @@ const ProductDetailPage = () => {
                     <Breadcrumb items={breadcrumbItems} />
                 </div>
 
-                {/* Top Section: Main Product + Buy Info + Frequently Bought Together */}
+                {/* Top Section: Main Product + Buy Info + More from our catalog */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     {/* Left Column: Product Image Showcase */}
                     <div className="lg:col-span-4 bg-white rounded-2xl border border-gray-200/90 p-6 sm:p-8 shadow-xs relative flex flex-col items-center justify-center min-h-[380px] group">
@@ -344,7 +253,7 @@ const ProductDetailPage = () => {
                                     <div className="w-full aspect-square max-h-[300px] flex items-center justify-center">
                                         <div className="w-48 h-48 rounded-xl bg-[#F4F8EE] flex flex-col items-center justify-center text-[#74AA34]">
                                             <ShieldCheck size={48} className="stroke-[1.5]" />
-                                            <span className="text-xs font-semibold mt-2">Authentic Medicine</span>
+                                            <span className="text-xs font-semibold mt-2">Product image unavailable</span>
                                         </div>
                                     </div>
                                 );
@@ -386,7 +295,7 @@ const ProductDetailPage = () => {
                             {product?.badges && product.badges.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     {product.badges.map((badge, idx) => (
-                                        <span key={idx} className="bg-[#EDF6E5] text-[#3E6913] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[#CDE5B7]">
+                                        <span key={idx} className="bg-[#EDF6E5] text-[#3E6913] text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-[#CDE5B7]">
                                             {badge}
                                         </span>
                                     ))}
@@ -396,7 +305,7 @@ const ProductDetailPage = () => {
                             {/* Product Title & Status */}
                             <div className="flex items-start justify-between gap-4 mb-2.5">
                                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
-                                    {product?.name || "Panadol Tablets 500mg (1 Strip = 10 Tablets)"}
+                                    {product?.name || "Product"}
                                 </h1>
                                 {isOutOfStock && (
                                     <span className="shrink-0 bg-red-100 text-red-600 font-bold text-xs px-2.5 py-1 rounded-md border border-red-200 mt-1">
@@ -408,7 +317,7 @@ const ProductDetailPage = () => {
                             {/* Ratings & Reviews Link */}
                             <div className="flex items-center gap-2 mb-3.5">
                                 <StarRating
-                                    rating={Number(avgRating) || 5}
+                                    rating={Number(avgRating)}
                                     readonly
                                     size={16}
                                     activeColor="text-[#74AA34]"
@@ -418,7 +327,7 @@ const ProductDetailPage = () => {
                                     onClick={scrollToReviews}
                                     className="text-xs font-semibold text-[#74AA34] hover:underline cursor-pointer"
                                 >
-                                    ({combinedReviews.length} Reviews)
+                                    {combinedReviews.length ? `(${combinedReviews.length} reviews)` : "No reviews yet"}
                                 </button>
                             </div>
 
@@ -427,7 +336,7 @@ const ProductDetailPage = () => {
                                 {product?.vendor && (
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg shrink-0">
                                         <Box size={14} className="text-gray-400" />
-                                        <span className="text-[11px] font-bold text-gray-700 tracking-wide">
+                                        <span className="text-xs font-bold text-gray-700 tracking-wide">
                                             {typeof product.vendor === 'object' ? product.vendor.name : product.vendor}
                                         </span>
                                     </div>
@@ -473,27 +382,7 @@ const ProductDetailPage = () => {
                                 </span>
                             </div>
 
-                            {/* Pack / Option Selector */}
-                            <div className="mb-5">
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                                    Available In:
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {["1 Strip (10 Tablets)", "Box (20 Strips)"].map((pack) => (
-                                        <button
-                                            key={pack}
-                                            type="button"
-                                            onClick={() => setSelectedPack(pack)}
-                                            className={`text-xs font-semibold py-2 px-3 rounded-lg border transition-all text-center ${selectedPack === pack
-                                                    ? "bg-[#F4F8EE] border-[#74AA34] text-[#3E6913] shadow-xs"
-                                                    : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-                                                }`}
-                                        >
-                                            {pack}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            <p className="mb-5 text-sm text-gray-600">Price is per listed item. Check the product packaging for pack contents.</p>
                         </div>
 
                         {/* Quantity Stepper & Add to Cart CTA */}
@@ -556,12 +445,12 @@ const ProductDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: Frequently Bought Together */}
+                    {/* Right Column: More from our catalog */}
                     <div className="lg:col-span-4 bg-[#F4F8EE] rounded-2xl border border-[#E0EED2] p-5 sm:p-6 shadow-xs flex flex-col justify-between min-h-[380px]">
                         <div>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-sm sm:text-base font-bold text-gray-900">
-                                    Frequently Bought Together
+                                    More from our catalog
                                 </h3>
                                 {/* Navigation arrows */}
                                 <div className="flex items-center gap-1.5">
@@ -627,7 +516,7 @@ const ProductDetailPage = () => {
                                             </div>
 
                                             {/* Name */}
-                                            <h4 className="text-[11px] font-medium text-gray-800 line-clamp-2 leading-tight mb-1.5 min-h-[28px]">
+                                            <h4 className="text-xs font-medium text-gray-800 line-clamp-2 leading-tight mb-1.5 min-h-[28px]">
                                                 {item.name}
                                             </h4>
 
@@ -637,7 +526,7 @@ const ProductDetailPage = () => {
                                                     Rs. {(item.effectivePrice || item.price)?.toLocaleString()}
                                                 </span>
                                                 {item.effectivePrice && item.effectivePrice < item.price && (
-                                                    <span className="text-[10px] text-gray-400 line-through">
+                                                    <span className="text-xs text-gray-400 line-through">
                                                         Rs. {item.price?.toLocaleString()}
                                                     </span>
                                                 )}
@@ -646,7 +535,7 @@ const ProductDetailPage = () => {
                                             {/* Quick Add Button */}
                                             <button
                                                 onClick={() => handleAddToCart(item, 1)}
-                                                className="w-full py-1 text-[10px] font-bold uppercase rounded-md bg-[#EDF6E5] text-[#3E6913] hover:bg-[#74AA34] hover:text-white transition-colors border border-[#D5EAC3]"
+                                                className="w-full py-1 text-xs font-bold uppercase rounded-md bg-[#EDF6E5] text-[#3E6913] hover:bg-[#74AA34] hover:text-white transition-colors border border-[#D5EAC3]"
                                             >
                                                 + Add
                                             </button>
@@ -667,7 +556,7 @@ const ProductDetailPage = () => {
                                 className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-[#74AA34] text-[#3E6913] hover:text-white font-bold text-xs uppercase tracking-wide border border-[#CDE5B7] transition-all shadow-2xs flex items-center justify-center gap-2"
                             >
                                 <ShoppingCart size={14} />
-                                Add All 3 to Cart
+                                Add {visibleFbt.length + 1} Items to Cart
                             </button>
                         </div>
                     </div>
@@ -713,171 +602,17 @@ const ProductDetailPage = () => {
                                     </h3>
                                     <div
                                         className="space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed max-w-none prose prose-sm prose-blue"
-                                        dangerouslySetInnerHTML={{ __html: detail.contentHTML }}
+                                        dangerouslySetInnerHTML={{ __html: safeHtml(detail.contentHTML) }}
                                     />
                                 </section>
                             </React.Fragment>
                         ))
                     ) : (
-                        <>
-                            {/* Section 1: Specification */}
-                            <section id="specification" className="space-y-4">
-                                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                                    {product?.name || "Panadol Tablets 500mg (1 Strip = 10 Tablets)"} Specification
-                                </h2>
-
-                                <div className="space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">
-                                            Requires Prescription (YES/NO):
-                                        </span>
-                                        <span className="text-gray-600">No</span>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">
-                                            Generics:
-                                        </span>
-                                        <span className="text-[#74AA34] font-medium">Paracetamol</span>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">
-                                            Pack Size:
-                                        </span>
-                                        <span className="text-gray-600">{selectedPack}</span>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">
-                                            How It works:
-                                        </span>
-                                        <p className="text-gray-600 leading-relaxed">
-                                            {product?.description ||
-                                                "Panadol contains paracetamol, an analgesic and antipyretic agent that provides fast and effective relief of headaches, tension headache, migraine, toothache, muscle aches, backache, and fever associated with colds and flu. It acts predominantly by inhibiting prostaglandin synthesis in the central nervous system."}
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <div className="border-t border-gray-100" />
-
-                            {/* Section 2: Usage and Safety */}
-                            <section id="usage_safety" className="space-y-4">
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                                    Usage And Safety
-                                </h3>
-
-                                <div className="space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Dosage:</span>
-                                        <p className="text-gray-600">
-                                            Adults and children aged 12 years and over: 1 to 2 tablets every 4 to 6 hours as required. Do not exceed 8 tablets in 24 hours. Children 6 to 11 years: Half to 1 tablet every 4 to 6 hours as required. Do not exceed 4 tablets in 24 hours. Not recommended for children under 6 years of age.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Side Effects:</span>
-                                        <p className="text-gray-600">
-                                            When taken at recommended doses, side effects are rare. Mild adverse reactions may include skin rash, allergic hypersensitivity, nausea, or epigastric distress. Discontinue use if any allergic reaction occurs.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Drug Interactions:</span>
-                                        <p className="text-gray-600">
-                                            Regular daily use of paracetamol may enhance the anticoagulant effect of warfarin and other coumarins, increasing bleeding risk. Concurrent use with other hepatotoxic medications or heavy alcohol consumption is not recommended.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Indications:</span>
-                                        <p className="text-gray-600">
-                                            Fast and effective treatment of mild to moderate pain including headache, migraine, toothache, dysmenorrhea, muscular aches, rheumatic pains, sore throat, and reducing fever.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">When not to Use:</span>
-                                        <p className="text-gray-600">
-                                            Do not take if you have known hypersensitivity to paracetamol or any other ingredients in the product. Avoid if suffering from severe hepatic or renal impairment without medical supervision.
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <div className="border-t border-gray-100" />
-
-                            {/* Section 3: Precautions */}
-                            <section id="precautions" className="space-y-3">
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                                    Precautions
-                                </h3>
-                                <div>
-                                    <span className="font-bold text-gray-900 block mb-0.5">Precaution:</span>
-                                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                                        Contains paracetamol. Do not take with any other products containing paracetamol. Consult your healthcare professional if symptoms persist after 3 days or if your condition worsens. Keep out of sight and reach of children.
-                                    </p>
-                                </div>
-                            </section>
-
-                            <div className="border-t border-gray-100" />
-
-                            {/* Section 4: Warnings */}
-                            <section id="warnings" className="space-y-4">
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                                    Warnings
-                                </h3>
-
-                                <div className="space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Warning 1:</span>
-                                        <p className="text-gray-600">
-                                            Liver warning: This product contains paracetamol. Severe liver damage may occur if you take more than 4,000 mg of paracetamol in 24 hours, take with other drugs containing paracetamol, or consume 3 or more alcoholic drinks every day while using this product.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Warning 2:</span>
-                                        <p className="text-gray-600">
-                                            Allergy alert: Paracetamol may cause severe skin reactions. Symptoms may include skin reddening, blisters, and rash. If a skin reaction occurs, stop use and seek medical help immediately.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Warning 3:</span>
-                                        <p className="text-gray-600">
-                                            Overdose warning: In case of overdose, get medical help or contact a Poison Control Center immediately. Prompt medical attention is critical even if you do not notice any signs or symptoms.
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <div className="border-t border-gray-100" />
-
-                            {/* Section 5: Additional Information */}
-                            <section id="additional_info" className="space-y-4">
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900">
-                                    Additional Information
-                                </h3>
-
-                                <div className="space-y-3 text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Pregnancy category:</span>
-                                        <p className="text-gray-600">
-                                            Category B. Always consult your doctor or healthcare professional before taking this medicine if you are pregnant or breastfeeding.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-bold text-gray-900 block mb-0.5">Storage (FREEZE / AMBIENT):</span>
-                                        <p className="text-gray-600">
-                                            Store below 25°C in a dry place away from heat, direct sunlight, and moisture. Do not freeze.
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-                        </>
+                        <section id="product-information" className="space-y-3">
+                            <h3 className="text-lg font-semibold text-gray-900">Product information</h3>
+                            <p className="text-sm leading-relaxed text-gray-700">{product?.description || "Detailed product information is not available yet. Check the product packaging or contact our pharmacy team before ordering."}</p>
+                            <Link to="/contact-us" className="inline-flex text-sm font-semibold text-primary-dark underline underline-offset-4">Ask about this product</Link>
+                        </section>
                     )}
                 </div>
 
@@ -905,9 +640,7 @@ const ProductDetailPage = () => {
                             </h4>
                             <form onSubmit={handleAddReviewSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                        Your Rating
-                                    </label>
+                                    <p className="block text-sm font-semibold text-gray-700 mb-1.5">Your rating</p>
                                     <StarRating
                                         rating={newRating}
                                         setRating={setNewRating}
@@ -917,11 +650,11 @@ const ProductDetailPage = () => {
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                <FormField>
+                                    <FieldLabel className="block text-xs font-semibold text-gray-700 mb-1.5">
                                         Review Details
-                                    </label>
-                                    <textarea
+                                    </FieldLabel>
+                                    <FieldControl as="textarea"
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         rows={3}
@@ -929,7 +662,7 @@ const ProductDetailPage = () => {
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-[#74AA34]/30 focus:border-[#74AA34] outline-none transition-all"
                                         required
                                     />
-                                </div>
+                                </FormField>
 
                                 <button
                                     type="submit"
@@ -956,7 +689,7 @@ const ProductDetailPage = () => {
                             <div className="md:col-span-4 flex flex-col items-center justify-center p-4 border-b md:border-b-0 md:border-r border-gray-100">
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className="text-4xl sm:text-5xl font-black text-gray-900">
-                                        {Math.round(Number(avgRating)) || 5}
+                                        {combinedReviews.length ? avgRating : "—"}
                                     </span>
                                     <span className="bg-[#74AA34] text-white text-xs font-bold px-2.5 py-1 rounded-md">
                                         Review
@@ -964,7 +697,7 @@ const ProductDetailPage = () => {
                                 </div>
                                 <div className="mb-2">
                                     <StarRating
-                                        rating={Number(avgRating) || 5}
+                                        rating={Number(avgRating)}
                                         readonly
                                         size={20}
                                         activeColor="text-[#74AA34]"
@@ -972,7 +705,7 @@ const ProductDetailPage = () => {
                                     />
                                 </div>
                                 <p className="text-xs text-gray-500 font-medium">
-                                    Based on {combinedReviews.length} verified ratings
+                                    {combinedReviews.length ? `Based on ${combinedReviews.length} customer reviews` : "No reviews yet"}
                                 </p>
                             </div>
 
@@ -1072,7 +805,7 @@ const ProductDetailPage = () => {
                                                 <h4 className="text-xs sm:text-sm font-bold text-gray-900">
                                                     {rev.name}
                                                 </h4>
-                                                <span className="text-[11px] text-gray-400">
+                                                <span className="text-xs text-gray-400">
                                                     {new Date(rev.createdAt || "2024-01-01T00:00:00Z").toLocaleDateString(
                                                         "en-US",
                                                         {

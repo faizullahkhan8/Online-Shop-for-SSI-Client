@@ -1,36 +1,23 @@
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
 import { X, Heart, Trash2, ShoppingCart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { toggleWishlist } from "../store/slices/wishlistSlice";
+import { useDispatch } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { useGetWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { getImageUrl } from "../utils/imageHelper";
 import { toast } from "react-toastify";
 
 const WishlistDrawer = ({ isOpen, onClose }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { data } = useGetWishlist();
+    const { data, loading, error } = useGetWishlist();
     const wishlistItems = data?.wishlist || [];
     const drawerRef = useRef(null);
+    useDialog(isOpen, onClose, drawerRef);
     const { removeFromWishlist } = useRemoveFromWishlist();
 
-    // Close on escape key
-    useEffect(() => {
-        const handleEsc = (e) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [onClose]);
-
-    // Close on click outside
-    const handleOutsideClick = (e) => {
-        if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-            onClose();
-        }
-    };
 
     const handleRemoveItem = async (item) => {
         try {
@@ -48,11 +35,13 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
         toast.success("Added to cart!");
     };
 
-    return (
+    if (!isOpen) return null;
+
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[90] ${
+                data-dialog-backdrop="" aria-hidden="true" className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[1000] ${
                     isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                 }`}
                 onClick={onClose}
@@ -61,7 +50,8 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
             {/* Drawer Panel */}
             <div
                 ref={drawerRef}
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${
+                role="dialog" aria-modal="true" aria-label="Your wishlist" tabIndex={-1}
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[1001] transform transition-transform duration-300 ease-in-out ${
                     isOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
@@ -85,7 +75,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
 
                 {/* Wishlist Items Scrollable Area */}
                 <div className="flex-1 overflow-y-auto p-5">
-                    {wishlistItems.length === 0 ? (
+                    {loading ? <p role="status">Loading wishlist...</p> : error ? <p role="alert">Could not load your wishlist. Please try again.</p> : wishlistItems.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-400">
                                 <Heart size={32} />
@@ -114,8 +104,9 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                                 return (
                                 <div key={item._id || item.id} className="flex gap-4 p-3 bg-white border border-gray-100 rounded-xl hover:border-red-200 transition-colors group relative">
                                     <button 
+                                        aria-label={`Remove ${item.name} from wishlist`}
                                         onClick={() => handleRemoveItem(item)}
-                                        className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-0 group-hover:opacity-100"
+                                        className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-100"
                                         title="Remove from Wishlist"
                                     >
                                         <Trash2 size={12} />
@@ -144,6 +135,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                                                 Rs. {effP.toLocaleString()}
                                             </span>
                                             <button
+                                                aria-label={`Add ${item.name} to cart`}
                                                 onClick={() => handleAddToCart(item)}
                                                 className="w-8 h-8 flex items-center justify-center bg-primary-pale text-primary-dark hover:bg-primary hover:text-white rounded-lg transition-colors cursor-pointer"
                                                 title="Add to Cart"
@@ -175,7 +167,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                 )}
             </div>
         </>
-    );
+    , document.body);
 };
 
 export default WishlistDrawer;

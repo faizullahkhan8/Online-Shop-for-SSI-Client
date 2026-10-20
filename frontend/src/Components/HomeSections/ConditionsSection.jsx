@@ -27,7 +27,7 @@ const ConditionsSection = ({ config }) => {
                             {cond.icon || <Activity size={24} />}
                         </div>
                         <h4 className="text-[12px] font-black text-gray-900 group-hover:text-primary transition-colors leading-snug mb-1">{cond.name}</h4>
-                        <span className="text-[10px] text-gray-500 font-bold">{cond.desc}</span>
+                        <span className="text-xs text-gray-500 font-bold">{cond.desc}</span>
                     </Link>
                 ))}
             </div>

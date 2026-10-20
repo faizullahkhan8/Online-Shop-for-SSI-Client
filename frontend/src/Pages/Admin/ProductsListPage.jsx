@@ -1,3 +1,4 @@
+import { QueryError } from "../../UI/QueryState";
 import {
     useDeleteProduct,
     useGetAllProducts,
@@ -12,7 +13,7 @@ const ProductList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const page = parseInt(searchParams.get("page") || "1");
 
-    const { data: productsData, isLoading: getAllProductsLoading } = useGetAllProducts({ page, limit: 10 });
+    const { data: productsData, loading: getAllProductsLoading, error: queryError } = useGetAllProducts({ page, limit: 10 });
     const products = productsData?.products || [];
     const totalPages = productsData?.totalPages || 1;
 
@@ -38,6 +39,8 @@ const ProductList = () => {
         }
     };
 
+    if (queryError) return <QueryError />;
+
     return (
         <div className="space-y-6">
             <DeleteDialog
@@ -62,24 +65,24 @@ const ProductList = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 overflow-hidden">
+                <div role="region" aria-label="Products table" tabIndex={0} className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Product
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Category
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Price
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Stock
                                 </th>
-                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Actions
                                 </th>
                             </tr>
@@ -154,7 +157,7 @@ const ProductList = () => {
                                                     className="text-primary hover:text-primary-dark transition-colors"
                                                 />
                                             </Link>
-                                            <button
+                                            <button aria-label="Delete item"
                                                 onClick={() => {
                                                     setProductState({
                                                         type: "delete",

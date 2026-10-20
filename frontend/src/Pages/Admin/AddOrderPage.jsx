@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { savedRecipient } from "../../utils/location.js";
+import { FormField, FieldLabel } from "../../UI/FormField";
+import { useState } from "react";
 import {
     Plus,
     Trash2,
@@ -19,10 +21,13 @@ import { useGetAllUsers } from "../../api/hooks/user.api.js";
 import { useNavigate } from "react-router-dom";
 
 const AddOrderPage = () => {
-    const { data: productsData, isLoading: productsLoading } = useGetAllProducts();
-    const products = productsData?.products || [];
+    const [productSearch, setProductSearch] = useState("");
+    const [productPage, setProductPage] = useState(1);
+    const [selectedCatalog, setSelectedCatalog] = useState({});
+    const { data: productsData, loading: productsLoading, error: productsError } = useGetAllProducts({ page: productPage, limit: 25, search: productSearch });
+    const products = [...new Map([...Object.values(selectedCatalog), ...(productsData?.products || [])].map(p => [p._id, p])).values()];
     const { placeOrder, loading: orderLoading } = usePlaceOrder();
-    const { data: usersData, isLoading: usersLoading } = useGetAllUsers();
+    const { data: usersData, loading: usersLoading, error: usersError } = useGetAllUsers();
     const users = usersData?.users || [];
     const navigate = useNavigate();
     const [orderData, setOrderData] = useState({
@@ -91,6 +96,7 @@ const AddOrderPage = () => {
 
         if (field === "product") {
             const selectedProd = products.find((p) => p._id === value);
+            if (selectedProd) setSelectedCatalog(previous => ({ ...previous, [value]: selectedProd }));
             item.product = value;
             item.originalPrice = selectedProd?.price || 0;
             if (selectedProd?.effectivePrice < selectedProd?.price) {
@@ -129,40 +135,18 @@ const AddOrderPage = () => {
             grandTotal,
         };
         const response = await placeOrder(finalData);
-        if (response.success) {
-            navigate("/admin-dashboard?tab=orders-list");
+        if (response?.success) {
+            navigate("/admin-dashboard/orders");
         }
     };
 
-    useEffect(() => {
-    }, []);
 
     const handleUserSelect = (value) => {
         const selectedUser = users.find((u) => u._id === value);
         setOrderData((prev) => ({
             ...prev,
             userId: value,
-            recipient: {
-                ...prev.recipient,
-                name: selectedUser?.name || prev.recipient.name,
-                phone: selectedUser?.phone || prev.recipient.phone,
-                street:
-                    selectedUser?.addresses?.[0]?.street ||
-                    prev.recipient.street,
-                addressLine2:
-                    selectedUser?.addresses?.[0]?.addressLine2 ||
-                    prev.recipient.addressLine2,
-                city:
-                    selectedUser?.addresses?.[0]?.city || prev.recipient.city,
-                state:
-                    selectedUser?.addresses?.[0]?.state || prev.recipient.state,
-                postalCode:
-                    selectedUser?.addresses?.[0]?.postalCode ||
-                    prev.recipient.postalCode,
-                country:
-                    selectedUser?.addresses?.[0]?.country ||
-                    prev.recipient.country,
-            },
+            recipient: savedRecipient(selectedUser),
         }));
     };
 
@@ -195,7 +179,7 @@ const AddOrderPage = () => {
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                 {/* Left Column - Order Items */}
                 <div className="xl:col-span-8 space-y-6">
-                    <div className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm transition-colors duration-200">
                         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                                 <Hash size={16} className="text-primary" />
@@ -203,16 +187,27 @@ const AddOrderPage = () => {
                             </h3>
                         </div>
 
+                        <div className="mb-4 space-y-3 text-sm">
+                            <label className="block font-medium text-gray-700" htmlFor="manual-product-search">Search catalog</label>
+                            <input id="manual-product-search" className="w-full border rounded-lg p-2" value={productSearch} onChange={event => { setProductSearch(event.target.value); setProductPage(1); }} />
+                            {productsError && <p role="alert">Could not load products. Please try again.</p>}
+                            {!productsLoading && !productsError && productsData?.products?.length === 0 && <p>No matching products.</p>}
+                            <div className="flex gap-3 items-center">
+                                <button type="button" className="px-3 py-2 border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50" disabled={productPage === 1 || productsLoading} onClick={() => setProductPage(page => page - 1)}>Previous products</button>
+                                <span>Page {productPage} of {productsData?.totalPages || 1}</span>
+                                <button type="button" className="px-3 py-2 border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50" disabled={productsLoading || productPage >= (productsData?.totalPages || 1)} onClick={() => setProductPage(page => page + 1)}>Next products</button>
+                            </div>
+                        </div>
                         <div className="space-y-4">
                             {orderData.items.map((item, index) => (
                                 <div
                                     key={index}
                                     className="grid grid-cols-3 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                                 >
-                                    <div className="col-span-3 space-y-1.5">
-                                        <label className="text-xs font-medium text-gray-700">
+                                    <FormField className="col-span-3 space-y-1.5">
+                                        <FieldLabel className="text-xs font-medium text-gray-700">
                                             Product
-                                        </label>
+                                        </FieldLabel>
                                         <Select
                                             disabled={productsLoading}
                                             options={products?.map((p) => ({
@@ -225,7 +220,7 @@ const AddOrderPage = () => {
                                                 updateItem(index, "product", val)
                                             }
                                         />
-                                    </div>
+                                    </FormField>
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-medium text-gray-700">
                                             Original Price
@@ -234,10 +229,10 @@ const AddOrderPage = () => {
                                             Rs {item.originalPrice}
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-gray-700">
+                                    <FormField className="space-y-1.5">
+                                        <FieldLabel className="text-xs font-medium text-gray-700">
                                             Discount
-                                        </label>
+                                        </FieldLabel>
                                         <Input
                                             type="number"
                                             value={item.discount}
@@ -250,11 +245,11 @@ const AddOrderPage = () => {
                                             }
                                             className="w-full"
                                         />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-gray-700">
+                                    </FormField>
+                                    <FormField className="space-y-1.5">
+                                        <FieldLabel className="text-xs font-medium text-gray-700">
                                             Price
-                                        </label>
+                                        </FieldLabel>
                                         <Input
                                             type="number"
                                             value={item.price}
@@ -267,11 +262,11 @@ const AddOrderPage = () => {
                                             }
                                             className="w-full"
                                         />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-medium text-gray-700">
+                                    </FormField>
+                                    <FormField className="space-y-1.5">
+                                        <FieldLabel className="text-xs font-medium text-gray-700">
                                             Quantity
-                                        </label>
+                                        </FieldLabel>
                                         <Input
                                             type="number"
                                             value={item.quantity}
@@ -284,7 +279,7 @@ const AddOrderPage = () => {
                                             }
                                             className="w-full"
                                         />
-                                    </div>
+                                    </FormField>
                                     <div className="space-y-1.5">
                                         <p className="text-xs font-medium text-gray-700">
                                             Subtotal
@@ -294,7 +289,7 @@ const AddOrderPage = () => {
                                         </p>
                                     </div>
                                     <div className="flex items-end">
-                                        <button
+                                        <button aria-label="Delete item"
                                             type="button"
                                             onClick={() => removeItem(index)}
                                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -319,7 +314,8 @@ const AddOrderPage = () => {
 
                 {/* Right Column - Customer & Details */}
                 <div className="xl:col-span-4 space-y-6">
-                    <div className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-6">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm transition-colors duration-200 space-y-6">
+                        {usersError && <p role="alert">Could not load customers. Please try again.</p>}
                         {/* Customer Section */}
                         <section className="space-y-3">
                             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-200">
@@ -519,10 +515,10 @@ const AddOrderPage = () => {
                                 Shipping & Fees
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-medium text-gray-700">
+                                <FormField className="space-y-1.5">
+                                    <FieldLabel className="text-xs font-medium text-gray-700">
                                         Tax Amount
-                                    </label>
+                                    </FieldLabel>
                                     <Input
                                         type="number"
                                         placeholder="0.00"
@@ -535,11 +531,11 @@ const AddOrderPage = () => {
                                         }
                                         className="w-full"
                                     />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-medium text-gray-700">
+                                </FormField>
+                                <FormField className="space-y-1.5">
+                                    <FieldLabel className="text-xs font-medium text-gray-700">
                                         Shipping Fee
-                                    </label>
+                                    </FieldLabel>
                                     <Input
                                         type="number"
                                         placeholder="0.00"
@@ -552,7 +548,7 @@ const AddOrderPage = () => {
                                         }
                                         className="w-full"
                                     />
-                                </div>
+                                </FormField>
                             </div>
                             <Select
                                 options={[

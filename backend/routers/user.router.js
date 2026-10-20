@@ -14,20 +14,22 @@ import {
     verifyPhone,
     resendOTP,
 } from "../controllers/user.controller.js";
-import { isAuth, authorize } from "../middlewares/auth.middleware.js";
+import { isAuth, authorize, authorizeUserAccess } from "../middlewares/auth.middleware.js";
 import { upload, imagekitUpload } from "../middlewares/multer.middleware.js";
+import { authLimit } from "../middlewares/securityLimits.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/verify-phone", verifyPhone);
-router.post("/resend-otp", resendOTP);
-router.post("/login", loginUser);
+router.post("/register", authLimit("register", 5, 3600000, 20), registerUser);
+router.post("/verify-phone", authLimit("verify", 10, 600000), verifyPhone);
+router.post("/resend-otp", authLimit("resend", 5, 3600000, 30), resendOTP);
+router.post("/login", authLimit("login", 10, 900000), loginUser);
 router.post("/logout", isAuth, logoutUser);
-router.get("/get/:id", isAuth, getUser);
+router.get("/get/:id", isAuth, authorizeUserAccess, getUser);
 router.put(
     "/update/:id",
     isAuth,
+    authorizeUserAccess,
     upload.single("avatar"),
     imagekitUpload,
     updateUser,

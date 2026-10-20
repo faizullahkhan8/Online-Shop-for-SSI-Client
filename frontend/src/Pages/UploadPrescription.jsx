@@ -1,3 +1,7 @@
+import { useSavedUser } from "../hooks/useSavedUser.js";
+import { useAddressLookup } from "../hooks/useAddressLookup.js";
+import { validPosition, samePosition, addressFields } from "../utils/location.js";
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUploadPrescription } from "../api/hooks/prescription.api.js";
@@ -15,7 +19,7 @@ import {
     FileText,
     AlertCircle
 } from "lucide-react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import LocationPicker from "../Components/LocationPicker.jsx";
 import { useUpdateUser } from "../api/hooks/user.api";
 import { loginSuccess } from "../store/slices/authSlice";
@@ -28,7 +32,7 @@ const UploadPrescription = () => {
     const { updateUser } = useUpdateUser();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.auth);
+    const user = useSavedUser();
 
     const [name, setName] = useState(user?.name || "");
     const [phone, setPhone] = useState(user?.phone || "");
@@ -42,72 +46,11 @@ const UploadPrescription = () => {
         return "";
     });
     
-    const [mapPosition, setMapPosition] = useState(
-        user?.addresses?.[0]?.lat && user?.addresses?.[0]?.lng 
-            ? { lat: user.addresses[0].lat, lng: user.addresses[0].lng } 
-            : null
-    );
-    const [isFetchingAddress, setIsFetchingAddress] = useState(false);
-    const lastReverseGeocodedAddress = useRef("");
-
-    useEffect(() => {
-        const fetchAddress = async () => {
-            if (!mapPosition) return;
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPosition.lat}&lon=${mapPosition.lng}`
-                );
-                const data = await response.json();
-                if (data && data.display_name) {
-                    lastReverseGeocodedAddress.current = data.display_name;
-                    setAddressText(data.display_name);
-                }
-            } catch (error) {
-                console.error("Error fetching address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchAddress();
-        }, 800);
-
-        return () => clearTimeout(timeoutId);
-    }, [mapPosition]);
-
-    // Forward Geocoding: Update map when typing address manually
-    useEffect(() => {
-        if (!addressText || addressText.length < 5) return;
-        
-        // Prevent infinite loop if the address change came from the map's reverse geocode
-        if (addressText === lastReverseGeocodedAddress.current) return;
-
-        const fetchCoordinates = async () => {
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
-                );
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const { lat, lon } = data[0];
-                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
-                }
-            } catch (error) {
-                console.error("Error forward geocoding address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchCoordinates();
-        }, 1500); // 1.5s debounce for typing
-
-        return () => clearTimeout(timeoutId);
-    }, [addressText]);
+    const [mapPosition, setMapPosition] = useState(() => validPosition(user?.addresses?.[0]));
+    const [resolvedAddress, setResolvedAddress] = useState(null);
+    const savedText = [user?.addresses?.[0]?.street, user?.addresses?.[0]?.city, user?.addresses?.[0]?.country].filter(Boolean).join(", ");
+    const isFetchingAddress = useAddressLookup({ position: mapPosition, text: addressText,
+        savedPosition: user?.addresses?.[0], savedText, onPosition: setMapPosition, onAddress: data => { setAddressText(data.display_name); setResolvedAddress({ ...addressFields(data), ...mapPosition }); } });
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -125,17 +68,13 @@ const UploadPrescription = () => {
     const [showAddressPrompt, setShowAddressPrompt] = useState(false);
     const [pendingFormData, setPendingFormData] = useState(null);
 
-    // Securely initialize mapPosition if missing but user data exists
+    const hydratedUser = useRef(user?._id);
     useEffect(() => {
-        if (!user) return;
-        setMapPosition(prev => {
-            if (prev) return prev;
-            if (user.addresses?.[0]?.lat && user.addresses?.[0]?.lng) {
-                return { lat: user.addresses[0].lat, lng: user.addresses[0].lng };
-            }
-            return null;
-        });
-    }, [user]);
+        if (!user || hydratedUser.current === user._id) return;
+        hydratedUser.current = user._id;
+        setName(prev => prev || user.name || ""); setPhone(prev => prev || user.phone || ""); setAddressText(prev => prev || savedText);
+        setMapPosition(prev => prev || validPosition(user.addresses?.[0]));
+    }, [user, savedText]);
 
     const isDifferentLocation = () => {
         if (!user) return false;
@@ -148,15 +87,8 @@ const UploadPrescription = () => {
         
         if (currentText !== dbAddrText) return true;
         
-        // Check map position with tolerance for float precision
-        if (mapPosition?.lat && dbAddr.lat) {
-            const latDiff = Math.abs(mapPosition.lat - dbAddr.lat);
-            const lngDiff = Math.abs(mapPosition.lng - dbAddr.lng);
-            if (latDiff > 0.00001 || lngDiff > 0.00001) return true;
-        } else if (mapPosition?.lat && !dbAddr.lat) {
-            return true;
-        }
-        
+        if (!samePosition(mapPosition, dbAddr)) return true;
+
         return false;
     };
 
@@ -170,19 +102,20 @@ const UploadPrescription = () => {
                     ...user,
                     addresses: [
                         {
-                            ...(user.addresses?.[0] || {}),
+                            ...(samePosition(mapPosition, user.addresses?.[0]) ? user.addresses[0] : { city: "", state: "", postalCode: "", country: "", addressLine2: "" }),
+                            ...(resolvedAddress && samePosition(mapPosition, resolvedAddress) ? resolvedAddress : {}),
                             street: addressText,
                             lat: mapPosition.lat,
                             lng: mapPosition.lng,
-                        }
+                        },
+                        ...(user.addresses?.slice(1) || [])
                     ]
                 };
                 const updateFormData = new FormData();
                 updateFormData.append("data", JSON.stringify(updatedUser));
                 const res = await updateUser({ userId: user._id, user: updateFormData });
-                if (res?.user) {
-                    dispatch(loginSuccess(res.user));
-                }
+                if (!res?.success || !res?.user) { setUploadProgress(0); return; }
+                dispatch(loginSuccess(res.user));
             }
 
             const response = await uploadPrescription(formData, (progressEvent) => {
@@ -190,10 +123,10 @@ const UploadPrescription = () => {
                 setUploadProgress(percentCompleted);
             });
             
-            if (response.success) {
+            if (response?.success) {
                 toast.success("Prescription submitted successfully!");
                 navigate("/");
-            }
+            } else { setUploadProgress(0); }
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to submit prescription.");
             setUploadProgress(0);
@@ -339,32 +272,32 @@ const UploadPrescription = () => {
                             
                             <div className="space-y-5">
                                 {/* Name Input */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                <FormField className="flex flex-col gap-2">
+                                    <FieldLabel className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                                         <User size={14} className="text-primary" /> Full Name
-                                    </label>
-                                    <input 
+                                    </FieldLabel>
+                                    <FieldControl
                                         type="text" 
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Enter your full name"
                                         className="bg-gray-50 border-2 border-gray-100 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all w-full"
                                     />
-                                </div>
+                                </FormField>
 
                                 {/* Phone Input */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                <FormField className="flex flex-col gap-2">
+                                    <FieldLabel className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                                         <Phone size={14} className="text-primary" /> Phone Number
-                                    </label>
-                                    <input 
+                                    </FieldLabel>
+                                    <FieldControl
                                         type="tel" 
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                         placeholder="03XX-XXXXXXX"
                                         className="bg-gray-50 border-2 border-gray-100 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all w-full"
                                     />
-                                </div>
+                                </FormField>
 
                                 {/* Map Picker */}
                                 <div className="flex flex-col gap-2 pt-2 pb-2">
@@ -379,7 +312,8 @@ const UploadPrescription = () => {
                                                 if ("geolocation" in navigator) {
                                                     navigator.geolocation.getCurrentPosition(
                                                         (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                                                        (err) => alert("Please allow location access to auto-detect your location.")
+                                                        () => alert("Unable to detect location. Allow location access or select a point on the map."),
+                                                            { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
                                                     );
                                                 }
                                             }}
@@ -395,21 +329,21 @@ const UploadPrescription = () => {
                                 </div>
 
                                 {/* Address Input */}
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                <FormField className="flex flex-col gap-2">
+                                    <FieldLabel className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                                         <MapPin size={14} className="text-primary" /> Delivery Address
                                         {isFetchingAddress && <Loader size={12} className="animate-spin text-primary ml-auto" />}
-                                    </label>
-                                    <textarea 
+                                    </FieldLabel>
+                                    <FieldControl as="textarea"
                                         value={addressText}
                                         onChange={(e) => setAddressText(e.target.value)}
                                         placeholder="Building, Street, Area..."
                                         className="bg-gray-50 border-2 border-gray-100 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all w-full resize-none h-24"
                                     />
-                                    <p className="text-[10px] font-bold text-gray-400 mt-[-4px]">
+                                    <p className="text-xs font-bold text-gray-400 mt-[-4px]">
                                         * Automatically filled when you drop the pin on the map.
                                     </p>
-                                </div>
+                                </FormField>
                             </div>
 
                             <div className="mt-8 border-t-2 border-dashed border-gray-100 pt-6">

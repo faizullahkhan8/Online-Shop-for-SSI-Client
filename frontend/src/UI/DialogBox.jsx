@@ -1,3 +1,6 @@
+import { createPortal } from "react-dom";
+import { useRef } from "react";
+import { useDialog } from "../hooks/useDialog";
 import { AlertTriangle, X, Loader2 } from "lucide-react";
 
 const DeleteDialog = ({
@@ -8,18 +11,20 @@ const DeleteDialog = ({
     message = "Are you sure you want to delete this? This action cannot be undone.",
     loading = false,
 }) => {
+    const panelRef = useRef(null);
+    useDialog(isOpen, () => { if (!loading) onClose(); }, panelRef);
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+                data-dialog-backdrop="" aria-hidden="true" className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
                 onClick={loading ? null : onClose}
             />
 
             {/* Dialog Content */}
-            <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-in fade-in zoom-in duration-100">
+            <div ref={panelRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="relative bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-in fade-in zoom-in duration-100">
                 <div className="p-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -30,6 +35,7 @@ const DeleteDialog = ({
                                 {title}
                             </h3>
                             <button
+                                aria-label="Close confirmation dialog"
                                 onClick={onClose}
                                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
                             >
@@ -70,7 +76,7 @@ const DeleteDialog = ({
                 </div>
             </div>
         </div>
-    );
+    , document.body);
 };
 
 export default DeleteDialog;

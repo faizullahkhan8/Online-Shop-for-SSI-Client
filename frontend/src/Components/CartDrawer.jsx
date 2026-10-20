@@ -1,8 +1,10 @@
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
 import { X, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { removeFromCart, updateQuantity, clearCart } from "../store/slices/cartSlice";
-import { useEffect, useRef } from "react";
+import { removeFromCart, updateQuantity } from "../store/slices/cartSlice";
+import { useRef } from "react";
 import { getImageUrl } from "../utils/imageHelper";
 import { toast } from "react-toastify";
 
@@ -11,25 +13,11 @@ const CartDrawer = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const cartItems = useSelector((state) => state.cart.items || []);
     const drawerRef = useRef(null);
+    useDialog(isOpen, onClose, drawerRef);
 
     // Calculate total price accurately based on Redux structure
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.totalPrice || (item.price * item.quantity)), 0);
 
-    // Close on escape key
-    useEffect(() => {
-        const handleEsc = (e) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [onClose]);
-
-    // Close on click outside
-    const handleOutsideClick = (e) => {
-        if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-            onClose();
-        }
-    };
 
     const handleQuantityChange = (id, currentQty, delta, stock) => {
         const newQty = currentQty + delta;
@@ -46,11 +34,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
         dispatch(removeFromCart({ _id: id }));
     };
 
-    return (
+    if (!isOpen) return null;
+
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[90] ${
+                data-dialog-backdrop="" aria-hidden="true" className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[1000] ${
                     isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                 }`}
                 onClick={onClose}
@@ -59,7 +49,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
             {/* Drawer Panel */}
             <div
                 ref={drawerRef}
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${
+                role="dialog" aria-modal="true" aria-label="Your cart" tabIndex={-1}
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[1001] transform transition-transform duration-300 ease-in-out ${
                     isOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
@@ -107,8 +98,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
                             {cartItems.map((item) => (
                                 <div key={item._id} className="flex gap-4 p-3 bg-white border border-gray-100 rounded-xl hover:border-primary-light transition-colors group relative">
                                     <button 
+                                        aria-label={`Remove ${item.name} from cart`}
                                         onClick={() => handleRemoveItem(item._id)}
-                                        className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-0 group-hover:opacity-100"
+                                        className="absolute -top-2 -right-2 p-1.5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-full transition-all cursor-pointer shadow-sm opacity-100"
                                     >
                                         <Trash2 size={12} />
                                     </button>
@@ -135,6 +127,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                             <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 h-7 overflow-hidden">
                                                 <button
                                                     type="button"
+                                                    aria-label={`Decrease quantity of ${item.name}`}
                                                     onClick={() => handleQuantityChange(item._id, item.quantity, -1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
@@ -145,6 +138,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                                                 </span>
                                                 <button
                                                     type="button"
+                                                    aria-label={`Increase quantity of ${item.name}`}
                                                     onClick={() => handleQuantityChange(item._id, item.quantity, 1, item.stock)}
                                                     className="w-7 flex items-center justify-center text-gray-600 hover:bg-white hover:text-primary transition-colors cursor-pointer"
                                                 >
@@ -195,7 +189,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 )}
             </div>
         </>
-    );
+    , document.body);
 };
 
 export default CartDrawer;

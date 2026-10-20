@@ -1,3 +1,4 @@
+import { QueryError } from "../../UI/QueryState";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { 
@@ -11,7 +12,7 @@ import { useSocket, SOCKET_EVENTS } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 
 const PrescriptionsList = () => {
-    const { data: prescriptionsData, isLoading: loading } = useGetAllPrescriptions();
+    const { data: prescriptionsData, loading: loading, error: queryError } = useGetAllPrescriptions();
     const { updatePrescriptionStatus } = useUpdatePrescriptionStatus();
     const { deletePrescription } = useDeletePrescription();
     const { socket } = useSocket();
@@ -311,6 +312,8 @@ const PrescriptionsList = () => {
         }
     };
 
+    if (queryError) return <QueryError />;
+
     return (
         <div className="p-6">
             <h1 className="text-3xl font-display text-gray-900 mb-6">Prescriptions Management</h1>
@@ -321,7 +324,7 @@ const PrescriptionsList = () => {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div role="region" aria-label="Prescriptions table" tabIndex={0} className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-100">
                                 <tr>

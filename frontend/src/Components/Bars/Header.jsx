@@ -20,7 +20,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLogoutUser } from "../../api/hooks/user.api";
 import { useGetAllCategories } from "../../api/hooks/category.api";
 import { useGetMenus } from "../../api/hooks/menu.api";
-import { useGetHomePage } from "../../api/hooks/homepage.api";
+import { useGetHomePage } from "../../api/hooks/homePage.api";
 import { logout } from "../../store/slices/authSlice";
 import MobileSideBar from "./MobileSideBar";
 import CartDrawer from "../CartDrawer";
@@ -38,18 +38,19 @@ const NavIcon = ({ to, icon, label, badge, onClick }) => {
     return (
         <Component
             to={to}
+            aria-label={label}
             onClick={onClick}
             className="flex flex-col items-center gap-0.5 text-gray-700 hover:text-primary transition-colors relative group cursor-pointer"
         >
             <div className="relative p-1.5 rounded-xl group-hover:bg-primary-pale transition-colors">
                 {icon}
                 {badge > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full h-4.5 w-4.5 flex items-center justify-center border-2 border-white">
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-4.5 w-4.5 flex items-center justify-center border-2 border-white">
                         {badge}
                     </span>
                 )}
             </div>
-            <span className="text-[11px] font-semibold hidden lg:block">{label}</span>
+            <span className="text-xs font-semibold hidden lg:block">{label}</span>
         </Component>
     );
 };
@@ -179,7 +180,7 @@ const Header = () => {
 
     const handleSignOut = async () => {
         const response = await logoutUser();
-        if (response.success) {
+        if (response?.success) {
             dispatch(logout());
             setUserDropDownOpen(false);
             navigate("/");
@@ -207,18 +208,18 @@ const Header = () => {
                     <div className="max-w-[1400px] mx-auto px-4 lg:px-8">
                         {topBarConfig.style === "marquee" ? (
                             <div className="marquee-container overflow-hidden w-full flex items-center">
-                                <div className="animate-marquee flex items-center gap-8 whitespace-nowrap text-[11px] font-bold tracking-wide">
+                                <div className="animate-marquee flex items-center gap-8 whitespace-nowrap text-xs font-bold tracking-wide">
                                     <span>{topBarConfig.textLeft}</span>
                                     <span>{topBarConfig.textLeft}</span>
                                     <span>{topBarConfig.textLeft}</span>
                                 </div>
                             </div>
                         ) : topBarConfig.style === "centered" ? (
-                            <div className="text-center text-[11px] font-bold tracking-wide">
+                            <div className="text-center text-xs font-bold tracking-wide">
                                 {topBarConfig.textLeft}
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between text-[11px] font-bold">
+                            <div className="flex items-center justify-between text-xs font-bold">
                                 <div className="flex items-center gap-2">
                                     <Clock size={12} className="opacity-80 shrink-0" />
                                     <span>{topBarConfig.textLeft}</span>
@@ -239,11 +240,11 @@ const Header = () => {
             ) : (
                 <div className="bg-primary-dark text-white py-1.5">
                     <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-primary-pale">
+                        <div className="flex items-center gap-2 text-xs font-medium text-primary-pale">
                             <Clock size={12} className="text-primary-light shrink-0" />
                             <span>Express 2-Hour Delivery in Karachi, Lahore &amp; Islamabad</span>
                         </div>
-                        <div className="hidden sm:flex items-center divide-x divide-white/20 text-[11px] font-medium text-primary-pale">
+                        <div className="hidden sm:flex items-center divide-x divide-white/20 text-xs font-medium text-primary-pale">
                             <span className="flex items-center gap-1.5 pr-4">
                                 <ShieldCheck size={12} className="text-primary-light" />
                                 100% Genuine &amp; Licensed
@@ -271,37 +272,34 @@ const Header = () => {
 
                     {/* Search Bar Trigger */}
                     <div className="hidden md:flex flex-1 max-w-2xl">
-                        <div
+                        <button type="button" aria-label="Search products"
                             onClick={() => setIsSearchModalOpen(true)}
                             className="flex w-full h-10.5 bg-gray-50/80 hover:bg-gray-50 border border-gray-200 hover:border-primary/50 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 rounded-xl overflow-hidden transition-all shadow-2xs cursor-pointer group items-center justify-between"
                         >
-                            <div className="flex items-center flex-1 px-3.5 gap-2.5">
+                            <span className="flex items-center flex-1 px-3.5 gap-2.5">
                                 <Search size={16} className="text-gray-400 group-hover:text-primary transition-colors shrink-0" />
                                 <span className="text-[13px] text-gray-400 group-hover:text-gray-600 transition-colors">
                                     Search for Medicines & more...
                                 </span>
-                            </div>
-                            <div className="flex items-center gap-2 pr-1.5">
-                                <span className="hidden lg:inline-flex text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-2xs">
+                            </span>
+                            <span className="flex items-center gap-2 pr-1.5">
+                                <span className="hidden lg:inline-flex text-xs font-bold text-gray-400 bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-2xs">
                                     Ctrl K
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsSearchModalOpen(true);
-                                    }}
-                                    className="px-4 py-1.5 bg-primary text-white text-[11px] font-extrabold uppercase tracking-wider rounded-lg group-hover:bg-primary-dark transition-colors cursor-pointer"
+                                <span
+
+
+                                    className="px-4 py-1.5 bg-primary text-white text-xs font-extrabold uppercase tracking-wider rounded-lg group-hover:bg-primary-dark transition-colors cursor-pointer"
                                 >
                                     Search
-                                </button>
-                            </div>
-                        </div>
+                                </span>
+                            </span>
+                        </button>
                     </div>
 
                     {/* Right Actions */}
                     <div className="hidden md:flex items-center gap-1 ml-auto shrink-0">
-                        <Link to="/upload-prescription" className="hidden xl:inline-flex items-center gap-1.5 mr-2 px-3 py-1.5 rounded-lg bg-primary-pale text-primary-dark hover:bg-primary hover:text-white border border-primary-light text-[11px] font-bold transition-all">
+                        <Link to="/upload-prescription" className="hidden xl:inline-flex items-center gap-1.5 mr-2 px-3 py-1.5 rounded-lg bg-primary-pale text-primary-dark hover:bg-primary hover:text-white border border-primary-light text-xs font-bold transition-all">
                             <FileText size={13} /> Upload Rx
                         </Link>
                         <NavIcon onClick={() => setIsWishlistOpen(true)} icon={<Heart size={18} />} label="Wishlist" />
@@ -315,7 +313,7 @@ const Header = () => {
                                     <div className="w-7 h-7 rounded-lg bg-primary-pale text-primary flex items-center justify-center font-bold text-xs shrink-0">
                                         {user?.name ? user.name.charAt(0).toUpperCase() : <User size={14} />}
                                     </div>
-                                    <span className="text-[11px] font-semibold text-gray-700 hidden lg:block max-w-[72px] truncate">{user?.name?.split(" ")[0] || "Account"}</span>
+                                    <span className="text-xs font-semibold text-gray-700 hidden lg:block max-w-[72px] truncate">{user?.name?.split(" ")[0] || "Account"}</span>
                                     <ChevronDown size={13} className={`text-gray-400 transition-transform duration-200 ${userDropDownOpen ? "rotate-180" : ""}`} />
                                 </button>
                                 {userDropDownOpen && (
@@ -323,7 +321,7 @@ const Header = () => {
                                         <div onClick={() => setUserDropDownOpen(false)} className="fixed inset-0 z-40" />
                                         <div className="absolute top-full right-0 mt-2 w-52 rounded-xl bg-white shadow-xl border border-gray-100 p-1.5 z-50">
                                             <div className="px-3 py-2 mb-1">
-                                                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
+                                                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
                                                 <p className="text-xs font-bold text-gray-900 truncate mt-0.5">{user?.name || "User"}</p>
                                             </div>
                                             <div className="border-t border-gray-100 pt-1">
@@ -354,7 +352,7 @@ const Header = () => {
                     </div>
 
                     {/* Mobile Hamburger */}
-                    <button className="md:hidden ml-auto p-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary-pale transition-all" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                    <button aria-label="Open navigation menu" className="md:hidden ml-auto p-2 rounded-lg text-gray-600 hover:text-primary hover:bg-primary-pale transition-all" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                         <Menu size={21} />
                     </button>
                 </div>
@@ -362,14 +360,14 @@ const Header = () => {
 
             {/* Mobile Search */}
             <div className="md:hidden px-4 pb-2.5">
-                <div
+                <button type="button" aria-label="Search products"
                     onClick={() => setIsSearchModalOpen(true)}
                     className="flex h-9 w-full bg-gray-50 border border-gray-200 rounded-xl overflow-hidden items-center px-3 gap-2 cursor-pointer shadow-2xs"
                 >
                     <Search size={14} className="text-gray-400 shrink-0" />
                     <span className="text-xs text-gray-400 flex-1 truncate">Search for Medicines & more...</span>
-                    <span className="px-2.5 py-0.5 rounded bg-primary text-white text-[10px] font-bold">Search</span>
-                </div>
+                    <span className="px-2.5 py-0.5 rounded bg-primary text-white text-xs font-bold">Search</span>
+                </button>
             </div>
 
             <MobileSideBar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} isAuthenticated={isAuthenticated} cartCount={cartCount} onCartClick={() => setIsCartOpen(true)} onWishlistClick={() => setIsWishlistOpen(true)} onOrdersClick={() => setIsOrdersOpen(true)} onRegisterClick={() => setIsRegisterOpen(true)} onLoginClick={() => setIsLoginOpen(true)} />
@@ -426,7 +424,7 @@ const Header = () => {
                 onClose={() => setIsSearchModalOpen(false)} 
             />
 
-            <RegisterModal 
+            {isRegisterOpen && <RegisterModal
                 isOpen={isRegisterOpen} 
                 onClose={() => {
                     setIsRegisterOpen(false);
@@ -438,9 +436,9 @@ const Header = () => {
                     setIsLoginOpen(true); 
                 }}
                 initialUserId={unverifiedUserId}
-            />
+            />}
 
-            <LoginModal 
+            {isLoginOpen && <LoginModal
                 isOpen={isLoginOpen} 
                 onClose={() => setIsLoginOpen(false)} 
                 onSwitchToRegister={() => { 
@@ -452,7 +450,7 @@ const Header = () => {
                     setUnverifiedUserId(userId);
                     setIsRegisterOpen(true);
                 }}
-            />
+            />}
         </header>
     );
 };

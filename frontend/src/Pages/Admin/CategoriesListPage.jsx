@@ -1,3 +1,5 @@
+import { QueryError } from "../../UI/QueryState";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
 import {
     useGetAllCategories,
@@ -55,7 +57,7 @@ const CategoriesListPage = () => {
         }));
     };
 
-    const { data: categoriesData, isLoading: getAllCategoriesLoading } = useGetAllCategories();
+    const { data: categoriesData, loading: getAllCategoriesLoading, error: queryError } = useGetAllCategories();
     const categories = categoriesData?.categories || [];
 
     const { deleteCategory, loading: deleteCategoryLoading } = useDeleteCategory();
@@ -219,6 +221,8 @@ const CategoriesListPage = () => {
         }
     };
 
+    if (queryError) return <QueryError />;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -241,24 +245,24 @@ const CategoriesListPage = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 overflow-hidden">
+                <div role="region" aria-label="Categories table" tabIndex={0} className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Image
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Category Name (Hierarchy)
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Parent
                                 </th>
-                                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Status
                                 </th>
-                                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
                                     Actions
                                 </th>
                             </tr>
@@ -464,7 +468,7 @@ const CategoriesListPage = () => {
                                         : "Create a new product category"}
                                 </p>
                             </div>
-                            <button
+                            <button aria-label="Close"
                                 onClick={handleCloseModal}
                                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
                             >
@@ -475,12 +479,12 @@ const CategoriesListPage = () => {
                         {/* Modal Body */}
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
                             {/* Category Name */}
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField>
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Tag size={14} className="text-primary" />
                                     Category Name
                                     <span className="text-red-500">*</span>
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="text"
                                     placeholder="e.g., Electronics, Medicine"
@@ -497,7 +501,7 @@ const CategoriesListPage = () => {
                                     className="mt-1"
                                     required
                                 />
-                            </div>
+                            </FormField>
 
                             {/* Image Upload with Instant Preview */}
                             <div>
@@ -564,7 +568,7 @@ const CategoriesListPage = () => {
                                         <p className="text-xs font-semibold text-gray-700">
                                             Click to select category picture
                                         </p>
-                                        <p className="text-[11px] text-gray-400 mt-0.5">
+                                        <p className="text-xs text-gray-400 mt-0.5">
                                             PNG, JPG, WEBP, SVG up to 5MB
                                         </p>
                                         <input
@@ -578,12 +582,12 @@ const CategoriesListPage = () => {
                             </div>
 
                             {/* Parent Category */}
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField>
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <FolderTree size={14} className="text-primary" />
                                     Parent Category
-                                </label>
-                                <select
+                                </FieldLabel>
+                                <FieldControl as="select"
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-gray-700"
                                     value={categoryModal.data.parentId}
                                     onChange={(e) =>
@@ -606,8 +610,8 @@ const CategoriesListPage = () => {
                                                 {cat.name}
                                             </option>
                                         ))}
-                                </select>
-                            </div>
+                                </FieldControl>
+                            </FormField>
 
                             {/* Active Toggle */}
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">

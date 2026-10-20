@@ -4,10 +4,12 @@ const settingsSchema = new Schema(
     {
         taxAmount: {
             type: Number,
+            min: 0, validate: Number.isFinite,
             default: 0,
         },
         shippingFee: {
             type: Number,
+            min: 0, validate: Number.isFinite,
             default: 0,
         },
         shippingMethod: {
@@ -26,22 +28,28 @@ const settingsSchema = new Schema(
         advancedShipping: {
             calculationMethod: { type: String, enum: ["flat", "distance", "percentage", "city_based"], default: "flat" },
             storeLocation: {
-                lat: { type: Number, default: 24.8607 }, // Default Karachi
-                lng: { type: Number, default: 67.0011 },
+                lat: { type: Number, min: -90, max: 90, validate: Number.isFinite, default: 24.8607 }, // Default Karachi
+                lng: { type: Number, min: -180, max: 180, validate: Number.isFinite, default: 67.0011 },
                 address: { type: String, default: "" }
             },
-            distanceRatePerKm: { type: Number, default: 50 },
-            percentageRate: { type: Number, default: 5 },
+            distanceRatePerKm: { type: Number, min: 0, validate: Number.isFinite, default: 50 },
+            percentageRate: { type: Number, min: 0, validate: Number.isFinite, default: 5 },
             cityRates: [
-                { city: { type: String }, fee: { type: Number } }
+                { city: { type: String }, fee: { type: Number, min: 0, validate: Number.isFinite } }
             ],
             conditionalOverride: {
                 enabled: { type: Boolean, default: false },
                 operator: { type: String, enum: ["greater_than", "less_than"], default: "greater_than" },
-                orderValueThreshold: { type: Number, default: 1000 },
-                overrideFee: { type: Number, default: 0 }
+                orderValueThreshold: { type: Number, min: 0, validate: Number.isFinite, default: 1000 },
+                overrideFee: { type: Number, min: 0, validate: Number.isFinite, default: 0 }
             }
         },
+        smsProvider: { type: String, match: /^[a-z][a-z0-9_]{0,63}$/, default: "sms_gate" },
+        smsConfigurations: { type: Map, of: new Schema({ values: { type: Map, of: String, default: () => new Map() } }, { _id: false }), default: () => new Map() },
+        smsTwilioAccountSid: { type: String, default: "" },
+        smsTwilioAuthToken: { type: String, default: "" },
+        smsTwilioFrom: { type: String, default: "" },
+        smsLastTestAt: { type: Date },
         smsGatewayUsername: {
             type: String,
             default: "",

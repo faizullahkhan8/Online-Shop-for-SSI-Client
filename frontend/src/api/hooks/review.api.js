@@ -13,6 +13,7 @@ export const useAddReview = () => {
         },
         onSuccess: (data, variables) => {
             toast.success("Review submitted successfully");
+            queryClient.invalidateQueries({ queryKey: ["products"] });
             if (variables?.productId) {
                 queryClient.invalidateQueries({ queryKey: ["reviews", variables.productId] });
             }

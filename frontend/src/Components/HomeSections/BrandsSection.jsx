@@ -64,7 +64,7 @@ const BrandsSection = ({ config }) => {
                                     {brand.abbr || brand.name?.substring(0, 3).toUpperCase()}
                                 </span>
                             </div>
-                            <span className="text-[11px] font-black text-gray-700 leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                            <span className="text-xs font-black text-gray-700 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                                 {brand.name}
                             </span>
                         </div>

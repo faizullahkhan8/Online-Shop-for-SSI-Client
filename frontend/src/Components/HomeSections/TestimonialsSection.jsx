@@ -1,12 +1,9 @@
 import { Star } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 
-const DEFAULT_TESTIMONIALS = [
-    { name: "Ahmed R.", rating: 5, comment: "Amazing delivery speed and very helpful pharmacists. Will always buy my medicines here from now on.", city: "Karachi" }
-];
-
 const TestimonialsSection = ({ config }) => {
-    const testimonials = config.testimonials?.length ? config.testimonials : DEFAULT_TESTIMONIALS;
+    const testimonials = config.testimonials || [];
+    if (!testimonials.length) return null;
 
     return (
         <section className="max-w-[1400px] mx-auto px-3 sm:px-4 lg:px-8 mt-14 bg-primary-pale/30 rounded-3xl p-6 sm:p-10 border border-primary-light">
@@ -32,7 +29,7 @@ const TestimonialsSection = ({ config }) => {
                             </div>
                             <div>
                                 <p className="font-black text-xs text-gray-900">{t.name}</p>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t.city}</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.city}</p>
                             </div>
                         </div>
                     </div>

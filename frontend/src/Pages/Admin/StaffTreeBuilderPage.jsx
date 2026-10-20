@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
 import { useGetStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "../../api/hooks/staff.api";
 import LoadingSpinner from "../../Components/LoadingSpinner";
@@ -141,7 +142,7 @@ const StaffTreeBuilderPage = () => {
                             <button onClick={() => handleOpenModal(node)} className="p-1.5 text-primary hover:bg-primary-pale rounded-md">
                                 <Edit2 size={16} />
                             </button>
-                            <button onClick={() => handleDelete(node._id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
+                            <button aria-label="Delete item" onClick={() => handleDelete(node._id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
                                 <Trash2 size={16} />
                             </button>
                         </div>
@@ -186,7 +187,7 @@ const StaffTreeBuilderPage = () => {
             {getLoading ? (
                 <LoadingSpinner />
             ) : (
-                <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 min-h-[400px]">
+                <div className="bg-white p-6 md:p-8 rounded-2xl border-2 border-transparent shadow-sm transition-colors duration-200 min-h-[400px]">
                     {treeData.length === 0 ? (
                         <div className="text-center py-12 text-gray-400">
                             No staff nodes found. Click "Add Staff Node" to create the root.
@@ -205,14 +206,14 @@ const StaffTreeBuilderPage = () => {
                             <h3 className="font-bold text-gray-900">
                                 {editingNode ? "Edit Staff Node" : "Add Staff Node"}
                             </h3>
-                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
+                            <button aria-label="Close" onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
                                 <X size={20} />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
-                                <input
+                            <FormField>
+                                <FieldLabel className="block text-sm font-semibold text-gray-700 mb-1">Name</FieldLabel>
+                                <FieldControl
                                     type="text"
                                     required
                                     value={formData.name}
@@ -220,10 +221,10 @@ const StaffTreeBuilderPage = () => {
                                     className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
                                     placeholder="John Doe"
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Role / Title</label>
-                                <input
+                            </FormField>
+                            <FormField>
+                                <FieldLabel className="block text-sm font-semibold text-gray-700 mb-1">Role / Title</FieldLabel>
+                                <FieldControl
                                     type="text"
                                     required
                                     value={formData.role}
@@ -231,7 +232,7 @@ const StaffTreeBuilderPage = () => {
                                     className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
                                     placeholder="CEO"
                                 />
-                            </div>
+                            </FormField>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
                                 <div className="border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-pale transition-all">
@@ -265,9 +266,9 @@ const StaffTreeBuilderPage = () => {
                                 </div>
                                 <p className="text-xs text-gray-400 mt-1">Leave both empty to use a placeholder image.</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">Reports To (Parent)</label>
-                                <select
+                            <FormField>
+                                <FieldLabel className="block text-sm font-semibold text-gray-700 mb-1">Reports To (Parent)</FieldLabel>
+                                <FieldControl as="select"
                                     value={formData.parentId}
                                     onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
                                     className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all"
@@ -276,8 +277,8 @@ const StaffTreeBuilderPage = () => {
                                     {staffList.filter(s => s._id !== editingNode?._id).map((staff) => (
                                         <option key={staff._id} value={staff._id}>{staff.name} - {staff.role}</option>
                                     ))}
-                                </select>
-                            </div>
+                                </FieldControl>
+                            </FormField>
 
                             <div className="flex justify-end gap-3 pt-4">
                                 <button

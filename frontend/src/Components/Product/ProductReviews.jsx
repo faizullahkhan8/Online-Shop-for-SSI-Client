@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
 import { useAddReview, useGetProductReviews } from "../../api/hooks/review.api.js";
 import StarRating from "../UI/StarRating.jsx";
@@ -52,18 +53,18 @@ const ProductReviews = ({ productId }) => {
                                 </label>
                                 <StarRating rating={rating} setRating={setRating} size={24} />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
+                            <FormField className="space-y-2">
+                                <FieldLabel className="text-sm font-medium text-gray-700">
                                     Your Review
-                                </label>
-                                <textarea
+                                </FieldLabel>
+                                <FieldControl as="textarea"
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
                                     placeholder="Share your experience with this product..."
                                     className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[120px] resize-none"
                                     required
                                 />
-                            </div>
+                            </FormField>
                             <button
                                 type="submit"
                                 disabled={addLoading || rating === 0}

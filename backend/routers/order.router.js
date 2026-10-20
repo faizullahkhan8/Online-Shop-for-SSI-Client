@@ -11,6 +11,7 @@ import {
     getDashboardStats,
     cancelOrder,
     cancelOrderItem,
+    recordRefund,
     getUnreadOrdersCount,
     markOrderViewed,
 } from "../controllers/order.controller.js";
@@ -30,6 +31,8 @@ router.get("/:id", isAuth, getOrderById);
 router.patch("/update/:id", isAuth, authorize("admin"), updateOrderStatus);
 router.patch("/payment/:id", isAuth, authorize("admin"), updatePaymentStatus);
 router.delete("/delete/:id", isAuth, authorize("admin"), deleteOrder);
+
+router.post("/:id/refunds", isAuth, authorize("admin"), recordRefund);
 
 // Cancellation routes
 router.put("/:id/cancel", isAuth, cancelOrder);

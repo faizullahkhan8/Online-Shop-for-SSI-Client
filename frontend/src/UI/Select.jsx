@@ -1,98 +1,21 @@
-import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
+import { useField } from "./fieldContext";
 
-const Select = ({
-    options = [],
-    value,
-    onChange,
-    placeholder = "All items",
-    disabled = false,
-    className,
-}) => {
-    const [open, setOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    const selectedOption = options.find((opt) => opt.value === value);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                containerRef.current &&
-                !containerRef.current.contains(event.target)
-            ) {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
-
-    return (
-        <div ref={containerRef} className={clsx("relative w-full", className)}>
-            {/* Trigger */}
-            <button
-                type="button"
-                disabled={disabled}
-                onClick={() => setOpen((prev) => !prev)}
-                className={clsx(
-                    "flex items-center justify-between w-full",
-                    "px-4 py-2.5",
-                    "bg-white border-2 border-gray-200 rounded-xl",
-                    "text-sm outline-none",
-                    "hover:border-primary-light transition-all duration-300",
-                    "disabled:bg-gray-50 disabled:cursor-not-allowed"
-                )}
-            >
-                <span className="truncate mr-2 text-gray-800">
-                    {selectedOption?.label || placeholder}
-                </span>
-
-                <ChevronDown
-                    size={16}
-                    className={clsx(
-                        "text-gray-500 transition-transform duration-150 shrink-0",
-                        open && "rotate-180"
-                    )}
-                />
-            </button>
-
-            {/* Dropdown */}
-            {open && !disabled && (
-                <div
-                    className={clsx(
-                        "absolute z-50 mt-1 inset-x-0",
-                        "max-h-64",
-                        "bg-white border-2 border-gray-100 rounded-xl",
-                        "shadow-xl shadow-primary-pale/30 py-2 overflow-y-auto"
-                    )}
-                >
-                    {options.map((option) => (
-                        <div
-                            key={option.value}
-                            onClick={() => {
-                                onChange(option.value);
-                                setOpen(false);
-                            }}
-                            className={clsx(
-                                "px-4 py-2 text-sm cursor-pointer transition-colors",
-                                "hover:bg-primary-pale hover:text-primary-dark",
-                                value === option.value
-                                    ? "bg-primary-pale text-primary-dark font-medium"
-                                    : "text-gray-700"
-                            )}
-                        >
-                            {option.label}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+const Select = ({ options = [], value, onChange, placeholder = "Select an option", disabled = false, className, id, ...props }) => {
+    const field = useField();
+    const selected = options.some(option => String(option.value) === String(value));
+    return <div className={clsx("relative w-full", className)}>
+        <select {...props} id={id || field?.id} disabled={disabled} value={selected ? String(value) : ""}
+            aria-describedby={props["aria-describedby"] || field?.descriptionId}
+            aria-invalid={props["aria-invalid"] || (field?.error ? true : undefined)}
+            aria-label={props["aria-label"] || (!field && !id ? placeholder : undefined)}
+            onChange={event => { const option = options.find(item => String(item.value) === event.target.value); onChange?.(option ? option.value : ""); }}
+            className="w-full h-11 appearance-none rounded-xl border border-gray-300 bg-white pl-3 pr-10 text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary-pale disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+            {!selected && <option value="" disabled>{placeholder}</option>}
+            {options.map(option => <option key={String(option.value)} value={String(option.value)} disabled={option.disabled}>{option.label}</option>)}
+        </select>
+        <ChevronDown size={17} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
+    </div>;
 };
-
 export default Select;

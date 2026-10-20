@@ -1,3 +1,4 @@
+import { safeHtml } from "../utils/safeHtml";
 import { useEffect, useState } from "react";
 import { useGetStaff } from "../api/hooks/staff.api";
 import LoadingSpinner from "../Components/LoadingSpinner";
@@ -132,7 +133,7 @@ const StaffTreePage = () => {
                         className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 relative"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <button 
+                        <button aria-label="Close"
                             onClick={closeModal} 
                             className="absolute top-4 right-4 p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full transition-colors z-10"
                         >
@@ -154,7 +155,7 @@ const StaffTreePage = () => {
                             
                             <div className="prose prose-sm prose-blue max-w-none text-gray-600">
                                 {selectedNode.description ? (
-                                    <div dangerouslySetInnerHTML={{ __html: selectedNode.description }} />
+                                    <div dangerouslySetInnerHTML={{ __html: safeHtml(selectedNode.description) }} />
                                 ) : (
                                     <p className="text-center text-gray-400 italic">No description available for this team member.</p>
                                 )}

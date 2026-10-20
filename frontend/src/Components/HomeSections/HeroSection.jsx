@@ -50,14 +50,14 @@ const HeroSection = () => {
                     {/* Navigation Arrows */}
                     {slides.length > 1 && (
                         <>
-                            <button
+                            <button aria-label="Previous"
                                 onClick={() => setHeroSlide((p) => (p - 1 + slides.length) % slides.length)}
                                 className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-4 group-hover:translate-x-0"
                             >
                                 <ChevronLeft size={24} />
                             </button>
 
-                            <button
+                            <button aria-label="Next"
                                 onClick={() => setHeroSlide((p) => (p + 1) % slides.length)}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0"
                             >

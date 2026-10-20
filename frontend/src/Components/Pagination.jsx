@@ -1,47 +1,15 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-const Pagination = ({ currentPage = 1, totalPages = 5, onPageChange }) => {
-    return (
-        <div className="flex justify-end items-center gap-4 mt-8">
-            <div className="relative">
-                <select className="appearance-none bg-white border border-gray-300 text-gray-700 py-1.5 pl-3 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 text-sm">
-                    <option>Show 10</option>
-                    <option>Show 20</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 text-xs">
-                    ▼
-                </div>
-            </div>
-
-            <div className="flex border border-gray-300 rounded bg-white overflow-hidden">
-                <button 
-                    onClick={() => onPageChange && onPageChange(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 border-r border-gray-300 hover:bg-gray-50 text-gray-500 disabled:opacity-50"
-                >
-                    <ChevronLeft size={20} />
-                </button>
-                
-                {[...Array(totalPages)].map((_, i) => (
-                    <button 
-                        key={i + 1}
-                        onClick={() => onPageChange && onPageChange(i + 1)}
-                        className={`px-4 py-1.5 border-r border-gray-300 hover:bg-gray-50 font-medium ${currentPage === i + 1 ? 'bg-gray-100 text-gray-900' : 'text-gray-600'}`}
-                    >
-                        {i + 1}
-                    </button>
-                ))}
-
-                <button 
-                    onClick={() => onPageChange && onPageChange(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 hover:bg-gray-50 text-gray-500 disabled:opacity-50"
-                >
-                    <ChevronRight size={20} />
-                </button>
-            </div>
+const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange }) => {
+    const count = Math.max(1, Number(totalPages) || 1);
+    const current = Math.min(count, Math.max(1, Number(currentPage) || 1));
+    const pages = [...new Set([1, current - 1, current, current + 1, count])].filter(page => page > 0 && page <= count).sort((a,b) => a-b);
+    return <nav aria-label="Pagination" className="w-full flex flex-wrap justify-between items-center gap-3 text-sm">
+        <p className="text-gray-600">Page {current} of {count}</p>
+        <div className="flex items-center gap-1">
+            <button type="button" aria-label="Previous page" disabled={current <= 1} onClick={() => onPageChange?.(current - 1)} className="h-11 w-11 grid place-items-center rounded-xl border border-gray-200 bg-white hover:bg-primary-pale disabled:opacity-40"><ChevronLeft size={18} /></button>
+            {pages.map((page,index) => <span key={page} className="flex items-center gap-1">{index > 0 && page - pages[index-1] > 1 && <span aria-hidden="true" className="px-1 text-gray-500">…</span>}<button type="button" aria-label={`Page ${page}`} aria-current={page === current ? "page" : undefined} onClick={() => onPageChange?.(page)} className={`h-11 min-w-10 rounded-xl border px-2 font-medium ${page === current ? "bg-primary text-white border-primary" : "bg-white text-gray-700 border-gray-200 hover:bg-primary-pale"}`}>{page}</button></span>)}
+            <button type="button" aria-label="Next page" disabled={current >= count} onClick={() => onPageChange?.(current + 1)} className="h-11 w-11 grid place-items-center rounded-xl border border-gray-200 bg-white hover:bg-primary-pale disabled:opacity-40"><ChevronRight size={18} /></button>
         </div>
-    );
+    </nav>;
 };
-
 export default Pagination;

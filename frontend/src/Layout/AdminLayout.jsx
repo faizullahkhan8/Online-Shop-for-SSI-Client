@@ -1,12 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import AdminSidebar from "../Components/Admin/AdminSidebar";
 import { useSocket, SOCKET_EVENTS } from "../context/SocketContext";
 import { playNotificationSound } from "../utils/notificationAudio";
 import { toast } from "react-toastify";
-import { ShoppingBag, FileText, ArrowRight } from "lucide-react";
+import { Menu, ShoppingBag, FileText, ArrowRight } from "lucide-react";
+
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
+
+const AdminNavigation = ({ onClose }) => {
+    const panelRef = useRef(null);
+    useDialog(true, onClose, panelRef);
+    return createPortal(<div className="fixed inset-0 z-[1001] lg:hidden">
+        <div data-dialog-backdrop="" aria-hidden="true" className="absolute inset-0 bg-gray-950/50" onClick={onClose} />
+        <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Admin navigation" tabIndex={-1} className="relative h-dvh w-72 max-w-[85vw] bg-white overflow-y-auto shadow-xl">
+            <AdminSidebar mobile onNavigate={onClose} />
+        </div>
+    </div>, document.body);
+};
 
 const AdminLayout = () => {
+    const [mobileMenu, setMobileMenu] = useState(false);
+    useEffect(() => {
+        const desktop = window.matchMedia("(min-width: 1024px)");
+        const closeOnDesktop = event => { if (event.matches) setMobileMenu(false); };
+        desktop.addEventListener("change", closeOnDesktop);
+        return () => desktop.removeEventListener("change", closeOnDesktop);
+    }, []);
     const { socket, joinAdmin } = useSocket();
     const navigate = useNavigate();
 
@@ -91,11 +112,17 @@ const AdminLayout = () => {
     }, [socket, navigate, joinAdmin]);
 
     return (
-        <div className="flex h-screen bg-surface overflow-hidden">
-            <AdminSidebar />
+        <div className="admin-workspace flex h-dvh bg-surface overflow-hidden">
+            <div className="hidden lg:block shrink-0"><AdminSidebar /></div>
+            {mobileMenu && <AdminNavigation onClose={() => setMobileMenu(false)} />}
 
             <div className="flex-1 flex flex-col min-w-0">
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-10 custom-scrollbar">
+                <header className="lg:hidden flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-2">
+                    <button type="button" aria-label="Open admin navigation" aria-expanded={mobileMenu} onClick={() => setMobileMenu(true)} className="h-11 w-11 grid place-items-center rounded-xl hover:bg-primary-pale text-primary-dark"><Menu size={22} /></button>
+                    <span className="font-semibold text-gray-900">Zada Admin</span>
+                    <a href="/" className="text-sm font-medium text-primary-dark px-3 py-2">Visit store</a>
+                </header>
+                <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 custom-scrollbar">
                     <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <Outlet />
                     </div>

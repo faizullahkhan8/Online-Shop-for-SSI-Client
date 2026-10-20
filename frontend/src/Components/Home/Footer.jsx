@@ -1,3 +1,4 @@
+import { useGetAllCategories } from "../../api/hooks/category.api";
 import {
     Facebook,
     Twitter,
@@ -18,31 +19,17 @@ import {
 import { Link } from "react-router-dom";
 
 /* ─── Data ─────────────────────────────────────────────────── */
-const categoriesLinks = [
-    { name: "Medicines", path: "/products?category=Medicines" },
-    { name: "Baby & Mother Care", path: "/products?category=Baby" },
-    { name: "Nutrition & Supplements", path: "/products?category=Nutrition" },
-    { name: "Personal Care", path: "/products?category=Personal" },
-    { name: "Foods & Beverages", path: "/products?category=Beverages" },
-    { name: "Devices & Appliances", path: "/products?category=Devices" },
-    { name: "OTC & Health Needs", path: "/products?category=OTC" },
-];
 
 const quickLinks = [
-    { name: "About Us", path: "/about-us" },
-    { name: "Health Blogs", path: "/" },
-    { name: "Careers", path: "/about-us" },
-    { name: "Find a Store", path: "/contact-us" },
-    { name: "Feedback", path: "/contact-us" },
+    { name: "About Zada", path: "/about-us" },
+    { name: "Our team", path: "/our-team" },
+    { name: "Contact us", path: "/contact-us" },
 ];
 
 const supportLinks = [
-    { name: "FAQs", path: "/contact-us" },
-    { name: "Return & Refund Policy", path: "/about-us" },
-    { name: "Shipping Policy", path: "/about-us" },
-    { name: "Terms & Conditions", path: "/about-us" },
-    { name: "Privacy Policy", path: "/about-us" },
-    { name: "Contact Support", path: "/contact-us" },
+    { name: "Delivery questions", path: "/contact-us" },
+    { name: "Returns & support", path: "/contact-us" },
+    { name: "Order history", path: "/orders" },
 ];
 
 const socialLinks = [
@@ -51,7 +38,7 @@ const socialLinks = [
     { icon: <Twitter size={15} />, label: "Twitter / X", href: "#", color: "hover:bg-[#1DA1F2]" },
     { icon: <Linkedin size={15} />, label: "LinkedIn", href: "#", color: "hover:bg-[#0A66C2]" },
     { icon: <Youtube size={15} />, label: "YouTube", href: "#", color: "hover:bg-[#FF0000]" },
-];
+].filter(social => /^https:\/\//.test(social.href));
 
 const trustBadges = [
     { icon: <Truck size={18} />, title: "Free Delivery", desc: "Orders above Rs 999" },
@@ -82,6 +69,8 @@ const ColHeading = ({ children }) => (
 
 /* ─── Footer Component ──────────────────────────────────────── */
 const Footer = () => {
+    const { data } = useGetAllCategories();
+    const categoriesLinks = (data?.categories || []).filter(category => !category.parentId && category.isActive !== false).map(category => ({ name: category.name, path: `/products?category=${category._id}` }));
     return (
         <footer className="w-full bg-gray-950 text-white mt-14">
 
@@ -96,7 +85,7 @@ const Footer = () => {
                                 </div>
                                 <div>
                                     <p className="text-[12px] font-black text-white leading-tight uppercase tracking-wider">{badge.title}</p>
-                                    <p className="text-[11px] font-bold text-gray-400 mt-0.5">{badge.desc}</p>
+                                    <p className="text-xs font-bold text-gray-400 mt-0.5">{badge.desc}</p>
                                 </div>
                             </div>
                         ))}
@@ -147,8 +136,8 @@ const Footer = () => {
                         </div>
 
                         {/* Social Icons */}
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-3">Follow Us</p>
+                        {socialLinks.length > 0 && <div>
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 mb-3">Follow Us</p>
                             <div className="flex gap-2.5">
                                 {socialLinks.map((s, i) => (
                                     <a
@@ -161,7 +150,7 @@ const Footer = () => {
                                     </a>
                                 ))}
                             </div>
-                        </div>
+                        </div>}
                     </div>
 
                     {/* Categories — spans 2 cols */}
@@ -196,23 +185,11 @@ const Footer = () => {
 
                     {/* Newsletter — spans 2 cols */}
                     <div className="lg:col-span-2">
-                        <ColHeading>Newsletter</ColHeading>
+                        <ColHeading>Need help?</ColHeading>
                         <p className="text-xs font-bold text-gray-400 mb-5 leading-relaxed">
-                            Get weekly health tips, new arrivals & exclusive deals in your inbox.
+                            Ask our pharmacy team about products, delivery, or an existing order.
                         </p>
-                        <form className="flex flex-col gap-2.5" onSubmit={(e) => e.preventDefault()}>
-                            <input
-                                type="email"
-                                placeholder="Your email address"
-                                className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-xs font-bold text-white placeholder:text-gray-600 outline-none focus:border-primary focus:bg-gray-800 transition-all shadow-inner"
-                            />
-                            <button
-                                type="submit"
-                                className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-[11px] font-black uppercase tracking-widest px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
-                            >
-                                Subscribe <ArrowRight size={14} strokeWidth={3} />
-                            </button>
-                        </form>
+                        <Link to="/contact-us" className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white text-sm font-semibold px-4 py-3 rounded-xl transition-colors">Contact our team <ArrowRight size={16} /></Link>
 
                         {/* Trust badge */}
                         <div className="mt-6 p-4 rounded-2xl bg-gray-900 border border-gray-800 flex items-start gap-3">
@@ -229,16 +206,10 @@ const Footer = () => {
             {/* ── Bottom Bar ───────────────────────────────────────── */}
             <div className="border-t border-gray-800 bg-black/40">
                 <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-[11px] font-bold text-gray-500 text-center md:text-left tracking-wide">
+                    <p className="text-xs font-bold text-gray-500 text-center md:text-left tracking-wide">
                         © {new Date().getFullYear()} Zada Online Pharmacy. All Rights Reserved.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
-                        <Link to="/about-us" className="hover:text-primary transition-colors">Privacy</Link>
-                        <span className="text-gray-700">·</span>
-                        <Link to="/about-us" className="hover:text-primary transition-colors">Terms</Link>
-                        <span className="text-gray-700">·</span>
-                        <Link to="/about-us" className="hover:text-primary transition-colors">Cookies</Link>
-                    </div>
+                    <Link to="/contact-us" className="text-sm text-gray-300 hover:text-white">Questions? Contact us</Link>
                 </div>
             </div>
         </footer>

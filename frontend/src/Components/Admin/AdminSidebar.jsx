@@ -7,6 +7,7 @@ import {
     Users,
     ShoppingCart,
     Layers,
+    X,
     ChevronLeft,
     ChevronRight,
     LayoutDashboardIcon,
@@ -33,7 +34,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../../store/slices/authSlice";
 import { useSocket } from "../../context/SocketContext";
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ mobile = false, onNavigate }) => {
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
 
@@ -43,7 +44,7 @@ const AdminSidebar = () => {
 
     const handleSignOut = async () => {
         const response = await logoutUser();
-        if (response.success) {
+        if (response?.success) {
             dispatch(logout());
             navigate("/");
         }
@@ -86,12 +87,19 @@ const AdminSidebar = () => {
 
     return (
         <Sidebar
+            onClick={event => {
+                // Submenu toggles are anchors without href; only page links close the drawer.
+                const link = event.target.closest("a[href]");
+                const href = link?.getAttribute("href");
+                if (href && !href.startsWith("#")) onNavigate?.();
+            }}
             backgroundColor="white"
-            collapsed={collapsed}
+            collapsed={mobile ? false : collapsed}
             rootStyles={{
                 borderRightWidth: "0px",
                 zIndex: "40",
-                height: "100vh",
+                height: "100dvh",
+                ...(mobile ? { width: "100%", minWidth: "100%" } : {}),
                 position: "sticky",
                 top: 0,
                 boxShadow: "4px 0 24px -4px rgb(0 0 0 / 0.08)",
@@ -118,9 +126,10 @@ const AdminSidebar = () => {
 
                 <button
                     className="absolute right-6 top-6 bg-white border border-gray-200 rounded-lg p-1.5 text-gray-400 hover:text-primary hover:border-primary-light transition-all shadow-sm z-50"
-                    onClick={() => setCollapsed(!collapsed)}
+                    aria-label={mobile ? "Close admin navigation" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    onClick={() => mobile ? onNavigate?.() : setCollapsed(!collapsed)}
                 >
-                    {collapsed ? (
+                    {mobile ? <X size={18} /> : collapsed ? (
                         <ChevronRight size={14} />
                     ) : (
                         <ChevronLeft size={14} />
@@ -166,7 +175,7 @@ const AdminSidebar = () => {
 
                     {/* Inventory Section */}
                     <div
-                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-xs font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Inventory
@@ -239,7 +248,7 @@ const AdminSidebar = () => {
 
                     {/* Logistics Section */}
                     <div
-                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-xs font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Logistics
@@ -251,7 +260,7 @@ const AdminSidebar = () => {
                         defaultOpen={location.pathname.includes("orders")}
                         suffix={
                             unreadOrders > 0 && (
-                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px] mr-2">
+                                <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px] mr-2">
                                     {unreadOrders > 99 ? '99+' : unreadOrders}
                                 </span>
                             )
@@ -262,7 +271,7 @@ const AdminSidebar = () => {
                             icon={<ListIcon size={16} />}
                             suffix={
                                 unreadOrders > 0 && (
-                                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
+                                    <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
                                         {unreadOrders > 99 ? '99+' : unreadOrders}
                                     </span>
                                 )
@@ -285,7 +294,7 @@ const AdminSidebar = () => {
                         icon={<FileText size={18} />}
                         suffix={
                             unreadPrescriptions > 0 && (
-                                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
+                                <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]">
                                     {unreadPrescriptions > 99 ? '99+' : unreadPrescriptions}
                                 </span>
                             )
@@ -317,7 +326,7 @@ const AdminSidebar = () => {
 
                     {/* Marketing Section */}
                     <div
-                        className={`px-8 py-4 mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
+                        className={`px-8 py-4 mt-6 text-xs font-black text-gray-400 uppercase tracking-widest transition-opacity ${collapsed ? "opacity-0" : "opacity-100"
                             }`}
                     >
                         Marketing

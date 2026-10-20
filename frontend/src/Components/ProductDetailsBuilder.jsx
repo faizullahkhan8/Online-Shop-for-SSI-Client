@@ -50,7 +50,7 @@ export default function ProductDetailsBuilder({ details = [], onChange }) {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button type="button" onClick={() => moveSection(idx, -1)} className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded"><ArrowUp size={16} /></button>
                             <button type="button" onClick={() => moveSection(idx, 1)} className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded"><ArrowDown size={16} /></button>
-                            <button type="button" onClick={() => removeSection(idx)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100 rounded ml-1"><X size={16} /></button>
+                            <button aria-label="Remove item" type="button" onClick={() => removeSection(idx)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-100 rounded ml-1"><X size={16} /></button>
                         </div>
                     </div>
                     <LexicalEditor

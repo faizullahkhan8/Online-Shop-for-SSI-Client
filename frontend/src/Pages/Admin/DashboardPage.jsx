@@ -5,12 +5,9 @@ import {
     ShoppingCart,
     Package,
     Users,
-    TrendingUp,
-    ArrowUpRight,
     Loader2,
     AlertCircle,
     Calendar,
-    ChevronDown,
 } from "lucide-react";
 import DashboardCharts from "../../Components/Admin/DashboardCharts";
 import InventoryAlerts from "../../Components/Admin/InventoryAlerts";
@@ -34,7 +31,7 @@ const DATE_PRESETS = [
 ];
 
 const DashboardHome = () => {
-    const [datePreset, setDatePreset] = useState("today");
+    const [datePreset, setDatePreset] = useState("last30days");
     const [dateRange, setDateRange] = useState(() =>
         getDateRangeFromPreset("last30days"),
     );
@@ -68,6 +65,7 @@ const DashboardHome = () => {
         const endDate = new Date(customDates.end);
         endDate.setHours(23, 59, 59, 999);
 
+        if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || startDate > endDate) return;
         setDateRange({ startDate, endDate });
     };
 
@@ -110,9 +108,9 @@ const DashboardHome = () => {
                 </div>
 
                 {/* Date Range Selector */}
-                <div className="flex flex-col gap-3 w-max">
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200 w-[350px]">
+                <div className="flex flex-col gap-3 w-full lg:w-auto">
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                        <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-200 max-w-full">
                             <Calendar size={16} className="text-gray-500" />
                             <span className="text-xs font-medium text-gray-600">
                                 {formatDateRange(
@@ -123,6 +121,7 @@ const DashboardHome = () => {
                         </div>
 
                         <Select
+                            aria-label="Dashboard date range"
                             value={datePreset}
                             onChange={handlePresetChange}
                             options={DATE_PRESETS}
@@ -167,34 +166,33 @@ const DashboardHome = () => {
                 </div>
             </header>
 
+            <p className="text-sm text-gray-600">Revenue includes paid, non-cancelled orders created in the selected period. Changes compare the preceding period of equal length. Products and users show current totals.</p>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard
-                    label="Total Revenue"
+                    label="Collected Revenue"
                     value={`Rs ${stats?.totalSales?.toLocaleString() ?? 0}`}
                     icon={<DollarSign size={20} />}
-                    trend="+12.5%"
+                    trend={stats?.trends?.revenue}
                     color="primary"
                 />
                 <StatCard
                     label="Orders"
                     value={stats?.totalOrders ?? 0}
                     icon={<ShoppingCart size={20} />}
-                    trend="+5.2%"
+                    trend={stats?.trends?.orders}
                     color="gray"
                 />
                 <StatCard
-                    label="Inventory"
+                    label="Products"
                     value={stats?.totalProducts ?? 0}
                     icon={<Package size={20} />}
-                    trend="Stable"
                     color="gray"
                 />
                 <StatCard
-                    label="Active Users"
+                    label="Registered Users"
                     value={stats?.totalUsers ?? 0}
                     icon={<Users size={20} />}
-                    trend="+2.1%"
                     color="gray"
                 />
             </div>
@@ -209,7 +207,7 @@ const DashboardHome = () => {
 };
 
 const StatCard = ({ label, value, icon, trend, color }) => (
-    <div className="bg-white border-2 border-transparent rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 hover:border-primary-light transition-all duration-300 hover:-translate-y-1 group">
+    <div className="bg-white border-2 border-transparent rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-primary-light transition-all duration-300  group">
         <div className="flex justify-between items-start mb-5">
             <div
                 className={`p-3 rounded-2xl ${
@@ -220,12 +218,11 @@ const StatCard = ({ label, value, icon, trend, color }) => (
             >
                 {icon}
             </div>
-            <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-200">
-                <span className="text-[10px] font-black uppercase tracking-widest">{trend}</span>
-                <ArrowUpRight size={12} />
-            </div>
+            {trend !== undefined && <div className="flex items-center gap-1 text-gray-700 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200">
+                <span className="text-xs font-black uppercase tracking-widest">{trend === null ? "No prior baseline" : `${trend > 0 ? "+" : ""}${trend}%`}</span>
+            </div>}
         </div>
-        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">{label}</p>
         <h4 className="text-3xl font-black text-gray-900">{value}</h4>
     </div>
 );

@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -34,6 +36,7 @@ const SearchModal = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const inputRef = useRef(null);
     const modalRef = useRef(null);
+    useDialog(isOpen, onClose, modalRef);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -219,7 +222,7 @@ const SearchModal = ({ isOpen, onClose }) => {
             addRecentSearch(searchTerm.trim());
         }
         onClose();
-        navigate(`/products?category=${encodeURIComponent(category.name)}`);
+        navigate(`/products?category=${encodeURIComponent(category._id)}`);
     };
 
     const handleSuggestionClick = (queryText) => {
@@ -239,14 +242,15 @@ const SearchModal = ({ isOpen, onClose }) => {
 
     const displayProducts = debouncedQuery ? searchResults : trendingProducts;
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center p-3 sm:p-4 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    return createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-start justify-center p-3 sm:p-4 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
             {/* Backdrop click dismiss */}
-            <div className="fixed inset-0" onClick={onClose} />
+            <div data-dialog-backdrop="" aria-hidden="true" className="fixed inset-0" onClick={onClose} />
 
             {/* Modal Card */}
             <div
                 ref={modalRef}
+                role="dialog" aria-modal="true" aria-label="Search products" tabIndex={-1}
                 className="relative w-full max-w-[840px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-10 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
             >
                 {/* -- 1. Top Search Header Input -- */}
@@ -257,6 +261,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                             className="absolute left-3.5 text-gray-400 pointer-events-none"
                         />
                         <input
+                            aria-label="Search products"
                             ref={inputRef}
                             type="text"
                             value={searchTerm}
@@ -301,7 +306,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                                 </h4>
                                 <button
                                     onClick={clearAllRecent}
-                                    className="text-[11px] font-semibold text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                    className="text-xs font-semibold text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                                 >
                                     Clear all
                                 </button>
@@ -314,7 +319,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                                         className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100/80 hover:bg-primary-pale text-xs font-semibold text-gray-700 hover:text-primary transition-colors cursor-pointer border border-transparent hover:border-primary-light"
                                     >
                                         <span>{term}</span>
-                                        <button
+                                        <button aria-label="Remove item"
                                             type="button"
                                             onClick={(e) => removeRecentSearch(e, term)}
                                             className="p-0.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors ml-0.5"
@@ -411,7 +416,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                                                         Rs. {product.price?.toLocaleString()}
                                                     </span>
                                                     {hasDiscount && (
-                                                        <span className="text-[10px] text-gray-400 line-through">
+                                                        <span className="text-xs text-gray-400 line-through">
                                                             Rs. {product.maxPrice?.toLocaleString()}
                                                         </span>
                                                     )}
@@ -427,7 +432,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                                 <p className="text-xs font-bold text-gray-700">
                                     No matching products found
                                 </p>
-                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                <p className="text-xs text-gray-400 mt-0.5">
                                     Try searching by generic name, brand, or therapeutic category
                                 </p>
                             </div>
@@ -482,7 +487,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                 )}
             </div>
         </div>
-    );
+    , document.body);
 };
 
 export default SearchModal;

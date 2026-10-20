@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
     LayoutGrid,
     List,
@@ -20,8 +20,19 @@ const ProductListPage = () => {
 
     const page = parseInt(searchParams.get("page") || "1");
     const searchQuery = searchParams.get("search");
+    const category = searchParams.get("category");
+    const previousCategory = useRef(category);
+    useEffect(() => {
+        if (previousCategory.current === category) return;
+        previousCategory.current = category;
+        setSearchParams(current => {
+            const next = new URLSearchParams(current);
+            next.delete("page");
+            return next;
+        }, { replace: true });
+    }, [category, setSearchParams]);
 
-    const { data: productsData, isLoading: productLoading } = useGetAllProducts({ page, search: searchQuery });
+    const { data: productsData, loading: productLoading, error } = useGetAllProducts({ page, search: searchQuery, category });
     const products = productsData?.products || [];
     const totalPages = productsData?.totalPages || 1;
 
@@ -42,7 +53,7 @@ const ProductListPage = () => {
         <div className="bg-gray-50 min-h-screen">
             <div className="container mx-auto px-4 lg:px-8 py-6 lg:py-8">
                 <div className="mb-6">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-gray-200">
+                    <div className="flex items-end justify-between gap-3 pb-4 border-b border-gray-200">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <SlidersHorizontal
@@ -54,7 +65,7 @@ const ProductListPage = () => {
                                 </span>
                             </div>
                             <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900">
-                                All Products
+                                {category ? "Category products" : "All Products"}
                             </h1>
                         </div>
                         <div className="text-xs font-bold text-[#3E6913] bg-[#EDF6E5] px-4 py-2 rounded-xl border border-[#D5EAC3]">
@@ -65,10 +76,12 @@ const ProductListPage = () => {
 
                 <div className="flex flex-col lg:flex-row gap-8 items-start">
                     <main className="flex-1 w-full">
-                        <div className="bg-white border border-gray-200/90 rounded-2xl p-3 mb-6 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-2xs">
-                            <div className="w-full flex items-center gap-2 bg-[#FAFBF9] px-3.5 py-2 rounded-xl border border-gray-200/80">
+                        <div className="bg-white border border-gray-200 rounded-2xl p-2 mb-5 flex items-center gap-2 shadow-sm">
+                            <div className="min-w-0 flex-1 flex items-center gap-2 bg-[#FAFBF9] px-3.5 py-2 rounded-xl border border-gray-200/80">
                                 <Search size={18} className="text-gray-400" />
                                 <input
+                                    value={searchQuery || ""}
+                                    aria-label="Search products"
                                     type="text"
                                     placeholder="Search medicines, supplements, personal care..."
                                     className="px-1 py-1 text-sm w-full outline-none bg-transparent text-gray-900 placeholder-gray-400 font-sans"
@@ -86,11 +99,13 @@ const ProductListPage = () => {
 
                             <div className="flex items-center bg-gray-100/80 p-1 rounded-xl border border-gray-200/80 shrink-0">
                                 <ViewButton
+                                    label="Grid view"
                                     active={viewMode === "grid"}
                                     onClick={() => setViewMode("grid")}
                                     icon={<LayoutGrid size={18} />}
                                 />
                                 <ViewButton
+                                    label="List view"
                                     active={viewMode === "list"}
                                     onClick={() => setViewMode("list")}
                                     icon={<List size={18} />}
@@ -108,7 +123,7 @@ const ProductListPage = () => {
                                     Loading products...
                                 </p>
                             </div>
-                        ) : products?.length === 0 ? (
+                        ) : error ? (<p role="alert" className="p-6 text-red-700">Could not load products. Please try again.</p>) : products?.length === 0 ? (
                             <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 flex flex-col items-center justify-center shadow-2xs">
                                 <div className="w-20 h-20 bg-[#F4F8EE] rounded-2xl flex items-center justify-center mb-4 text-[#74AA34]">
                                     <PackageSearch
@@ -126,7 +141,7 @@ const ProductListPage = () => {
                             <div
                                 className={
                                     viewMode === "grid"
-                                        ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+                                        ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-5"
                                         : "flex flex-col gap-4"
                                 }
                             >
@@ -163,7 +178,7 @@ const ProductListPage = () => {
 const FilterChip = ({ label, onRemove }) => (
     <span className="flex items-center gap-2 bg-gray-900 text-white pl-3 pr-2 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all hover:bg-[#74AA34] group">
         {label}
-        <button
+        <button aria-label="Remove item"
             onClick={onRemove}
             className="bg-white/20 p-0.5 rounded group-hover:bg-white/30 transition-colors cursor-pointer"
         >
@@ -172,10 +187,12 @@ const FilterChip = ({ label, onRemove }) => (
     </span>
 );
 
-const ViewButton = ({ active, onClick, icon }) => (
+const ViewButton = ({ active, onClick, icon, label }) => (
     <button
         onClick={onClick}
-        className={`p-2 rounded-lg transition-all cursor-pointer ${
+        aria-label={label}
+        aria-pressed={active}
+        className={`h-11 w-11 grid place-items-center rounded-lg transition-all cursor-pointer ${
             active
                 ? "bg-white text-[#74AA34] shadow-xs font-bold"
                 : "text-gray-400 hover:text-gray-700"

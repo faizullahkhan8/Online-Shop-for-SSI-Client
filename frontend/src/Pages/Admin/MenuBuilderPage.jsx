@@ -1,3 +1,5 @@
+import { QueryError } from "../../UI/QueryState";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { 
@@ -23,7 +25,7 @@ import {
 import { useGetAllCategories } from "../../api/hooks/category.api";
 
 const MenuBuilderPage = () => {
-    const { data: menuData, isLoading: fetchLoading } = useGetMenus();
+    const { data: menuData, loading: fetchLoading, error: queryError } = useGetMenus();
     const { createMenu, loading: createLoading } = useCreateMenu();
     const { updateMenu, loading: updateLoading } = useUpdateMenu();
     const { deleteMenu } = useDeleteMenu();
@@ -158,7 +160,7 @@ const MenuBuilderPage = () => {
                                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
                                         {node.link}
                                     </span>
-                                    <span className="text-[10px] text-gray-400 font-mono">
+                                    <span className="text-xs text-gray-400 font-mono">
                                         Order: {node.order}
                                     </span>
                                 </div>
@@ -170,13 +172,13 @@ const MenuBuilderPage = () => {
                                     >
                                         Add Child
                                     </button>
-                                    <button 
+                                    <button aria-label="Edit"
                                         onClick={() => handleOpenForm(node)}
                                         className="text-gray-500 hover:text-gray-700 bg-gray-50 p-1.5 rounded"
                                     >
                                         <Edit size={16} />
                                     </button>
-                                    <button 
+                                    <button aria-label="Delete item"
                                         onClick={() => handleDelete(node._id)}
                                         className="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded"
                                     >
@@ -194,6 +196,8 @@ const MenuBuilderPage = () => {
             </div>
         );
     };
+
+    if (queryError) return <QueryError />;
 
     return (
         <div className="p-6 max-w-5xl mx-auto">
@@ -217,7 +221,7 @@ const MenuBuilderPage = () => {
                     <Loader size={32} className="animate-spin text-primary" />
                 </div>
             ) : menus.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center flex flex-col items-center">
+                <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center flex flex-col items-center">
                     <ListTree size={48} className="text-gray-300 mb-4" />
                     <h3 className="text-lg font-bold text-gray-900 mb-1">No Menu Items</h3>
                     <p className="text-gray-500 text-sm mb-4">Start building your navigation menu by adding your first item.</p>
@@ -229,7 +233,7 @@ const MenuBuilderPage = () => {
                     </button>
                 </div>
             ) : (
-                <div className="bg-white shadow-sm border-2 border-transparent hover:border-primary-light hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 rounded-3xl p-6 md:p-8">
+                <div className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 rounded-2xl p-6 md:p-8">
                     {renderTree(menus)}
                 </div>
             )}
@@ -245,7 +249,7 @@ const MenuBuilderPage = () => {
                                 </h3>
                                 <p className="text-sm text-gray-500 mt-1">Configure how this link will appear in your website navigation.</p>
                             </div>
-                            <button onClick={() => setIsFormOpen(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                            <button aria-label="Close" onClick={() => setIsFormOpen(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -253,9 +257,9 @@ const MenuBuilderPage = () => {
                         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6 overflow-y-auto">
                             
                             {/* Section 1: Basic Info */}
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-bold text-gray-800">Display Title</label>
-                                <input 
+                            <FormField className="flex flex-col gap-2">
+                                <FieldLabel className="text-sm font-bold text-gray-800">Display Title</FieldLabel>
+                                <FieldControl
                                     type="text" 
                                     required
                                     value={formData.title}
@@ -263,8 +267,8 @@ const MenuBuilderPage = () => {
                                     placeholder="e.g., Winter Collection"
                                     className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all bg-white"
                                 />
-                                <span className="text-[11px] text-gray-500">This is the exact text the user will see in the header.</span>
-                            </div>
+                                <span className="text-xs text-gray-500">This is the exact text the user will see in the header.</span>
+                            </FormField>
 
                             <hr className="border-gray-100" />
 
@@ -325,9 +329,9 @@ const MenuBuilderPage = () => {
                             {/* Section 3: Dynamic Link Input */}
                             <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                                 {formData.type === "CATEGORY" ? (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-bold text-gray-800">Select Target Category</label>
-                                        <select 
+                                    <FormField className="flex flex-col gap-2">
+                                        <FieldLabel className="text-sm font-bold text-gray-800">Select Target Category</FieldLabel>
+                                        <FieldControl as="select"
                                             value={formData.link}
                                             onChange={e => setFormData({...formData, link: e.target.value})}
                                             className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white shadow-sm transition-all"
@@ -335,20 +339,20 @@ const MenuBuilderPage = () => {
                                         >
                                             <option value="">-- Click to choose a category --</option>
                                             {categories.map(cat => (
-                                                <option key={cat._id} value={`/products?category=${encodeURIComponent(cat.name)}`}>
+                                                <option key={cat._id} value={`/products?category=${encodeURIComponent(cat._id)}`}>
                                                     {cat.name}
                                                 </option>
                                             ))}
-                                        </select>
-                                    </div>
+                                        </FieldControl>
+                                    </FormField>
                                 ) : (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-bold text-gray-800">Target URL Path</label>
+                                    <FormField className="flex flex-col gap-2">
+                                        <FieldLabel className="text-sm font-bold text-gray-800">Target URL Path</FieldLabel>
                                         <div className="flex items-center">
                                             <span className="bg-gray-100 border border-gray-200 border-r-0 rounded-l-xl p-3 text-sm text-gray-500 shrink-0">
                                                 https://yourdomain.com
                                             </span>
-                                            <input 
+                                            <FieldControl
                                                 type="text" 
                                                 required
                                                 value={formData.link}
@@ -357,8 +361,8 @@ const MenuBuilderPage = () => {
                                                 className="border-2 border-gray-200 rounded-r-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white flex-1 min-w-0 transition-all"
                                             />
                                         </div>
-                                        <span className="text-[11px] text-gray-500 mt-1">Always start with a forward slash (/).</span>
-                                    </div>
+                                        <span className="text-xs text-gray-500 mt-1">Always start with a forward slash (/).</span>
+                                    </FormField>
                                 )}
                             </div>
 
@@ -366,9 +370,9 @@ const MenuBuilderPage = () => {
 
                             {/* Section 4: Structure & Ordering */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-bold text-gray-800">Nest Under (Parent)</label>
-                                    <select 
+                                <FormField className="flex flex-col gap-2">
+                                    <FieldLabel className="text-sm font-bold text-gray-800">Nest Under (Parent)</FieldLabel>
+                                    <FieldControl as="select"
                                         value={formData.parentId}
                                         onChange={e => setFormData({...formData, parentId: e.target.value})}
                                         className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale bg-white transition-all"
@@ -377,22 +381,22 @@ const MenuBuilderPage = () => {
                                         {parentOptions.map(opt => (
                                             <option key={opt._id} value={opt._id}>{opt.label}</option>
                                         ))}
-                                    </select>
-                                    <span className="text-[11px] text-gray-500">Leave as Top Level to show directly on the main header.</span>
-                                </div>
+                                    </FieldControl>
+                                    <span className="text-xs text-gray-500">Leave as Top Level to show directly on the main header.</span>
+                                </FormField>
                                 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-bold text-gray-800">Display Order</label>
+                                <FormField className="flex flex-col gap-2">
+                                    <FieldLabel className="text-sm font-bold text-gray-800">Display Order</FieldLabel>
                                     <div className="relative">
-                                        <input 
+                                        <FieldControl
                                             type="number" 
                                             value={formData.order}
                                             onChange={e => setFormData({...formData, order: Number(e.target.value)})}
                                             className="border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale w-full pr-12 transition-all bg-white"
                                         />
                                     </div>
-                                    <span className="text-[11px] text-gray-500">Lower numbers (e.g., 0, 1) appear first from left to right.</span>
-                                </div>
+                                    <span className="text-xs text-gray-500">Lower numbers (e.g., 0, 1) appear first from left to right.</span>
+                                </FormField>
                             </div>
 
                             {/* Actions */}

@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import Input from "../../UI/Input.jsx";
@@ -165,14 +166,14 @@ const AddProduct = () => {
 
         if (!isEditing) {
             const response = await createProduct(formData);
-            if (response.success) navigate("/admin-dashboard/products");
+            if (response?.success) navigate("/admin-dashboard/products");
         } else {
             const response = await updateProduct({
                 product: formData,
                 id: productData._id,
             });
-            if (response.success)
-                navigate("/admin-dashboard?tab=products-list");
+            if (response?.success)
+                navigate("/admin-dashboard/products");
         }
     };
 
@@ -190,7 +191,7 @@ const AddProduct = () => {
                             : "Create a new product listing"}
                     </p>
                 </div>
-                <button
+                <button aria-label="Close"
                     onClick={() => navigate(-1)}
                     className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
                 >
@@ -205,13 +206,13 @@ const AddProduct = () => {
             >
                 {/* Left Column - Product Details */}
                 <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white p-6 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-5">
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 space-y-5">
                         {/* Product Name */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                        <FormField id="name">
+                            <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                 <Hash size={14} className="text-primary" />
                                 Product Name
-                            </label>
+                            </FieldLabel>
                             <Input
                                 type="text"
                                 id="name"
@@ -221,16 +222,16 @@ const AddProduct = () => {
                                 onChange={handleChange}
                                 required
                             />
-                        </div>
+                        </FormField>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Slug */}
-                            <div>
+                            <FormField id="slug">
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <FieldLabel className="text-sm font-medium text-gray-700 flex items-center gap-2">
                                         <Hash size={14} className="text-primary" />
                                         Slug (URL)
-                                    </label>
+                                    </FieldLabel>
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -238,7 +239,7 @@ const AddProduct = () => {
                                             const generated = productData.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
                                             setProductData(prev => ({ ...prev, slug: generated }));
                                         }}
-                                        className="text-[11px] font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale px-2 py-0.5 rounded transition-colors"
+                                        className="text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1 bg-primary-pale px-2 py-0.5 rounded transition-colors"
                                     >
                                         <Wand2 size={12} />
                                         Auto-generate
@@ -252,14 +253,14 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </div>
+                            </FormField>
                             
                             {/* Vendor */}
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField id="vendor">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Box size={14} className="text-primary" />
                                     Vendor
-                                </label>
+                                </FieldLabel>
                                 <Select
                                     id="vendor"
                                     value={productData?.vendor?._id || productData?.vendor || ""}
@@ -277,16 +278,16 @@ const AddProduct = () => {
                                     ]}
                                     className="w-full"
                                 />
-                            </div>
+                            </FormField>
                         </div>
 
                         {/* Product Type & Category */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField id="productType">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Layers size={14} className="text-primary" />
                                     Product Type
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="text"
                                     id="productType"
@@ -295,19 +296,19 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </div>
+                            </FormField>
                         </div>
 
                         {/* Pricing */}
                         <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField id="price">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign
                                         size={14}
                                         className="text-primary"
                                     />
                                     Price (Rs)
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="number"
                                     id="price"
@@ -318,12 +319,12 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            </FormField>
+                            <FormField id="minPrice">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign size={14} className="text-primary" />
                                     Min Price
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="number"
                                     id="minPrice"
@@ -332,12 +333,12 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            </FormField>
+                            <FormField id="maxPrice">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <DollarSign size={14} className="text-primary" />
                                     Max Price
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="number"
                                     id="maxPrice"
@@ -346,19 +347,19 @@ const AddProduct = () => {
                                     className="w-full"
                                     onChange={handleChange}
                                 />
-                            </div>
+                            </FormField>
                         </div>
 
                         {/* Stock Quantity */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField id="stock">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Boxes
                                         size={16}
                                         className="text-primary"
                                     />
                                     Stock Quantity
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="number"
                                     id="stock"
@@ -368,12 +369,12 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            </FormField>
+                            <FormField id="lowStock">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Box size={14} className="text-primary" />
                                     Low Stock
-                                </label>
+                                </FieldLabel>
                                 <Input
                                     type="number"
                                     id="lowStock"
@@ -383,16 +384,16 @@ const AddProduct = () => {
                                     onChange={handleChange}
                                     required
                                 />
-                            </div>
+                            </FormField>
                         </div>
 
                         {/* Category */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-[-10px]">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                            <FormField id="category">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                                     <Layers size={14} className="text-primary" />
                                     Category
-                                </label>
+                                </FieldLabel>
                                 <Select
                                     placeholder="Select category"
                                     id="category"
@@ -408,7 +409,7 @@ const AddProduct = () => {
                                     }))}
                                     className="w-full"
                                 />
-                            </div>
+                            </FormField>
                         </div>
 
                         {/* Badges */}
@@ -451,16 +452,16 @@ const AddProduct = () => {
                 {/* Right Column - Image Upload & Actions */}
                 <div className="lg:col-span-5 space-y-6">
                     {/* Image Upload */}
-                    <div className="bg-white p-6 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200">
                         <div className="flex items-center justify-between mb-3">
                             <label className="text-sm font-medium text-gray-700">
                                 Product Image
                             </label>
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs font-medium text-gray-600">
+                            <FormField className="flex items-center gap-2">
+                                <FieldLabel className="text-xs font-medium text-gray-600">
                                     Remove BG
-                                </label>
-                                <input
+                                </FieldLabel>
+                                <FieldControl
                                     type="checkbox"
                                     checked={productData?.isRemoveBg}
                                     onChange={(e) =>
@@ -471,7 +472,7 @@ const AddProduct = () => {
                                     }
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
                                 />
-                            </div>
+                            </FormField>
                         </div>
                         <div className="space-y-4">
                             <label
@@ -518,7 +519,7 @@ const AddProduct = () => {
                                         return (
                                             <div key={idx} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group bg-gray-50">
                                                 <img src={imgUrl} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
-                                                <button
+                                                <button aria-label="Remove item"
                                                     type="button"
                                                     onClick={() => removeImage(idx)}
                                                     className="absolute top-1.5 right-1.5 bg-white/90 text-red-500 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 shadow-sm"

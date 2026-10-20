@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
 import {
     Plus,
@@ -83,16 +84,12 @@ const HeroManager = () => {
 
         if (res?.success) {
             handleClose();
-            getSlides();
         }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this slide?")) {
-            const res = await deleteSlide(id);
-            if (res?.success) {
-                getSlides();
-            }
+            await deleteSlide(id);
         }
     };
 
@@ -152,7 +149,7 @@ const HeroManager = () => {
                                         <Edit3 size={14} />
                                         Edit
                                     </button>
-                                    <button
+                                    <button aria-label="Delete item"
                                         onClick={() => handleDelete(slide._id)}
                                         className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"
                                     >
@@ -168,7 +165,7 @@ const HeroManager = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-lg w-full max-w-2xl overflow-hidden shadow-xl relative">
-                        <button
+                        <button aria-label="Close"
                             onClick={handleClose}
                             className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all z-10"
                         >
@@ -184,12 +181,12 @@ const HeroManager = () => {
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div className="space-y-4">
-                                        <div className="space-y-1.5">
+                                        <FormField id="hero-image" className="space-y-1.5">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-sm font-medium text-gray-700">
+                                                <FieldLabel className="text-sm font-medium text-gray-700">
                                                     Slide Image
-                                                </label>
-                                                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                </FieldLabel>
+                                                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                                     Rec: 1920 × 600 px
                                                 </span>
                                             </div>
@@ -198,9 +195,9 @@ const HeroManager = () => {
                                             <div className="bg-primary-pale/60 border border-blue-100 rounded-lg p-2.5 text-xs text-blue-800 flex flex-col gap-0.5">
                                                 <div className="flex items-center justify-between font-semibold">
                                                     <span>📐 Optimal Ratio: ~16:5 (Wide Banner)</span>
-                                                    <span className="text-[10px] text-primary">Max: 2MB</span>
+                                                    <span className="text-xs text-primary">Max: 2MB</span>
                                                 </div>
-                                                <span className="text-[11px] text-primary/90">
+                                                <span className="text-xs text-primary/90">
                                                     High-res landscape images (e.g. 1920×600 or 1600×500) fit best on desktop & mobile carousels.
                                                 </span>
                                             </div>
@@ -226,12 +223,12 @@ const HeroManager = () => {
                                                         <p className="text-sm font-medium text-gray-600">
                                                             Click to upload slide image
                                                         </p>
-                                                        <p className="text-[11px] text-gray-400 mt-1">
+                                                        <p className="text-xs text-gray-400 mt-1">
                                                             1920 × 600 px recommended (WebP / PNG / JPG)
                                                         </p>
                                                     </>
                                                 )}
-                                                <input
+                                                <FieldControl
                                                     id="hero-image"
                                                     type="file"
                                                     onChange={handleFileChange}
@@ -239,7 +236,7 @@ const HeroManager = () => {
                                                     accept="image/*"
                                                 />
                                             </div>
-                                        </div>
+                                        </FormField>
 
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium text-gray-700">
@@ -273,10 +270,10 @@ const HeroManager = () => {
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-gray-700">
+                                        <FormField className="space-y-1.5">
+                                            <FieldLabel className="text-sm font-medium text-gray-700">
                                                 Order
-                                            </label>
+                                            </FieldLabel>
                                             <Input
                                                 type="number"
                                                 value={formData.order}
@@ -284,7 +281,7 @@ const HeroManager = () => {
                                                 className="w-full"
                                                 placeholder="0"
                                             />
-                                        </div>
+                                        </FormField>
                                     </div>
                                 </div>
 

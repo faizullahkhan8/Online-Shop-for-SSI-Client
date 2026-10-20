@@ -1,3 +1,5 @@
+import { QueryError } from "../../UI/QueryState";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import HeroManager from "../../Components/Admin/HeroManager";
@@ -111,21 +113,21 @@ const ColorField = ({ label, value, onChange }) => (
 );
 
 const NumberField = ({ label, value, onChange, min, max }) => (
-    <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
-        <input type="number" value={value ?? ""} onChange={e => onChange(Number(e.target.value))} min={min} max={max}
+    <FormField className="mb-4">
+        <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</FieldLabel>
+        <FieldControl type="number" value={value ?? ""} onChange={e => onChange(Number(e.target.value))} min={min} max={max}
             className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all" />
-    </div>
+    </FormField>
 );
 
 const SelectField = ({ label, value, onChange, options }) => (
-    <div className="mb-4">
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</label>
-        <select value={value || ""} onChange={e => onChange(e.target.value)}
+    <FormField className="mb-4">
+        <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">{label}</FieldLabel>
+        <FieldControl as="select" value={value || ""} onChange={e => onChange(e.target.value)}
             className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all bg-white">
             {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-    </div>
+        </FieldControl>
+    </FormField>
 );
 
 const ImageField = ({
@@ -290,15 +292,15 @@ const EditForm = ({ section, onChange }) => {
         case "top_micro_bar":
             return (
                 <div>
-                    <div className="mb-3">
-                        <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Style Variant</label>
-                        <select className="w-full text-xs p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary"
+                    <FormField className="mb-3">
+                        <FieldLabel className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Style Variant</FieldLabel>
+                        <FieldControl as="select" className="w-full text-xs p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary"
                             value={cfg.style || "classic"} onChange={(e) => set("style", e.target.value)}>
                             <option value="classic">Classic (3 Columns)</option>
                             <option value="marquee">Marquee (Scrolling)</option>
                             <option value="centered">Centered Text</option>
-                        </select>
-                    </div>
+                        </FieldControl>
+                    </FormField>
                     <TextField label="Left Text (or Main Text)" value={cfg.textLeft} onChange={v => set("textLeft", v)} placeholder="Express 2-Hour Delivery" />
                     {cfg.style === "classic" && (
                         <>
@@ -318,7 +320,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-gray-500">Badge {i + 1}</span>
-                                <button onClick={() => set("badges", cfg.badges.filter((_, idx) => idx !== i))}
+                                <button aria-label="Delete item" onClick={() => set("badges", cfg.badges.filter((_, idx) => idx !== i))}
                                     className="text-red-400 hover:text-red-600 transition-colors">
                                     <Trash2 size={13} />
                                 </button>
@@ -341,7 +343,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-gray-500">Stat {i + 1}</span>
-                                <button onClick={() => set("stats", cfg.stats.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                <button aria-label="Delete item" onClick={() => set("stats", cfg.stats.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
                             <TextField label="Value" value={stat.value} onChange={v => set("stats", cfg.stats.map((s, idx) => idx === i ? { ...s, value: v } : s))} placeholder="50K+" />
                             <TextField label="Label" value={stat.label} onChange={v => set("stats", cfg.stats.map((s, idx) => idx === i ? { ...s, label: v } : s))} placeholder="Happy Customers" />
@@ -395,7 +397,7 @@ const EditForm = ({ section, onChange }) => {
                                         <p className="text-[10px] font-semibold text-gray-800 line-clamp-2 leading-tight">{p.name}</p>
                                         <p className="text-[9px] text-primary font-bold mt-0.5">PKR {p.price?.toLocaleString()}</p>
                                     </div>
-                                    <button
+                                    <button aria-label="Delete item"
                                         onClick={() => set("selectedProducts", ribbonProducts.filter((_, idx) => idx !== i))}
                                         className="absolute top-1 right-1 p-0.5 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
@@ -533,12 +535,12 @@ const EditForm = ({ section, onChange }) => {
                 <div>
                     <TextField label="Section Title" value={cfg.title} onChange={v => set("title", v)} />
                     <TextField label="Subtitle" value={cfg.subtitle} onChange={v => set("subtitle", v)} />
-                    <div className="mb-4">
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Sale End Date & Time</label>
-                        <input type="datetime-local" value={cfg.endTime ? new Date(cfg.endTime).toISOString().slice(0, 16) : ""}
+                    <FormField className="mb-4">
+                        <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">Sale End Date & Time</FieldLabel>
+                        <FieldControl type="datetime-local" value={cfg.endTime ? new Date(cfg.endTime).toISOString().slice(0, 16) : ""}
                             onChange={e => set("endTime", e.target.value ? new Date(e.target.value).toISOString() : null)}
                             className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all" />
-                    </div>
+                    </FormField>
                     <SelectField label="Products Source" value={cfg.productSource} onChange={v => set("productSource", v)}
                         options={[{ value: "on_sale", label: "On Sale" }, { value: "featured", label: "Featured" }, { value: "top_sellers", label: "Top Sellers" }]} />
                     <NumberField label="Product Count" value={cfg.productCount} onChange={v => set("productCount", v)} min={2} max={12} />
@@ -589,7 +591,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-bold text-gray-500">Condition {i + 1}</span>
-                                <button onClick={() => set("conditions", cfg.conditions.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                <button aria-label="Delete item" onClick={() => set("conditions", cfg.conditions.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
                             <TextField label="Name" value={cond.name} onChange={v => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, name: v } : c))} />
                             <TextField label="Description" value={cond.desc} onChange={v => set("conditions", cfg.conditions.map((c, idx) => idx === i ? { ...c, desc: v } : c))} />
@@ -612,7 +614,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-bold text-gray-500">Review {i + 1}</span>
-                                <button onClick={() => set("testimonials", cfg.testimonials.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                <button aria-label="Delete item" onClick={() => set("testimonials", cfg.testimonials.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
                             <TextField label="Customer Name" value={t.name} onChange={v => set("testimonials", cfg.testimonials.map((x, idx) => idx === i ? { ...x, name: v } : x))} />
                             <TextField label="City" value={t.city} onChange={v => set("testimonials", cfg.testimonials.map((x, idx) => idx === i ? { ...x, city: v } : x))} />
@@ -663,7 +665,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-bold text-gray-500">Blog {i + 1}</span>
-                                <button onClick={() => set("blogs", cfg.blogs.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                <button aria-label="Delete item" onClick={() => set("blogs", cfg.blogs.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
                             <TextField label="Title" value={blog.title} onChange={v => set("blogs", cfg.blogs.map((b, idx) => idx === i ? { ...b, title: v } : b))} />
                             <TextField label="Category" value={blog.category} onChange={v => set("blogs", cfg.blogs.map((b, idx) => idx === i ? { ...b, category: v } : b))} />
@@ -783,14 +785,14 @@ const EditForm = ({ section, onChange }) => {
                                     return (
                                         <div className="space-y-4">
                                             <div className="flex gap-3">
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Brand Name</label>
-                                                    <input value={brand.name} onChange={e => updateField("name", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all" placeholder="e.g. Acme Corp" />
-                                                </div>
-                                                <div className="w-20 shrink-0">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Abbr</label>
-                                                    <input value={brand.abbr} onChange={e => updateField("abbr", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all text-center" placeholder="ACM" />
-                                                </div>
+                                                <FormField className="flex-1">
+                                                    <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">Brand Name</FieldLabel>
+                                                    <FieldControl value={brand.name} onChange={e => updateField("name", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all" placeholder="e.g. Acme Corp" />
+                                                </FormField>
+                                                <FormField className="w-20 shrink-0">
+                                                    <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">Abbr</FieldLabel>
+                                                    <FieldControl value={brand.abbr} onChange={e => updateField("abbr", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all text-center" placeholder="ACM" />
+                                                </FormField>
                                             </div>
                                             <ImageField 
                                                 label="Brand Logo Image" 
@@ -834,7 +836,7 @@ const EditForm = ({ section, onChange }) => {
                                     <button onClick={() => setBrandUI({ isOpen: true, tab: "manual", editingManualIdx: i })} className="p-1 text-primary bg-primary-pale hover:bg-primary-light rounded-md">
                                         <Settings2 size={12} />
                                     </button>
-                                    <button onClick={() => set("brands", manualBrands.filter((_, idx) => idx !== i))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
+                                    <button aria-label="Delete item" onClick={() => set("brands", manualBrands.filter((_, idx) => idx !== i))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -850,7 +852,7 @@ const EditForm = ({ section, onChange }) => {
                         {selectedVendors.map(vendor => (
                             <div key={`vendor-${vendor._id}`} className="bg-white border-2 border-transparent shadow-sm hover:shadow-md hover:border-primary-light rounded-2xl p-3 flex flex-col items-center relative group shadow-sm hover:shadow-md transition-shadow">
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => set("selectedVendors", selectedVendorIds.filter(id => id !== vendor._id))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
+                                    <button aria-label="Delete item" onClick={() => set("selectedVendors", selectedVendorIds.filter(id => id !== vendor._id))} className="p-1 text-red-500 bg-red-50 hover:bg-red-100 rounded-md">
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -882,7 +884,7 @@ const EditForm = ({ section, onChange }) => {
                         <div key={i} className="border border-gray-100 rounded-xl p-3 mb-3 bg-gray-50">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-bold text-gray-500">Q{i + 1}</span>
-                                <button onClick={() => set("faqs", cfg.faqs.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                                <button aria-label="Delete item" onClick={() => set("faqs", cfg.faqs.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
                             </div>
                             <TextField label="Question" value={faq.q} onChange={v => set("faqs", cfg.faqs.map((f, idx) => idx === i ? { ...f, q: v } : f))} />
                             <TextField label="Answer" value={faq.a} onChange={v => set("faqs", cfg.faqs.map((f, idx) => idx === i ? { ...f, a: v } : f))} multiline />
@@ -899,11 +901,11 @@ const EditForm = ({ section, onChange }) => {
             return (
                 <div>
                     <TextField label="Block Label (for reference)" value={cfg.label} onChange={v => set("label", v)} />
-                    <div className="mb-4">
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">HTML Code</label>
-                        <textarea value={cfg.html || ""} onChange={e => set("html", e.target.value)} rows={8}
+                    <FormField className="mb-4">
+                        <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">HTML Code</FieldLabel>
+                        <FieldControl as="textarea" value={cfg.html || ""} onChange={e => set("html", e.target.value)} rows={8}
                             className="w-full text-xs font-mono border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-4 focus:ring-primary-pale focus:border-primary transition-all bg-gray-50 resize-none" />
-                    </div>
+                    </FormField>
                     <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-3 text-xs text-yellow-700">
                         ⚠️ Only use trusted HTML. Scripts may not execute for security reasons.
                     </div>
@@ -915,13 +917,13 @@ const EditForm = ({ section, onChange }) => {
                 <div>
                     <TextField label="Phone Number (include country code, e.g. +923001234567)" value={cfg.phoneNumber} onChange={v => set("phoneNumber", v)} />
                     <TextField label="Pre-filled Message" value={cfg.message} onChange={v => set("message", v)} multiline />
-                    <div className="mb-4">
-                        <label className="block text-xs font-semibold text-gray-600 mb-1.5">Position</label>
-                        <select value={cfg.position || "right"} onChange={e => set("position", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all">
+                    <FormField className="mb-4">
+                        <FieldLabel className="block text-xs font-semibold text-gray-600 mb-1.5">Position</FieldLabel>
+                        <FieldControl as="select" value={cfg.position || "right"} onChange={e => set("position", e.target.value)} className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary focus:ring-4 focus:ring-primary-pale transition-all">
                             <option value="right">Bottom Right</option>
                             <option value="left">Bottom Left</option>
-                        </select>
-                    </div>
+                        </FieldControl>
+                    </FormField>
                 </div>
             );
 
@@ -1134,7 +1136,7 @@ const AddSectionModal = ({ onAdd, onClose, existingTypes }) => {
                         <h3 className="font-bold text-gray-900">Add New Section</h3>
                         <p className="text-xs text-gray-400 mt-0.5">Choose a section type to add to your page</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
+                    <button aria-label="Close" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
                 </div>
                 <div className="p-5">
                     {categories.map(cat => {
@@ -1169,7 +1171,7 @@ const AddSectionModal = ({ onAdd, onClose, existingTypes }) => {
 /* ─── Main Builder Page ──────────────────────────────────────────────── */
 const HomePageBuilderPage = () => {
     const navigate = useNavigate();
-    const { data: homePageData, isLoading: homePageLoading } = useGetHomePage();
+    const { data: homePageData, loading: homePageLoading, error: homePageError } = useGetHomePage();
     const { updateHomePage, loading: saving } = useUpdateHomePage();
     const { resetHomePage, loading: resetting } = useResetHomePage();
 
@@ -1217,19 +1219,7 @@ const HomePageBuilderPage = () => {
             const sections = homePageData.sections || [];
             if (sections.length > 0) {
                 const sorted = [...sections].sort((a, b) => a.order - b.order);
-                const completeLayout = [...DEFAULT_LAYOUT];
-
-                sorted.forEach(savedSec => {
-                    const idx = completeLayout.findIndex(ds =>
-                        ds.type === savedSec.type &&
-                        (ds.gridVariant ? ds.gridVariant === savedSec.config?.gridVariant : true)
-                    );
-                    if (idx !== -1) {
-                        completeLayout[idx] = { ...completeLayout[idx], ...savedSec };
-                    }
-                });
-                
-                const safeLayout = completeLayout.map(sec => ({
+                const safeLayout = sorted.map(sec => ({
                     ...sec,
                     _id: sec._id || `temp-${Math.random()}`,
                     isVisible: sec.isVisible ?? true,
@@ -1351,6 +1341,8 @@ const HomePageBuilderPage = () => {
             }
         }
     }, [activeIdx]);
+
+    if (homePageError) return <QueryError message="Could not load the homepage configuration. Please refresh to try again." />;
 
     if (pageLoading) {
         return (

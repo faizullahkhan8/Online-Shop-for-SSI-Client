@@ -1,4 +1,5 @@
 import express from "express";
+import { isAuth, authorize } from "../middlewares/auth.middleware.js";
 import {
     addPromotion,
     getActiveDeals,
@@ -10,11 +11,12 @@ import {
 
 const router = express.Router();
 
-router.post("/", addPromotion);
 router.get("/active", getActiveDeals);
-router.get("/", getAllPromotions); // Admin
-router.get("/:id", getPromotionById); // Admin/Edit
-router.put("/:id", updatePromotion); // Admin
-router.delete("/:id", deletePromotion); // Admin
+router.use(isAuth, authorize("admin"));
+router.post("/", addPromotion);
+router.get("/", getAllPromotions);
+router.get("/:id", getPromotionById);
+router.put("/:id", updatePromotion);
+router.delete("/:id", deletePromotion);
 
 export default router;

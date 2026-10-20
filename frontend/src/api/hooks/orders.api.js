@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ORDER_ROUTES } from "../routes";
 import apiClient from "../apiClient.js";
@@ -62,10 +62,23 @@ export const useMarkOrderViewed = () => {
 
 export const usePlaceOrder = () => {
     const queryClient = useQueryClient();
+    const inFlight = useRef(false);
+    const pending = useRef(null);
 
     const mutation = useMutation({
         mutationFn: async (orderData) => {
-            const response = await apiClient.post(ORDER_ROUTES.PLACE, orderData);
+            const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(orderData)));
+            const fingerprint = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+            const storageKey = `checkout:${fingerprint}`;
+            if (pending.current?.fingerprint !== fingerprint) {
+                let key;
+                try { key = sessionStorage.getItem(storageKey); } catch { /* Memory fallback. */ }
+                pending.current = { fingerprint, key: key || crypto.randomUUID() };
+            }
+            try { sessionStorage.setItem(storageKey, pending.current.key); } catch { /* Memory fallback. */ }
+            const response = await apiClient.post(ORDER_ROUTES.PLACE, orderData, { headers: { "Idempotency-Key": pending.current.key } });
+            try { sessionStorage.removeItem(storageKey); } catch { /* Memory fallback. */ }
+            pending.current = null;
             return response.data;
         },
         onSuccess: (data) => {
@@ -84,10 +97,14 @@ export const usePlaceOrder = () => {
     });
 
     const placeOrder = async (orderData) => {
+        if (inFlight.current) return undefined;
+        inFlight.current = true;
         try {
             return await mutation.mutateAsync(orderData);
         } catch {
             return undefined;
+        } finally {
+            inFlight.current = false;
         }
     };
 
@@ -420,4 +437,18 @@ export const useCancelOrder = () => {
     };
 
     return { cancelOrder, loading: mutation.isPending };
+};
+
+export const useRecordRefund = () => {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: async ({ orderId, amount, reference }) => (await apiClient.post(`/orders/${orderId}/refunds`, { amount, reference })).data,
+        onSuccess: () => {
+            toast.success("Refund recorded.");
+            queryClient.invalidateQueries({ queryKey: ["orders"] });
+            queryClient.invalidateQueries({ queryKey: ["my-orders"] });
+        },
+        onError: error => toast.error(error.response?.data?.message || "Unable to record refund."),
+    });
+    return { recordRefund: async values => { try { return await mutation.mutateAsync(values); } catch { return undefined; } }, loading: mutation.isPending };
 };

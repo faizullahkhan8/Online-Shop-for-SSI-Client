@@ -1,6 +1,8 @@
 import expressAsyncHandler from "express-async-handler";
 import {
     getLocalProductModel,
+    getLocalCategoryModel,
+    getLocalReviewModel,
     getLocalPromotionModel,
 } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
@@ -12,11 +14,13 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
     if (!ProductModel)
         return next(new ErrorResponse("Product model not found", 500));
 
-    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock } = JSON.parse(
-        req.body?.data,
-    );
+    let data;
+    try { data = JSON.parse(req.body?.data); }
+    catch { return next(new ErrorResponse("Invalid product data format", 400)); }
+    if (!data || typeof data !== "object" || Array.isArray(data)) return next(new ErrorResponse("Invalid product data format", 400));
+    const { name, slug, productType, vendor, price, minPrice, maxPrice, description, details, badges, category, stock, lowStock } = data;
 
-    if (!name || !price || !category || !stock || !lowStock)
+    if (typeof name !== "string" || !name.trim() || !category || [price, stock, lowStock].some(value => value === undefined || value === null || value === ""))
         return next(new ErrorResponse("All fields are required except description", 400));
 
     let finalSlug = slug;
@@ -81,7 +85,27 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
     let query = {};
 
     if (category) {
-        query.category = category;
+        // New links use category IDs; old bookmarks may contain names or legacy labels.
+        const Category = getLocalCategoryModel();
+        const aliases = {
+            baby: ["baby", "baby care", "baby & mother care"],
+            personal: ["personal", "personal care"],
+            nutrition: ["nutrition", "nutrition & supplements", "vitamins and supplements"],
+            beverages: ["beverages", "foods & beverages"],
+            devices: ["devices", "devices & appliances"],
+            otc: ["otc", "otc & health needs"],
+        };
+        const key = String(category).trim().toLowerCase();
+        const categories = await Category.find({}).select("name parentId").lean();
+        const names = aliases[key] || [key];
+        const ids = new Set(categories.filter(c => String(c._id) === key || names.includes(c.name.toLowerCase())).map(c => String(c._id)));
+        // Selecting a parent includes products assigned to its descendants.
+        let size;
+        do {
+            size = ids.size;
+            categories.forEach(c => { if (ids.has(String(c.parentId))) ids.add(String(c._id)); });
+        } while (ids.size !== size);
+        query.category = { $in: [...ids] };
     }
 
     if (productType) {
@@ -93,7 +117,7 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
     }
 
     if (search) {
-        query.name = { $regex: search, $options: "i" };
+        query.name = { $regex: String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
     }
 
     if (minPrice || maxPrice) {
@@ -135,6 +159,8 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
         }
     }
 
+    if (!Number.isSafeInteger(Number(page)) || Number(page) < 1 || !Number.isSafeInteger(Number(limit)) || Number(limit) < 1 || Number(limit) > 1000)
+        return next(new ErrorResponse("Page must be positive and limit must be between 1 and 1000", 400));
     const skip = (Number(page) - 1) * Number(limit);
 
     const products = await ProductModel.find(query)
@@ -146,6 +172,12 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
 
     const totalProducts = await ProductModel.countDocuments(query);
 
+    const Review = getLocalReviewModel();
+    const reviewStats = Review && products.length ? await Review.aggregate([
+        { $match: { product: { $in: products.map(product => product._id) } } },
+        { $group: { _id: "$product", averageRating: { $avg: "$rating" }, reviewCount: { $sum: 1 } } },
+    ]) : [];
+    const ratings = new Map(reviewStats.map(stats => [String(stats._id), stats]));
     // Enrich products with promotional pricing
     const productsWithPromos = await Promise.all(
         products.map(async (product) => {
@@ -154,6 +186,8 @@ export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
             return {
                 ...product.toObject(),
                 id: product._id,
+                averageRating: ratings.get(String(product._id))?.averageRating || 0,
+                reviewCount: ratings.get(String(product._id))?.reviewCount || 0,
                 effectivePrice,
                 promotion,
             };
@@ -219,6 +253,10 @@ export const updateProduct = expressAsyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("Invalid product data format", 400));
     }
 
+    if (!updateData || typeof updateData !== "object" || Array.isArray(updateData)) return next(new ErrorResponse("Invalid product data format", 400));
+    const editable = ["name", "slug", "productType", "vendor", "price", "minPrice", "maxPrice", "description", "details", "badges", "category", "stock", "lowStock", "images", "image", "imagekitFileId"];
+    updateData = Object.fromEntries(Object.entries(updateData).filter(([key]) => editable.includes(key)));
+    if (updateData.images !== undefined && !Array.isArray(updateData.images)) return next(new ErrorResponse("Images must be an array", 400));
     if (req.uploadedImages && req.uploadedImages.length > 0) {
         if (!updateData.images) updateData.images = [];
         // Optional: you could delete removed images from ImageKit here by comparing product.images and updateData.images

@@ -1,10 +1,13 @@
+import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect } from "react";
 import { useGetAllUsers } from "../../api/hooks/user.api";
 import { User } from "lucide-react";
 
 const UserListPage = () => {
-    const { data, isLoading: loading } = useGetAllUsers();
+    const { data, loading: loading, error: queryError } = useGetAllUsers();
     const users = data?.users || [];
+
+    if (queryError) return <QueryError />;
 
     return (
         <div className="space-y-6">
@@ -19,8 +22,8 @@ const UserListPage = () => {
                 </div>
             </header>
 
-            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 overflow-hidden overflow-hidden">
+                <div role="region" aria-label="Users table" tabIndex={0} className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50">

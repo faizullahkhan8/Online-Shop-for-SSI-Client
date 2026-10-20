@@ -1,3 +1,4 @@
+import { safeError } from "../utils/safeLog.js";
 import asyncHandler from "express-async-handler";
 import {
     getLocalUserModel,
@@ -8,8 +9,11 @@ import { generateToken, setCookie, verifyToken } from "../utils/jwt.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 import { sendSMS } from "../utils/smsService.js";
+import { disconnectUserSockets } from "../config/socket.js";
 
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+import { profileAddresses } from "../utils/profileAddresses.js";
+
+import { generateOTP, hashOTP, matchesOTP } from "../utils/otp.js";
 
 export const registerUser = asyncHandler(async (req, res, next) => {
     const UserModel = getLocalUserModel();
@@ -20,7 +24,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
     const { name, email, phone, password } = req.body;
 
-    if (!name || !email || !password || !phone) {
+    if ([name, email, password, phone].some(value => typeof value !== "string" || !value.trim()) || password.length > 128) {
         return next(new ErrorResponse("All fields are required including phone", 400));
     }
 
@@ -40,20 +44,23 @@ export const registerUser = asyncHandler(async (req, res, next) => {
             password,
             phone,
             isPhoneVerified: false,
-            phoneVerificationOtp: otp,
+            phoneVerificationOtp: hashOTP(otp),
+            phoneVerificationLastSentAt: new Date(),
             phoneVerificationExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 mins
         });
     } catch (error) {
-        console.error("CREATE USER ERROR:", error);
+        safeError("CREATE USER ERROR:", error);
         return next(error);
     }
 
     // Send OTP SMS
-    await sendSMS("REGISTRATION_OTP", phone, { otp });
+    const smsSent = await sendSMS("REGISTRATION_OTP", phone, { otp });
 
     return res.status(201).json({
         success: true,
-        message: "OTP sent to phone for verification",
+        smsSent,
+        verificationRequired: true,
+        message: smsSent ? "OTP sent to phone for verification" : "Account created, but the verification SMS could not be sent. Please retry sending the code.",
         userId: user._id,
     });
 });
@@ -61,62 +68,47 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 export const resendOTP = asyncHandler(async (req, res, next) => {
     const UserModel = getLocalUserModel();
     const { userId } = req.body;
-
-    if (!userId) return next(new ErrorResponse("User ID is required", 400));
-
-    const user = await UserModel.findById(userId);
-    if (!user) return next(new ErrorResponse("User not found", 404));
-
-    if (user.isPhoneVerified) return next(new ErrorResponse("Phone already verified", 400));
-
+    if (typeof userId !== "string" || !/^[a-f0-9]{24}$/i.test(userId)) return next(new ErrorResponse("Invalid user ID", 400));
+    const user = await UserModel.findOneAndUpdate({ _id: userId, isPhoneVerified: false,
+        $or: [{ phoneVerificationLastSentAt: { $exists: false } }, { phoneVerificationLastSentAt: { $lte: new Date(Date.now() - 60000) } }] },
+        { $set: { phoneVerificationLastSentAt: new Date() } }, { returnDocument: "after" })
+        .select("+phoneVerificationOtp +phoneVerificationExpires");
+    if (!user) {
+        res.set("Retry-After", "60");
+        return next(new ErrorResponse("Wait one minute before requesting another code, or check whether this account is already verified.", 429));
+    }
     const otp = generateOTP();
-    user.phoneVerificationOtp = otp;
-    user.phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-    await user.save({ validateModifiedOnly: true });
-
-    await sendSMS("REGISTRATION_OTP", user.phone, { otp });
-
-    return res.status(200).json({
-        success: true,
-        message: "OTP resent successfully",
-    });
+    const smsSent = await sendSMS("REGISTRATION_OTP", user.phone, { otp });
+    if (!smsSent) return res.status(503).json({ success: false, smsSent: false, verificationRequired: true, userId,
+        message: "Verification SMS could not be sent. Your previous code remains valid until its expiry." });
+    const updated = await UserModel.updateOne({ _id: userId, isPhoneVerified: false, phoneVerificationOtp: user.phoneVerificationOtp },
+        { $set: { phoneVerificationOtp: hashOTP(otp), phoneVerificationExpires: new Date(Date.now() + 600000), phoneVerificationAttempts: 0 } });
+    if (!updated.modifiedCount) return next(new ErrorResponse("Verification state changed. Please log in or request a new code.", 409));
+    return res.json({ success: true, smsSent: true, message: "OTP resent successfully" });
 });
 
 export const verifyPhone = asyncHandler(async (req, res, next) => {
     const UserModel = getLocalUserModel();
     const { userId, otp } = req.body;
-
-    if (!userId || !otp) return next(new ErrorResponse("User ID and OTP are required", 400));
-
-    const user = await UserModel.findById(userId);
-    if (!user) return next(new ErrorResponse("User not found", 404));
-
-    if (user.isPhoneVerified) return next(new ErrorResponse("Phone already verified", 400));
-
-    if (user.phoneVerificationOtp !== otp) {
-        return next(new ErrorResponse("Invalid OTP", 400));
+    if (typeof userId !== "string" || !/^[a-f0-9]{24}$/i.test(userId) || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+        return next(new ErrorResponse("A valid user ID and six-digit OTP are required", 400));
     }
-
-    if (new Date() > new Date(user.phoneVerificationExpires)) {
-        return next(new ErrorResponse("OTP expired", 400));
-    }
-
-    user.isPhoneVerified = true;
-    user.phoneVerificationOtp = undefined;
-    user.phoneVerificationExpires = undefined;
-    await user.save({ validateModifiedOnly: true });
-
-    const refreshToken = generateToken(user, "7d", process.env.JWT_REFRESH_SECRET);
-    const accessToken = generateToken(user, "1d", process.env.JWT_ACCESS_SECRET);
-
-    setCookie(res, refreshToken, 1000 * 60 * 60 * 24 * 7, "refreshToken");
-    setCookie(res, accessToken, 1000 * 60 * 60 * 24, "accessToken");
-
-    return res.status(200).json({
-        success: true,
-        message: "Phone verified successfully and logged in",
-        user: user,
-    });
+    const user = await UserModel.findOneAndUpdate({ _id: userId, isPhoneVerified: false,
+        phoneVerificationExpires: { $gt: new Date() },
+        $or: [{ phoneVerificationAttempts: { $lt: 5 } }, { phoneVerificationAttempts: { $exists: false } }] },
+        { $inc: { phoneVerificationAttempts: 1 } }, { returnDocument: "after" })
+        .select("+phoneVerificationOtp +phoneVerificationExpires");
+    if (!user) return next(new ErrorResponse("Code expired, already used, or attempt limit reached. Request a new code.", 400));
+    if (!matchesOTP(otp, user.phoneVerificationOtp)) return next(new ErrorResponse("Invalid OTP", 400));
+    const verified = await UserModel.findOneAndUpdate({ _id: userId, isPhoneVerified: false, phoneVerificationOtp: user.phoneVerificationOtp },
+        { $set: { isPhoneVerified: true }, $unset: { phoneVerificationOtp: 1, phoneVerificationExpires: 1, phoneVerificationAttempts: 1 } },
+        { returnDocument: "after" });
+    if (!verified) return next(new ErrorResponse("Code already used or replaced", 409));
+    const refreshToken = generateToken(verified, "7d", process.env.JWT_REFRESH_SECRET);
+    const accessToken = generateToken(verified, "15m", process.env.JWT_ACCESS_SECRET);
+    setCookie(res, refreshToken, 7 * 86400000, "refreshToken");
+    setCookie(res, accessToken, 900000, "accessToken");
+    return res.json({ success: true, message: "Phone verified successfully and logged in", user: verified });
 });
 
 export const loginUser = asyncHandler(async (req, res, next) => {
@@ -128,12 +120,12 @@ export const loginUser = asyncHandler(async (req, res, next) => {
 
     const { email, phone, password } = req.body;
 
-    if ((!email && !phone) || !password) {
+    if ((email !== undefined && typeof email !== "string") || (phone !== undefined && typeof phone !== "string") || (!email && !phone) || typeof password !== "string" || !password || password.length > 128) {
         return next(new ErrorResponse("Email/Phone and password are required", 400));
     }
 
-    const query = email ? { email } : { phone };
-    const user = await UserModel.findOne(query);
+    const query = email ? { email: email.trim().toLowerCase() } : { phone: phone.trim() };
+    const user = await UserModel.findOne(query).select("+password");
 
     if (!user) {
         return next(new ErrorResponse("Invalid credentials", 400));
@@ -159,12 +151,12 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     );
     const accessToken = generateToken(
         user,
-        "1d",
+        "15m",
         process.env.JWT_ACCESS_SECRET,
     );
 
     setCookie(res, refreshToken, 1000 * 60 * 60 * 24 * 7, "refreshToken");
-    setCookie(res, accessToken, 1000 * 60 * 60 * 24, "accessToken");
+    setCookie(res, accessToken, 900000, "accessToken");
 
     return res.status(200).json({
         success: true,
@@ -174,8 +166,10 @@ export const loginUser = asyncHandler(async (req, res, next) => {
 });
 
 export const logoutUser = asyncHandler(async (req, res, next) => {
-    res.clearCookie("refreshToken");
-    res.clearCookie("accessToken");
+    await getLocalUserModel().updateOne({ _id: req.user._id }, { $inc: { sessionVersion: 1 } });
+    disconnectUserSockets(req.user._id);
+    res.clearCookie("refreshToken", { path: "/", httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
+    res.clearCookie("accessToken", { path: "/", httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
 
     return res.status(200).json({
         success: true,
@@ -239,18 +233,9 @@ export const updateUser = asyncHandler(async (req, res, next) => {
         ];
     }
 
-    if (Array.isArray(addresses) && addresses.length > 0) {
-        const nextAddress = addresses[0] || {};
-        user.addresses = [
-            {
-                street: nextAddress.street || "",
-                addressLine2: nextAddress.addressLine2 || "",
-                city: nextAddress.city || "",
-                state: nextAddress.state || "",
-                postalCode: nextAddress.postalCode || "",
-                country: nextAddress.country || "",
-            },
-        ];
+    if (addresses !== undefined) {
+        try { user.addresses = profileAddresses(addresses); }
+        catch (error) { return next(new ErrorResponse(error.message, 400)); }
     }
 
     if (req.image?.fileId) {
@@ -258,7 +243,7 @@ export const updateUser = asyncHandler(async (req, res, next) => {
             try {
                 await deleteImageKitFile(user.avatarFileId);
             } catch (err) {
-                console.error("Failed to delete old avatar from ImageKit:", err);
+                safeError("Failed to delete old avatar from ImageKit:", err);
             }
         }
         user.avatar = req.image.url;
@@ -300,7 +285,9 @@ export const getAccessToken = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("Session expired. Login again", 401));
     }
 
-    const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+    let decoded;
+    try { decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET); }
+    catch { return next(new ErrorResponse("Session expired. Login again", 401)); }
 
     if (!decoded) {
         return next(new ErrorResponse("Session expired. Login again", 401));
@@ -308,13 +295,13 @@ export const getAccessToken = asyncHandler(async (req, res, next) => {
 
     const user = await UserModel.findById(decoded.id);
 
-    if (!user) {
-        return next(new ErrorResponse("User not found", 404));
+    if (!user || decoded.version !== (user.sessionVersion || 0)) {
+        return next(new ErrorResponse("Session expired. Login again", 401));
     }
 
     const accessToken = generateToken(
         user,
-        "1d",
+        "15m",
         process.env.JWT_ACCESS_SECRET,
     );
 
@@ -322,7 +309,7 @@ export const getAccessToken = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse("Access token not generated", 400));
     }
 
-    setCookie(res, accessToken, 1000 * 60 * 60 * 24, "accessToken");
+    setCookie(res, accessToken, 900000, "accessToken");
 
     return res.status(200).json({
         success: true,
@@ -373,28 +360,13 @@ export const addToWishlist = asyncHandler(async (req, res, next) => {
     const product = await ProductModel.findById(productId);
     if (!product) return next(new ErrorResponse("Product not found", 404));
 
-    let wishlistDoc = await WishlistModel.findOne({ userId: req.user._id });
-
-    if (!wishlistDoc) {
-        wishlistDoc = await WishlistModel.create({
-            userId: req.user._id,
-            items: [{ product: productId }],
-        });
-        // attach wishlist ref to user document
-        const user = await UserModel.findById(req.user._id);
-        if (user) {
-            user.wishlist = wishlistDoc._id;
-            await user.save({ validateModifiedOnly: true });
-        }
-    } else {
-        const exists = wishlistDoc.items.find(
-            (i) => i.product.toString() === productId.toString(),
-        );
-        if (!exists) {
-            wishlistDoc.items.push({ product: productId });
-            await wishlistDoc.save({ validateModifiedOnly: true });
-        }
-    }
+    await WishlistModel.init();
+    try {
+        await WishlistModel.updateOne({ userId: req.user._id }, { $setOnInsert: { userId: req.user._id, items: [] } }, { upsert: true });
+    } catch (error) { if (error.code !== 11000) throw error; }
+    await WishlistModel.updateOne({ userId: req.user._id, "items.product": { $ne: product._id } }, { $push: { items: { product: product._id } } });
+    const wishlistDoc = await WishlistModel.findOne({ userId: req.user._id });
+    await UserModel.updateOne({ _id: req.user._id }, { $set: { wishlist: wishlistDoc._id } });
 
     await wishlistDoc.populate({ path: "items.product", model: "Product" });
 
@@ -415,19 +387,10 @@ export const removeFromWishlist = asyncHandler(async (req, res, next) => {
 
     const { productId } = req.params;
 
-    const wishlistDoc = await WishlistModel.findOne({ userId: req.user._id });
-
-    if (!wishlistDoc)
-        return res.status(200).json({
-            success: true,
-            message: "Wishlist fetched successfully",
-            wishlist: [],
-        });
-
-    wishlistDoc.items = wishlistDoc.items.filter(
-        (i) => i.product.toString() !== productId.toString(),
-    );
-    await wishlistDoc.save({ validateModifiedOnly: true });
+    if (!/^[a-f0-9]{24}$/i.test(productId)) return next(new ErrorResponse("Invalid product ID", 400));
+    const wishlistDoc = await WishlistModel.findOneAndUpdate({ userId: req.user._id },
+        { $pull: { items: { product: productId } } }, { returnDocument: "after" });
+    if (!wishlistDoc) return res.json({ success: true, wishlist: [] });
 
     await wishlistDoc.populate({ path: "items.product", model: "Product" });
 

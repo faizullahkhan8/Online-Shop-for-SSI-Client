@@ -1,10 +1,11 @@
+import { safeError } from "../utils/safeLog.js";
 import { getLocalVendorModel } from "../config/localDb.js";
-import imagekit from "../config/imageKit.js";
+import imagekit from "../config/imagekit.js";
 
 // @desc    Get all vendors
 // @route   GET /api/vendors
 // @access  Public (or Admin, depending on requirement, usually public for listing)
-export const getAllVendors = async (req, res) => {
+export const getAllVendors = async (req, res, next) => {
     try {
         const Vendor = getLocalVendorModel();
         if (!Vendor) {
@@ -14,15 +15,15 @@ export const getAllVendors = async (req, res) => {
         const vendors = await Vendor.find({}).sort({ name: 1 });
         res.status(200).json({ success: true, vendors });
     } catch (error) {
-        console.error("Error fetching vendors:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+        safeError("Error fetching vendors:", error);
+        return next(error);
     }
 };
 
 // @desc    Create a vendor
 // @route   POST /api/vendors
 // @access  Private/Admin
-export const createVendor = async (req, res) => {
+export const createVendor = async (req, res, next) => {
     try {
         const Vendor = getLocalVendorModel();
         if (!Vendor) {
@@ -50,15 +51,15 @@ export const createVendor = async (req, res) => {
 
         res.status(201).json({ success: true, vendor: newVendor });
     } catch (error) {
-        console.error("Error creating vendor:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+        safeError("Error creating vendor:", error);
+        return next(error);
     }
 };
 
 // @desc    Update a vendor
 // @route   PUT /api/vendors/:id
 // @access  Private/Admin
-export const updateVendor = async (req, res) => {
+export const updateVendor = async (req, res, next) => {
     try {
         const Vendor = getLocalVendorModel();
         if (!Vendor) {
@@ -89,7 +90,7 @@ export const updateVendor = async (req, res) => {
                 try {
                     await imagekit.files.delete(vendor.imageFileId);
                 } catch (delError) {
-                    console.error("Failed to delete old image from ImageKit:", delError);
+                    safeError("Failed to delete old image from ImageKit:", delError);
                 }
             }
             vendor.image = "";
@@ -102,15 +103,15 @@ export const updateVendor = async (req, res) => {
         const updatedVendor = await vendor.save();
         res.status(200).json({ success: true, vendor: updatedVendor });
     } catch (error) {
-        console.error("Error updating vendor:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+        safeError("Error updating vendor:", error);
+        return next(error);
     }
 };
 
 // @desc    Delete a vendor
 // @route   DELETE /api/vendors/:id
 // @access  Private/Admin
-export const deleteVendor = async (req, res) => {
+export const deleteVendor = async (req, res, next) => {
     try {
         const Vendor = getLocalVendorModel();
         if (!Vendor) {
@@ -127,7 +128,7 @@ export const deleteVendor = async (req, res) => {
             try {
                 await imagekit.files.delete(vendor.imageFileId);
             } catch (delError) {
-                console.error("Failed to delete image from ImageKit:", delError);
+                safeError("Failed to delete image from ImageKit:", delError);
             }
         }
 
@@ -135,13 +136,13 @@ export const deleteVendor = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Vendor deleted successfully" });
     } catch (error) {
-        console.error("Error deleting vendor:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+        safeError("Error deleting vendor:", error);
+        return next(error);
     }
 };
 
 
-export const uploadVendorImage = async (req, res) => {
+export const uploadVendorImage = async (req, res, next) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: "No image provided" });
@@ -153,12 +154,12 @@ export const uploadVendorImage = async (req, res) => {
         });
         res.status(200).json({ success: true, url: uploadResponse.url, fileId: uploadResponse.fileId });
     } catch (error) {
-        console.error("Error uploading vendor image:", error);
+        safeError("Error uploading vendor image:", error);
         res.status(500).json({ success: false, message: "Upload failed" });
     }
 };
 
-export const deleteVendorImage = async (req, res) => {
+export const deleteVendorImage = async (req, res, next) => {
     try {
         const { fileId } = req.params;
         if (!fileId) return res.status(400).json({ success: false, message: "No fileId provided" });
@@ -166,7 +167,7 @@ export const deleteVendorImage = async (req, res) => {
         await imagekit.files.delete(fileId);
         res.status(200).json({ success: true, message: "Image deleted" });
     } catch (error) {
-        console.error("Error deleting vendor image:", error);
+        safeError("Error deleting vendor image:", error);
         res.status(500).json({ success: false, message: "Delete failed" });
     }
 };

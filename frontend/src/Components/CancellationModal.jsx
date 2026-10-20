@@ -1,5 +1,8 @@
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
 import { X, AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Button from "../UI/Button";
 
 const CancellationModal = ({
@@ -10,6 +13,8 @@ const CancellationModal = ({
     description = "Are you sure you want to cancel this order? This action cannot be undone.",
     loading = false,
 }) => {
+    const panelRef = useRef(null);
+    useDialog(isOpen, () => { if (!loading) onClose(); }, panelRef);
     const [reason, setReason] = useState("");
     const [error, setError] = useState("");
 
@@ -30,10 +35,11 @@ const CancellationModal = ({
         onConfirm(reason);
     };
 
-    return (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/40">
+    return createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40">
             <div
-                className="w-full max-w-md bg-white rounded-lg border border-gray-200"
+                ref={panelRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
+                className="max-h-[90dvh] overflow-y-auto w-full max-w-md bg-white rounded-lg border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -51,6 +57,7 @@ const CancellationModal = ({
                     </div>
 
                     <button
+                        aria-label="Close cancellation dialog"
                         onClick={onClose}
                         className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
                     >
@@ -60,11 +67,11 @@ const CancellationModal = ({
 
                 {/* Body */}
                 <div className="px-5 py-4 space-y-3">
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Cancellation reason
-                        </label>
-                        <textarea
+                        </FieldLabel>
+                        <FieldControl as="textarea"
                             value={reason}
                             onChange={(e) => {
                                 setReason(e.target.value);
@@ -76,7 +83,7 @@ const CancellationModal = ({
                         {error && (
                             <p className="text-xs text-red-600">{error}</p>
                         )}
-                    </div>
+                    </FormField>
                 </div>
 
                 {/* Footer */}
@@ -100,7 +107,7 @@ const CancellationModal = ({
                 </div>
             </div>
         </div>
-    );
+    , document.body);
 };
 
 export default CancellationModal;

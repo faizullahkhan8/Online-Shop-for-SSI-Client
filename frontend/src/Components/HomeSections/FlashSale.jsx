@@ -8,7 +8,7 @@ const FlashSale = ({ config, products }) => {
                 <div>
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="block w-5 h-[2px] rounded-full bg-amber-500" />
-                        <span className="font-sans text-[10px] font-black uppercase tracking-[0.18em] text-amber-500 flex items-center gap-1.5">
+                        <span className="font-sans text-xs font-black uppercase tracking-[0.18em] text-amber-500 flex items-center gap-1.5">
                             <Timer size={14} strokeWidth={3} /> {config.subtitle}
                         </span>
                     </div>

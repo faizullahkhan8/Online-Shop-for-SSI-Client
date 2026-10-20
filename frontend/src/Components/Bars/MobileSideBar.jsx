@@ -1,3 +1,6 @@
+import { createPortal } from "react-dom";
+import { useRef } from "react";
+import { useDialog } from "../../hooks/useDialog";
 import {
     X,
     Home,
@@ -29,20 +32,24 @@ const MobileSideBar = ({
     onLoginClick,
 }) => {
     const { user } = useSelector((state) => state.auth);
+    const panelRef = useRef(null);
+    useDialog(isMenuOpen, () => setIsMenuOpen(false), panelRef);
+    if (!isMenuOpen) return null;
 
-    return (
+    return createPortal(
         <>
             {/* Overlay */}
             {isMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300"
+                    data-dialog-backdrop="" aria-hidden="true" className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[1000] md:hidden transition-all duration-300"
+                    aria-label="Close navigation menu"
                     onClick={() => setIsMenuOpen(false)}
                 />
             )}
 
             {/* Sidebar Panel */}
-            <div
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-gray-50 z-[70] md:hidden transform transition-transform duration-400 ease-in-out shadow-2xl flex flex-col ${
+            <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Navigation menu" tabIndex={-1}
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-gray-50 z-[1001] md:hidden transform transition-transform duration-400 ease-in-out shadow-2xl flex flex-col ${
                     isMenuOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
@@ -50,6 +57,7 @@ const MobileSideBar = ({
                 <div className="bg-gradient-to-br from-gray-950 to-primary-dark pt-10 pb-6 px-6 relative overflow-hidden rounded-bl-3xl">
                     <div className="absolute top-0 right-0 p-4">
                         <button
+                            aria-label="Close navigation menu"
                             onClick={() => setIsMenuOpen(false)}
                             className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
                         >
@@ -136,7 +144,7 @@ const MobileSideBar = ({
 
                     {/* Navigation Menu */}
                     <div>
-                        <p className="px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
+                        <p className="px-2 text-xs font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
                             Explore
                         </p>
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -165,7 +173,7 @@ const MobileSideBar = ({
                     </div>
 
                     <div>
-                        <p className="px-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
+                        <p className="px-2 text-xs font-extrabold uppercase tracking-[0.15em] text-gray-400 mb-3">
                             My Account
                         </p>
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -213,13 +221,13 @@ const MobileSideBar = ({
                         </div>
                         <div className="flex gap-2 items-center bg-gray-50 px-2 py-1 rounded-md">
                             <Globe size={12} />
-                            <span className="text-[10px] font-bold">EN</span>
+                            <span className="text-xs font-bold">EN</span>
                         </div>
                     </div>
                 </div>
             </div>
         </>
-    );
+    , document.body);
 };
 
 export default MobileSideBar;
@@ -252,7 +260,7 @@ const NavItem = ({
             {label}
         </span>
         {badge > 0 ? (
-            <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+            <span className="bg-primary text-white text-xs font-black px-2 py-0.5 rounded-full shadow-sm">
                 {badge}
             </span>
         ) : (

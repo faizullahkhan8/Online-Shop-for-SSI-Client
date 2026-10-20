@@ -1,3 +1,4 @@
+import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect } from "react";
 import { useGetAllOrder, useMarkOrderViewed } from "../../api/hooks/orders.api.js";
 import { Eye, Package, Loader2, CreditCard, Truck } from "lucide-react";
@@ -9,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const OrdersList = () => {
     const queryClient = useQueryClient();
     const [orders, setOrders] = useState([]);
-    const { data, isLoading: loading } = useGetAllOrder();
+    const { data, loading: loading, error: queryError } = useGetAllOrder();
     const { markOrderViewed } = useMarkOrderViewed();
     const { socket } = useSocket();
 
@@ -55,6 +56,8 @@ const OrdersList = () => {
         }
     };
 
+    if (queryError) return <QueryError />;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -68,7 +71,7 @@ const OrdersList = () => {
             </header>
 
             {/* Table */}
-            <div className="bg-white rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 overflow-hidden overflow-x-auto">
+            <div role="region" aria-label="Orders table" tabIndex={0} className="bg-white rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 overflow-hidden overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
@@ -78,7 +81,7 @@ const OrdersList = () => {
                             <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200 min-w-[180px]">
                                 Customer
                             </th>
-                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap">
+                            <th className="px-4 py-3.5 text-right text-xs font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap">
                                 Total
                             </th>
                             <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-700 border-b border-gray-200 min-w-[200px]">
@@ -129,8 +132,8 @@ const OrdersList = () => {
                                             {order.recipient?.phone}
                                         </p>
                                     </td>
-                                    <td className="px-4 py-3.5">
-                                        <span className="text-sm font-semibold text-gray-900">
+                                    <td className="px-4 py-3.5 text-right">
+                                        <span className="text-sm font-semibold text-gray-900 whitespace-nowrap tabular-nums">
                                             Rs{" "}
                                             {order.grandTotal?.toLocaleString()}
                                         </span>

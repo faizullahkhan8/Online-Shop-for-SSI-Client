@@ -26,7 +26,7 @@ const TrustBadges = ({ config }) => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-gray-900">{badge.title}</p>
-                            <p className="text-[10px] text-gray-500 mt-0.5">{badge.desc}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{badge.desc}</p>
                         </div>
                     </div>
                 ))}

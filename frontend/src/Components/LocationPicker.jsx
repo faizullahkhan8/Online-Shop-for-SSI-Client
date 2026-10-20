@@ -1,3 +1,5 @@
+import { validPosition } from "../utils/location.js";
+import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -31,11 +33,12 @@ const LocateControl = ({ setPosition }) => {
                     setLocating(false);
                 },
                 (err) => {
-                    console.error("Location access denied", err);
+                    toast.error(err.code === 1 ? "Location permission denied. Select your location on the map." : "Unable to find your location. Select it on the map.");
                     setLocating(false);
-                }
+                }, { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
             );
         } else {
+            toast.error("Location is unavailable. Select your location on the map.");
             setLocating(false);
         }
     };
@@ -52,6 +55,8 @@ const LocateControl = ({ setPosition }) => {
                         e.stopPropagation();
                         handleLocate();
                     }}
+                    disabled={locating}
+                    aria-label="Use my current location"
                     title="Focus on my location"
                 >
                     <Locate size={18} className={locating ? "animate-pulse text-blue-500" : "text-gray-700"} />
@@ -91,31 +96,33 @@ const LocationMarker = ({ position, setPosition }) => {
     );
 };
 
-const LocationPicker = ({ position, setPosition }) => {
+const MapSizeObserver = () => {
+    const map = useMap();
+    useEffect(() => {
+        const container = map.getContainer();
+        const observer = new ResizeObserver(() => {
+            if (container.isConnected && container.clientWidth > 0) map.invalidateSize({ pan: false });
+        });
+        observer.observe(container);
+        return () => observer.disconnect();
+    }, [map]);
+    return null;
+};
+
+const Recenter = ({ position }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (position) map.setView([position.lat, position.lng], Math.max(map.getZoom(), 14));
+    }, [map, position?.lat, position?.lng]);
+    return null;
+};
+
+const LocationPicker = ({ position, setPosition, className = "h-64" }) => {
+    position = validPosition(position);
     const defaultCenter = [33.6844, 73.0479]; // Islamabad as default
 
-    useEffect(() => {
-        if (!position) {
-            // Attempt to get user location
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    },
-                    (err) => {
-                        console.error("Location access denied", err);
-                        // Fallback to default center if geolocation fails so the marker is visible
-                        setPosition({ lat: defaultCenter[0], lng: defaultCenter[1] });
-                    }
-                );
-            } else {
-                setPosition({ lat: defaultCenter[0], lng: defaultCenter[1] });
-            }
-        }
-    }, []);
-
     return (
-        <div className="w-full h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 mt-2 z-0 relative">
+        <div className={`w-full ${className} bg-gray-100 rounded-lg overflow-hidden border border-gray-200 z-0 relative`}>
             <MapContainer
                 center={position ? [position.lat, position.lng] : defaultCenter}
                 zoom={12}
@@ -129,6 +136,8 @@ const LocationPicker = ({ position, setPosition }) => {
                 />
                 <LocationMarker position={position} setPosition={setPosition} />
                 <LocateControl setPosition={setPosition} />
+                <MapSizeObserver />
+                <Recenter position={position} />
             </MapContainer>
         </div>
     );

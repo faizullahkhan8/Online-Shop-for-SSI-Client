@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useEffect, useState } from "react";
 import { useAddUserFromAdmin, useGetAllUsers } from "../../api/hooks/user.api";
 import {
@@ -41,19 +42,19 @@ const AddUserPage = () => {
 
             <form
                 onSubmit={submit}
-                className="bg-white rounded-3xl p-6 border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 space-y-5"
+                className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm transition-colors duration-200 space-y-5"
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Full Name
-                        </label>
+                        </FieldLabel>
                         <div className="relative">
                             <User
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 size={16}
                             />
-                            <input
+                            <FieldControl
                                 required
                                 value={form.name}
                                 onChange={(e) =>
@@ -63,18 +64,18 @@ const AddUserPage = () => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             />
                         </div>
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Email Address
-                        </label>
+                        </FieldLabel>
                         <div className="relative">
                             <Mail
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 size={16}
                             />
-                            <input
+                            <FieldControl
                                 required
                                 type="email"
                                 value={form.email}
@@ -85,18 +86,18 @@ const AddUserPage = () => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             />
                         </div>
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Phone Number
-                        </label>
+                        </FieldLabel>
                         <div className="relative">
                             <Phone
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 size={16}
                             />
-                            <input
+                            <FieldControl
                                 required
                                 type="tel"
                                 value={form.phone}
@@ -107,18 +108,18 @@ const AddUserPage = () => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             />
                         </div>
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Password
-                        </label>
+                        </FieldLabel>
                         <div className="relative">
                             <Lock
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 size={16}
                             />
-                            <input
+                            <FieldControl
                                 required
                                 type="password"
                                 value={form.password}
@@ -132,18 +133,18 @@ const AddUserPage = () => {
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             />
                         </div>
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-gray-700">
+                    <FormField className="space-y-1.5">
+                        <FieldLabel className="text-sm font-medium text-gray-700">
                             Role
-                        </label>
+                        </FieldLabel>
                         <div className="relative">
                             <ShieldCheck
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                                 size={16}
                             />
-                            <select
+                            <FieldControl as="select"
                                 value={form.role}
                                 onChange={(e) =>
                                     setForm({ ...form, role: e.target.value })
@@ -152,9 +153,9 @@ const AddUserPage = () => {
                             >
                                 <option value="user">User</option>
                                 <option value="admin">Admin</option>
-                            </select>
+                            </FieldControl>
                         </div>
-                    </div>
+                    </FormField>
                 </div>
 
                 <div className="pt-2">

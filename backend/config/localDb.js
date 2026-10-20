@@ -1,3 +1,4 @@
+import { safeError } from "../utils/safeLog.js";
 import mongoose from "mongoose";
 import userSchema from "../models/user.model.js";
 import productSchema from "../models/product.model.js";
@@ -14,6 +15,7 @@ import homePageSchema from "../models/homePage.model.js";
 import vendorSchema from "../models/vendor.model.js";
 import staffSchema from "../models/staff.model.js";
 import smsTemplateSchema from "../models/smsTemplate.model.js";
+import smsAttemptSchema from "../models/smsAttempt.model.js";
 
 let connectionPromise = null;
 let localDbConnection = null;
@@ -32,6 +34,7 @@ let localHomePageModel;
 let localVendorModel;
 let localStaffModel;
 let localSmsTemplateModel;
+let localSmsAttemptModel;
 
 export const connectToDB = async () => {
     if (connectionPromise) return connectionPromise;
@@ -81,10 +84,11 @@ export const connectToDB = async () => {
             localVendorModel = localDbConnection.model("Vendor", vendorSchema);
             localStaffModel = localDbConnection.model("Staff", staffSchema);
             localSmsTemplateModel = localDbConnection.model("SmsTemplate", smsTemplateSchema);
+            localSmsAttemptModel = localDbConnection.model("SmsAttempt", smsAttemptSchema);
 
             return localDbConnection;
         } catch (error) {
-            console.log("Database connection error:", error);
+            safeError("Database connection error:", error);
             connectionPromise = null; // Allow retry on next request
             throw error;
         }
@@ -108,3 +112,4 @@ export const getLocalHomePageModel = () => localHomePageModel || null;
 export const getLocalVendorModel = () => localVendorModel || null;
 export const getLocalStaffModel = () => localStaffModel || null;
 export const getLocalSmsTemplateModel = () => localSmsTemplateModel || null;
+export const getLocalSmsAttemptModel = () => localSmsAttemptModel || null;

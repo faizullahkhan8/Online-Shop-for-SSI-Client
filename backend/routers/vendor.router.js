@@ -1,5 +1,5 @@
 import express from "express";
-import multer from "multer";
+import { upload } from "../middlewares/multer.middleware.js";
 import {
     getAllVendors,
     createVendor,
@@ -11,7 +11,6 @@ import {
 import { isAuth, authorize } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
 
 router
     .route("/")

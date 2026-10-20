@@ -1,3 +1,4 @@
+import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect, useCallback } from "react";
 import {
     Zap,
@@ -23,7 +24,7 @@ import { format } from "date-fns";
 
 const PromotionManager = () => {
     const navigate = useNavigate();
-    const { data: promotionsData, isLoading: fetchLoading } = useGetAllPromotions();
+    const { data: promotionsData, loading: fetchLoading, error: queryError } = useGetAllPromotions();
     const { updatePromotion, loading: updateLoading } = useUpdatePromotion();
     const { deletePromotion, loading: deleteLoading } = useDeletePromotion();
 
@@ -69,6 +70,7 @@ const PromotionManager = () => {
     };
 
     if (fetchLoading && promotions.length === 0) {
+
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <Loader2 className="animate-spin text-primary" size={32} />
@@ -79,10 +81,12 @@ const PromotionManager = () => {
         );
     }
 
+    if (queryError) return <QueryError />;
+
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-2 border-transparent shadow-sm rounded-3xl p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-2 border-transparent shadow-sm rounded-2xl p-6">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
                         <Zap size={24} />
@@ -109,7 +113,7 @@ const PromotionManager = () => {
             </div>
 
             {/* Promotions List */}
-            <div className="bg-white border-2 border-transparent shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 rounded-3xl p-6 md:p-8">
+            <div className="bg-white border-2 border-transparent shadow-sm transition-colors duration-200 rounded-2xl p-6 md:p-8">
                 <div className="flex items-center justify-between mb-5 pb-3 border-b border-gray-200">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                         <Calendar size={16} className="text-primary" />
@@ -179,7 +183,7 @@ const PromotionManager = () => {
                                             {promo.title}
                                         </h4>
                                         <span
-                                            className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border ${promo.status === "ACTIVE"
+                                            className={`px-2 py-0.5 rounded text-xs font-black uppercase tracking-widest border ${promo.status === "ACTIVE"
                                                 ? "bg-green-50 text-green-700 border-green-200"
                                                 : promo.status === "SCHEDULED"
                                                     ? "bg-amber-50 text-amber-700 border-amber-200"

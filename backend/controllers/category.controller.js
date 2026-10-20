@@ -1,3 +1,4 @@
+import { safeError } from "../utils/safeLog.js";
 import expressAsyncHandler from "express-async-handler";
 import { getLocalCategoryModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
@@ -82,7 +83,7 @@ export const deleteCategory = expressAsyncHandler(async (req, res, next) => {
         try {
             await deleteImageKitFile(category.imagekitFileId);
         } catch (error) {
-            console.log("Failed to delete category image from ImageKit", error);
+            safeError("Failed to delete category image from ImageKit", error);
         }
     }
 
@@ -126,7 +127,7 @@ export const updateCategory = expressAsyncHandler(async (req, res, next) => {
             try {
                 await deleteImageKitFile(existingCategory.imagekitFileId);
             } catch (error) {
-                console.log("Failed to delete old category image from ImageKit", error);
+                safeError("Failed to delete old category image from ImageKit", error);
             }
         }
         image = req.image.filePath;
@@ -136,7 +137,7 @@ export const updateCategory = expressAsyncHandler(async (req, res, next) => {
             try {
                 await deleteImageKitFile(existingCategory.imagekitFileId);
             } catch (error) {
-                console.log("Failed to delete old category image from ImageKit", error);
+                safeError("Failed to delete old category image from ImageKit", error);
             }
         }
         image = "";

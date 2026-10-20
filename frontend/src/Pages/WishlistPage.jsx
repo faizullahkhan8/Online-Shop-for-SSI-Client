@@ -1,3 +1,4 @@
+import { QueryError } from "../UI/QueryState";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import ProductCard from "../Components/ProductCard";
@@ -7,8 +8,10 @@ import { setWishlist } from "../store/slices/wishlistSlice";
 import { Heart, ArrowLeft, ShoppingBag } from "lucide-react";
 
 const WishlistPage = () => {
-    const { data, isLoading: loading } = useGetWishlist();
+    const { data, loading: loading, error: queryError } = useGetWishlist();
     const items = data?.wishlist || [];
+
+    if (queryError) return <QueryError />;
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">

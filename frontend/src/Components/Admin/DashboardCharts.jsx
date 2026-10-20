@@ -55,9 +55,9 @@ const DashboardCharts = ({ stats }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Area Chart */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
                 <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
-                    Revenue Trends (Last 30 Days)
+                    Collected Revenue by Day
                 </h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -141,10 +141,10 @@ const DashboardCharts = ({ stats }) => {
                 </div>
             </div>
 
-            {/* Category Performance Bar Chart */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+            {/* Category Lifetime Units Sold Bar Chart */}
+            <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
                 <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
-                    Category Performance
+                    Category Lifetime Units Sold
                 </h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +201,7 @@ const DashboardCharts = ({ stats }) => {
             </div>
 
             {/* Order Status Pie Chart */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl border-2 border-transparent hover:border-primary-light shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300 group">
+            <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group">
                 <h3 className="text-xl font-display text-gray-900 mb-6 group-hover:text-primary transition-colors">
                     Order Status Breakdown
                 </h3>
@@ -266,25 +266,21 @@ const DashboardCharts = ({ stats }) => {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 gap-6">
-                <div className="bg-gray-900 p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                        Avg Order Value
+                <div className="bg-gray-900 p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl  transition-all duration-300">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                        Avg Non-Cancelled Order Value
                     </span>
                     <h4 className="text-3xl font-black text-white">
                         Rs{" "}
-                        {stats?.totalOrders > 0
-                            ? (stats?.totalSales / stats?.totalOrders)
-                                  .toFixed(0)
-                                  .toLocaleString()
-                            : 0}
+                        {Math.round(stats?.averageOrderValue || 0).toLocaleString()}
                     </h4>
                 </div>
-                <div className="bg-primary p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 transition-all duration-300">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-primary-light mb-2">
-                        Total Inventory
+                <div className="bg-primary p-6 md:p-8 rounded-3xl flex flex-col justify-center shadow-lg hover:shadow-xl hover:shadow-primary/30  transition-all duration-300">
+                    <span className="text-xs font-black uppercase tracking-widest text-primary-light mb-2">
+                        Catalog Products
                     </span>
                     <h4 className="text-3xl font-black text-white">
-                        {stats?.totalProducts} Units
+                        {stats?.totalProducts} Products
                     </h4>
                 </div>
             </div>

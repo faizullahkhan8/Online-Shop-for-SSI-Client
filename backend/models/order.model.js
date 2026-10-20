@@ -2,6 +2,8 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 const orderSchema = new Schema(
     {
+        checkoutKey: { type: String, select: false },
+        checkoutHash: { type: String, select: false },
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         recipient: {
             name: {
@@ -100,7 +102,11 @@ const orderSchema = new Schema(
             type: String,
             default: "standard",
         },
+        refundDue: { type: Number, default: 0 },
+        refunds: [{ amount: Number, reference: String, recordedBy: { type: Schema.Types.ObjectId, ref: "User" }, recordedAt: Date }],
         payment: {
+            paidAmount: Number,
+            paidAt: Date,
             method: {
                 type: String,
                 required: true,
@@ -137,4 +143,5 @@ const orderSchema = new Schema(
     },
 );
 
+orderSchema.index({ checkoutKey: 1 }, { unique: true, partialFilterExpression: { checkoutKey: { $type: "string" } } });
 export default orderSchema;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 
@@ -21,12 +21,16 @@ export const SOCKET_EVENTS = {
 };
 
 export const SocketProvider = ({ children }) => {
-    const [socket, setSocket] = useState(null);
-    const [isConnected, setIsConnected] = useState(false);
+    const [connection, setConnection] = useState(null);
     const { user } = useSelector((state) => state.auth);
-    const prevUserIdRef = useRef(null);
+    const userId = user?._id;
+    const userRole = user?.role;
+    const socket = connection && connection.userId === userId && connection.userRole === userRole
+        ? connection.socket : null;
+    const isConnected = Boolean(socket?.connected);
 
     useEffect(() => {
+        if (!userId) return;
         // Connect to root namespace via proxy or direct URL
         const backendUrl =
             import.meta.env.VITE_SOCKET_URL ||
@@ -41,52 +45,30 @@ export const SocketProvider = ({ children }) => {
 
         socketInstance.on("connect", () => {
             console.log("[Socket.io] Connected to server successfully (ID:", socketInstance.id, ")");
-            setIsConnected(true);
+            setConnection({ socket: socketInstance, userId, userRole });
 
             // Resilient admin room check
-            if (user?.role === "admin" || user?.role?.toLowerCase() === "admin" || user?.isAdmin) {
+            if (userRole === "admin") {
                 socketInstance.emit(SOCKET_EVENTS.JOIN_ADMIN);
             }
-            if (user?._id) {
-                socketInstance.emit(SOCKET_EVENTS.JOIN_USER, user._id);
-            }
+            socketInstance.emit(SOCKET_EVENTS.JOIN_USER, userId);
         });
 
         socketInstance.on("disconnect", (reason) => {
             console.log("[Socket.io] Disconnected from server:", reason);
-            setIsConnected(false);
+            setConnection((current) => current?.socket === socketInstance ? { ...current } : current);
+            if (reason === "io server disconnect") socketInstance.connect();
         });
 
         socketInstance.on("connect_error", (error) => {
             console.warn("[Socket.io] Connection error:", error.message);
         });
 
-        setSocket(socketInstance);
-
         return () => {
+            socketInstance.removeAllListeners();
             socketInstance.disconnect();
         };
-    }, []);
-
-    // Handle user login / logout / role changes
-    useEffect(() => {
-        if (!socket || !isConnected) return;
-
-        // Leave previous room if user changed/logged out
-        if (prevUserIdRef.current && prevUserIdRef.current !== user?._id) {
-            socket.emit(SOCKET_EVENTS.LEAVE_USER, prevUserIdRef.current);
-        }
-
-        if (user?.role === "admin" || user?.role?.toLowerCase() === "admin" || user?.isAdmin) {
-            socket.emit(SOCKET_EVENTS.JOIN_ADMIN);
-        }
-
-        if (user?._id) {
-            socket.emit(SOCKET_EVENTS.JOIN_USER, user._id);
-        }
-
-        prevUserIdRef.current = user?._id || null;
-    }, [socket, isConnected, user]);
+    }, [userId, userRole]);
 
     const joinAdmin = () => {
         if (socket && socket.connected) {

@@ -1,3 +1,5 @@
+import { securityConfigIssues } from "./utils/securityConfig.js";
+import { safeError } from "./utils/safeLog.js";
 import express from "express";
 import http from "http";
 import dotenv from "dotenv";
@@ -22,7 +24,12 @@ import smsTemplateRouter from "./routers/smsTemplate.router.js";
 import { errorHandler } from "./middlewares/ErrorHandler.js";
 import cookieParser from "cookie-parser";
 import { ErrorResponse } from "./utils/ErrorResponse.js";
+import { safeContentMiddleware } from "./utils/safeHtml.js";
 dotenv.config();
+if (process.env.NODE_ENV === "production") {
+    const issues = securityConfigIssues(process.env);
+    if (issues.length) throw new Error(`Invalid production configuration: ${issues.join("; ")}`);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -31,8 +38,19 @@ const server = http.createServer(app);
 initSocket(server);
 
 app.use("/public", express.static("public"));
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "2mb" }));
+app.use(safeContentMiddleware);
 app.use(cookieParser());
+// CORS alone does not prevent cross-site form submissions with session cookies.
+app.use((req, res, next) => {
+    if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+        const allowed = [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean);
+        if ((req.headers.origin && !allowed.includes(req.headers.origin)) ||
+            (!req.headers.origin && req.headers["sec-fetch-site"] === "cross-site"))
+            return next(new ErrorResponse("Untrusted request origin", 403));
+    }
+    next();
+});
 app.use(
     cors({
         origin: [process.env.FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean),
@@ -74,10 +92,12 @@ app.use(errorHandler);
 
 // Initial connection attempt
 connectToDB().catch((err) =>
-    console.error("Initial DB connection failed:", err),
+    safeError("Initial DB connection failed", err),
 );
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server and Socket.io running on port ${PORT}`);
 });
+
+export { app, server };

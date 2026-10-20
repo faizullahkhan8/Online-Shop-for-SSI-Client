@@ -40,7 +40,7 @@ const PromoBanners = ({ config }) => {
                         {/* Content */}
                         <div className="relative z-10 w-full sm:w-2/3">
                             <span
-                                className="inline-block text-[10px] font-black uppercase tracking-[0.15em] text-white px-3 py-1 rounded-full mb-4 shadow-sm"
+                                className="inline-block text-xs font-black uppercase tracking-[0.15em] text-white px-3 py-1 rounded-full mb-4 shadow-sm"
                                 style={{ background: b.badgeColor || "#4d8d3a" }}
                             >
                                 {b.badge}

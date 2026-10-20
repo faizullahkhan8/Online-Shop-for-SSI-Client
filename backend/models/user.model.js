@@ -21,6 +21,7 @@ const userSchema = new Schema(
         password: {
             type: String,
             required: true,
+            select: false,
         },
         isPhoneVerified: {
             type: Boolean,
@@ -28,10 +29,15 @@ const userSchema = new Schema(
         },
         phoneVerificationOtp: {
             type: String,
+            select: false,
         },
         phoneVerificationExpires: {
             type: Date,
+            select: false,
         },
+        phoneVerificationAttempts: { type: Number, default: 0, select: false },
+        phoneVerificationLastSentAt: { type: Date, select: false },
+        sessionVersion: { type: Number, default: 0 },
         role: {
             type: String,
             enum: ["user", "admin"],
@@ -75,8 +81,22 @@ const userSchema = new Schema(
     }
 );
 
+// Also protect newly created documents and explicitly selected auth fields.
+const hideAuthenticationFields = (_document, value) => {
+    delete value.password;
+    delete value.phoneVerificationOtp;
+    delete value.phoneVerificationExpires;
+    delete value.phoneVerificationAttempts;
+    delete value.phoneVerificationLastSentAt;
+    delete value.sessionVersion;
+    return value;
+};
+userSchema.set("toJSON", { transform: hideAuthenticationFields });
+userSchema.set("toObject", { transform: hideAuthenticationFields });
+
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
+    if (!this.isNew) this.sessionVersion = (this.sessionVersion || 0) + 1;
 
     try {
         const salt = await bcrypt.genSalt(10);

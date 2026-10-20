@@ -40,13 +40,13 @@ const MobileBottomNav = () => {
                             >
                                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                                 {item.badge > 0 && (
-                                    <span className="absolute top-0 right-1 w-4 h-4 bg-[#74AA34] text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                    <span className="absolute top-0 right-1 w-4 h-4 bg-[#74AA34] text-white text-xs font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
                                         {item.badge}
                                     </span>
                                 )}
                             </div>
                             <span
-                                className={`text-[9px] font-bold mt-1 transition-all duration-300 ${
+                                className={`text-xs font-bold mt-1 transition-all duration-300 ${
                                     isActive ? "text-[#1E5128] opacity-100" : "text-gray-400 opacity-90"
                                 }`}
                             >

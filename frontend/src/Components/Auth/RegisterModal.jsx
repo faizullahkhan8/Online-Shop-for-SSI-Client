@@ -1,20 +1,25 @@
-import { useState, useEffect } from "react";
+import { useAddressLookup } from "../../hooks/useAddressLookup.js";
+import { addressFields } from "../../utils/location.js";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
+import { createPortal } from "react-dom";
+import { useDialog } from "../../hooks/useDialog";
+import { useState, useRef } from "react";
 import { X, User, Phone, Mail, MapPin, Loader2, ChevronRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/slices/authSlice.js";
-import { useRegisterUser, useVerifyPhone, useResendOTP } from "../../api/hooks/user.api";
+import { useRegisterUser, useVerifyPhone, useResendOTP, useUpdateUser } from "../../api/hooks/user.api";
 import { toast } from "react-toastify";
 import LocationPicker from "../LocationPicker.jsx";
-import { useNavigate } from "react-router-dom";
 
 const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
+    const panelRef = useRef(null);
+    useDialog(isOpen, onClose, panelRef);
     const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { registerUser } = useRegisterUser();
+    const { registerUser, loading: registering } = useRegisterUser();
 
     // Steps: 1 = Details, 2 = OTP, 3 = Address
-    const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState(initialUserId ? 2 : 1);
+    const [deliveryMessage, setDeliveryMessage] = useState("");
 
     // Form State
     const [name, setName] = useState("");
@@ -23,63 +28,19 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [otp, setOtp] = useState(["", "", "", "", "", ""]); // 6 digits for OTP
-    const [userId, setUserId] = useState(null);
+    const [userId, setUserId] = useState(initialUserId || null);
     
     // Address State
     const [addressText, setAddressText] = useState("");
     const [mapPosition, setMapPosition] = useState(null);
-    const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+    const [registrationAddress, setRegistrationAddress] = useState({});
+    const { updateUser, loading: savingAddress } = useUpdateUser();
+    const isFetchingAddress = useAddressLookup({ position: mapPosition, text: addressText, onPosition: setMapPosition,
+        onAddress: data => { setAddressText(data.display_name); setRegistrationAddress(addressFields(data)); } });
 
-    // Reset state when modal opens/closes
-    useEffect(() => {
-        if (isOpen) {
-            if (initialUserId) {
-                setUserId(initialUserId);
-                setStep(2); // Jump directly to OTP if we have a pending unverified user
-            } else {
-                setStep(1);
-                setUserId(null);
-            }
-            setName("");
-            setPhone("");
-            setEmail("");
-            setPassword("");
-            setConfirmPassword("");
-            setOtp(["", "", "", "", "", ""]);
-            setAddressText("");
-            setMapPosition(null);
-        }
-    }, [isOpen, initialUserId]);
-
-    // Reverse Geocoding for Address Step
-    useEffect(() => {
-        const fetchAddress = async () => {
-            if (!mapPosition) return;
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPosition.lat}&lon=${mapPosition.lng}`
-                );
-                const data = await response.json();
-                if (data && data.display_name) {
-                    setAddressText(data.display_name);
-                }
-            } catch (error) {
-                console.error("Error fetching address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchAddress();
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [mapPosition]);
-
-    const { verifyPhone } = useVerifyPhone();
-    const { resendOTP } = useResendOTP();
+    const { verifyPhone, loading: verifying } = useVerifyPhone();
+    const { resendOTP, loading: resending } = useResendOTP();
+    const loading = registering || verifying || resending || savingAddress;
 
     const handleSendOTP = async (e) => {
         e.preventDefault();
@@ -104,13 +65,15 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
 
         if (response?.success && response.userId) {
             setUserId(response.userId);
+            setDeliveryMessage(response.message);
             setStep(2);
         }
     };
 
     const handleResendOTP = async () => {
         if (!userId) return;
-        await resendOTP({ userId });
+        const response = await resendOTP({ userId });
+        setDeliveryMessage(response?.smsSent ? "A new code was sent to your phone." : "The SMS could not be sent. Please try again later.");
     };
 
     const handleVerifyOTP = async (e) => {
@@ -130,8 +93,11 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
     };
 
     const handleCompleteRegistration = async () => {
-        // Here we could hit a profile update API if we want to save the address immediately
-        onClose();
+        if (!addressText.trim()) { toast.error("Please enter your address."); return; }
+        const data = new FormData();
+        data.append("data", JSON.stringify({ addresses: [{ ...registrationAddress, street: addressText, ...(mapPosition || {}) }] }));
+        const result = await updateUser({ userId, user: data });
+        if (result?.success) { dispatch(loginSuccess(result.user)); onClose(); }
     };
 
     const handleOtpChange = (index, value) => {
@@ -156,15 +122,16 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
+    return createPortal(
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 sm:p-6">
+            <div data-dialog-backdrop="" aria-hidden="true" className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
             
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Create account" tabIndex={-1} className="max-h-[90dvh] overflow-y-auto relative bg-white rounded-3xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-300">
                 {/* Close Button */}
                 <button 
+                    aria-label="Close create account"
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center transition-colors z-10 cursor-pointer"
+                    className="absolute top-4 right-4 w-11 h-11 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center transition-colors z-10 cursor-pointer"
                 >
                     <X size={18} />
                 </button>
@@ -180,7 +147,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             {step === 1 ? "Create Account" : step === 2 ? "Verify Phone" : "Delivery Address"}
                         </h2>
                         <p className="text-gray-500 text-sm font-bold mt-2">
-                            {step === 1 ? "Join us and start shopping for healthcare essentials." : step === 2 ? `We sent a code to ${phone}` : "Set your default delivery location."}
+                            {step === 1 ? "Join us and start shopping for healthcare essentials." : step === 2 ? (deliveryMessage || "Enter a verification code, or request a new code below.") : "Set your default delivery location."}
                         </p>
                     </div>
 
@@ -188,10 +155,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                     {step === 1 && (
                         <form onSubmit={handleSendOTP} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name *</label>
+                                <label htmlFor="registermodal-field-1" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name *</label>
                                 <div className="relative">
                                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
+                                    <input id="registermodal-field-1"
                                         type="text"
                                         required
                                         placeholder="Enter your name"
@@ -204,10 +171,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone Number *</label>
+                                <label htmlFor="registermodal-field-2" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone Number *</label>
                                 <div className="relative">
                                     <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
+                                    <input id="registermodal-field-2"
                                         type="tel"
                                         required
                                         placeholder="03XX-XXXXXXX"
@@ -220,12 +187,12 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
+                                <label htmlFor="registermodal-field-3" className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
                                     Email Address <span className="text-gray-400 font-medium lowercase">(Optional)</span>
                                 </label>
                                 <div className="relative">
                                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
+                                    <input id="registermodal-field-3"
                                         type="email"
                                         placeholder="name@example.com"
                                         className="w-full h-12 pl-11 pr-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -237,10 +204,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password *</label>
+                                <label htmlFor="registermodal-field-4" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password *</label>
                                 <div className="relative">
                                     <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
+                                    <input id="registermodal-field-4"
                                         type="password"
                                         required
                                         placeholder="Create a password"
@@ -253,10 +220,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm Password *</label>
+                                <label htmlFor="registermodal-field-5" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Confirm Password *</label>
                                 <div className="relative">
                                     <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
+                                    <input id="registermodal-field-5"
                                         type="password"
                                         required
                                         placeholder="Confirm your password"
@@ -306,6 +273,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                 {otp.map((digit, idx) => (
                                     <input
                                         key={idx}
+                                        aria-label={`Verification digit ${idx + 1}`}
                                         id={`otp-${idx}`}
                                         type="text"
                                         maxLength={1}
@@ -341,10 +309,10 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                             <div className="text-center mt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setStep(1)}
+                                    onClick={onSwitchToLogin}
                                     className="text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
                                 >
-                                    Wrong phone number? Go back
+                                    Return to login
                                 </button>
                             </div>
                         </form>
@@ -354,7 +322,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                     {step === 3 && (
                         <div className="space-y-4">
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
+                                <label htmlFor="registermodal-field-6" className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
                                     <span>Pin Exact Location</span>
                                 </label>
                                 <div className="rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm h-[180px] relative z-0">
@@ -362,18 +330,18 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                            <FormField id="registermodal-field-6" className="flex flex-col gap-2">
+                                <FieldLabel className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
                                     <MapPin size={14} className="text-primary" /> Delivery Address
                                     {isFetchingAddress && <Loader2 size={12} className="animate-spin text-primary ml-auto" />}
-                                </label>
-                                <textarea 
+                                </FieldLabel>
+                                <FieldControl as="textarea" id="registermodal-field-6"
                                     value={addressText}
                                     onChange={(e) => setAddressText(e.target.value)}
                                     placeholder="Building, Street, Area..."
                                     className="bg-gray-50 border-2 border-gray-100 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all w-full resize-none h-20"
                                 />
-                            </div>
+                            </FormField>
 
                             <button
                                 onClick={handleCompleteRegistration}
@@ -390,7 +358,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin, initialUserId }) => {
                 </div>
             </div>
         </div>
-    );
+    , document.body);
 };
 
 export default RegisterModal;

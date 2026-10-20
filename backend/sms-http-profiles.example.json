@@ -1,0 +1,26 @@
+[
+  {
+    "id": "http_example_json",
+    "label": "Your JSON SMS provider",
+    "url": "https://sms-provider.example/v1/messages",
+    "encoding": "json",
+    "auth": { "type": "bearer", "field": "apiToken" },
+    "fields": [
+      { "key": "apiToken", "label": "API token", "secret": true },
+      { "key": "sender", "label": "Sender ID" }
+    ],
+    "body": { "recipient": "{{phone}}", "message": "{{message}}", "sender": "{{field.sender}}" },
+    "response": { "successPath": "success", "successValues": [true], "failurePath": "success", "failureValues": [false], "messageIdPath": "data.id" }
+  },
+  {
+    "id": "http_example_form",
+    "label": "Your form SMS provider",
+    "url": "https://sms-provider.example/api/send",
+    "encoding": "form",
+    "phoneFormat": "international_digits",
+    "auth": { "type": "header", "header": "X-API-Key", "field": "apiKey" },
+    "fields": [ { "key": "apiKey", "label": "API key", "secret": true } ],
+    "body": { "to": "{{phone}}", "text": "{{message}}" },
+    "response": { "successPath": "status", "successValues": ["ok"], "failurePath": "status", "failureValues": ["error"], "messageIdPath": "messageId" }
+  }
+]

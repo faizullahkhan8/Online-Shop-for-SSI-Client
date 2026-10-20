@@ -1,4 +1,7 @@
 import { Server } from "socket.io";
+import cookieParser from "cookie-parser";
+import { connectToDB, getLocalUserModel } from "./localDb.js";
+import { verifyToken } from "../utils/jwt.js";
 
 let io = null;
 
@@ -43,32 +46,86 @@ export const initSocket = (httpServer) => {
         pingInterval: 25000,
     });
 
+    const parseCookies = cookieParser();
+    io.use((socket, next) => {
+        parseCookies(socket.request, {}, async (error) => {
+            if (error) return next(new Error("Authentication required"));
+            try {
+                await connectToDB();
+                const cookies = socket.request.cookies || {};
+                let identity;
+                for (const [token, secret] of [
+                    [cookies.accessToken, process.env.JWT_ACCESS_SECRET],
+                    [cookies.refreshToken, process.env.JWT_REFRESH_SECRET],
+                ]) {
+                    if (!token) continue;
+                    try {
+                        identity = verifyToken(token, secret);
+                        break;
+                    } catch {
+                        // A valid refresh cookie may outlive the access cookie.
+                    }
+                }
+                if (!identity?.id || !identity.exp) {
+                    return next(new Error("Authentication required"));
+                }
+                const user = await getLocalUserModel().findById(identity.id);
+                if (!user || identity.version !== (user.sessionVersion || 0)) return next(new Error("Authentication required"));
+                socket.data.userId = String(user._id);
+                socket.data.role = user.role;
+                socket.data.expiresAt = identity.exp * 1000;
+                next();
+            } catch {
+                next(new Error("Authentication required"));
+            }
+        });
+    });
+
     io.on("connection", (socket) => {
+        const userId = socket.data.userId;
+        socket.join(SOCKET_ROOMS.getUserRoom(userId));
+        if (socket.data.role === "admin") socket.join(SOCKET_ROOMS.ADMIN);
+
+        const expiryTimer = setTimeout(() => socket.disconnect(true),
+            Math.max(0, socket.data.expiresAt - Date.now()));
+        expiryTimer.unref?.();
+        const respond = (ack, success) => {
+            if (typeof ack === "function") ack({ success });
+        };
         // Handle joining the admin notification room
-        socket.on(SOCKET_EVENTS.JOIN_ADMIN, () => {
+        socket.on(SOCKET_EVENTS.JOIN_ADMIN, (ack) => {
+            if (socket.data.role !== "admin") return respond(ack, false);
             socket.join(SOCKET_ROOMS.ADMIN);
+            respond(ack, true);
         });
 
         // Handle joining a specific customer/user room
-        socket.on(SOCKET_EVENTS.JOIN_USER, (userId) => {
-            if (userId) {
+        socket.on(SOCKET_EVENTS.JOIN_USER, (requestedUserId, ack) => {
+            if (requestedUserId === userId) {
                 socket.join(SOCKET_ROOMS.getUserRoom(userId));
+                return respond(ack, true);
             }
+            respond(ack, false);
         });
 
         // Handle leaving a user room (e.g. on logout)
-        socket.on(SOCKET_EVENTS.LEAVE_USER, (userId) => {
-            if (userId) {
+        socket.on(SOCKET_EVENTS.LEAVE_USER, (requestedUserId) => {
+            if (requestedUserId === userId) {
                 socket.leave(SOCKET_ROOMS.getUserRoom(userId));
             }
         });
 
         socket.on("disconnect", () => {
+            clearTimeout(expiryTimer);
             // Socket automatically leaves rooms upon disconnect
         });
     });
 
     return io;
+};
+
+export const disconnectUserSockets = (userId) => {
+    io?.in(SOCKET_ROOMS.getUserRoom(String(userId))).disconnectSockets(true);
 };
 
 /**

@@ -1,13 +1,21 @@
 import ImageKit from "@imagekit/nodejs";
+import { ErrorResponse } from "../utils/ErrorResponse.js";
 
-const IMAGEKIT_PUBLIC_KEY = process.env.IMAGEKIT_PUBLIC_KEY || "public_GdhNZH35X8WEuptKt1UG526PkyU=";
-const IMAGEKIT_PRIVATE_KEY = process.env.IMAGEKIT_PRIVATE_KEY || "private_pOFQ9fL4tl/UhE2ppOjLKA7zw1w=";
-const IMAGEKIT_URL_ENDPOINT = process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/letsconnekt/online-shop";
+let client;
+// Initialize on first use so optional image configuration cannot stop checkout/auth.
+export function getImageKit() {
+    if (!client) {
+        const { IMAGEKIT_PUBLIC_KEY: publicKey, IMAGEKIT_PRIVATE_KEY: privateKey, IMAGEKIT_URL_ENDPOINT: urlEndpoint } = process.env;
+        if (!publicKey || !privateKey || !urlEndpoint) {
+            throw new ErrorResponse("Image uploads require ImageKit environment configuration.", 503);
+        }
+        client = new ImageKit({ publicKey, privateKey, urlEndpoint });
+    }
+    return client;
+}
 
-const imagekit = new ImageKit({
-  publicKey: IMAGEKIT_PUBLIC_KEY,
-  privateKey: IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: IMAGEKIT_URL_ENDPOINT
-});
-
-export default imagekit;
+export default {
+    get files() {
+        return getImageKit().files;
+    },
+};

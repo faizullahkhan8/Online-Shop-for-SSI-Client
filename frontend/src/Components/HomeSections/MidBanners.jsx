@@ -28,7 +28,7 @@ const MidBanners = ({ config }) => {
                         )}
 
                         <div className="relative z-10 w-full sm:w-2/3">
-                            <span className="inline-block text-[10px] font-black uppercase tracking-[0.15em] bg-white/15 border border-white/20 px-3 py-1 rounded-full mb-4 shadow-sm"
+                            <span className="inline-block text-xs font-black uppercase tracking-[0.15em] bg-white/15 border border-white/20 px-3 py-1 rounded-full mb-4 shadow-sm"
                                 style={{ color: b.badgeColor || '#fff' }}>
                                 {b.badge}
                             </span>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     useGetOrderById,
@@ -7,6 +7,7 @@ import {
     useDeleteOrder,
     useCancelOrderItem,
     useCancelOrder,
+    useRecordRefund,
 } from "../../api/hooks/orders.api.js";
 import {
     ArrowLeft,
@@ -27,7 +28,7 @@ const OrderDetails = () => {
     const orderId = id;
     const navigate = useNavigate();
 
-    const { data: orderData, isLoading: loading } = useGetOrderById(orderId);
+    const { data: orderData, loading, error } = useGetOrderById(orderId);
     const order = orderData?.order || null;
 
     const { cancelOrder, loading: cancelOrderLoading } = useCancelOrder();
@@ -37,6 +38,9 @@ const OrderDetails = () => {
     const { deleteOrder } = useDeleteOrder();
     const { cancelOrderItem, loading: cancelLoading } = useCancelOrderItem();
 
+    const { recordRefund, loading: refundLoading } = useRecordRefund();
+    const [refundReference, setRefundReference] = useState("");
+    const [refundAmount, setRefundAmount] = useState("");
     const [orderCancelModal, setOrderCancelModal] = useState(false);
 
     const [cancelModal, setCancelModal] = useState({
@@ -80,7 +84,7 @@ const OrderDetails = () => {
 
 
 
-    if (!order || loading) {
+    if (loading) {
         return (
             <div className="h-[60vh] flex flex-col items-center justify-center">
                 <Loader2
@@ -94,10 +98,15 @@ const OrderDetails = () => {
         );
     }
 
+    if (error || !order) {
+        return <p role="alert" className="p-6 text-red-700">Unable to load this order. Return to the orders list and try again.</p>;
+    }
+
     const itemsSubtotal = order.items.reduce((sum, item) => {
         if (item.status === "cancelled") return sum;
         return sum + (item.totalAmount || item.quantity * item.price);
     }, 0);
+    const refundOutstanding = Math.max(0, Math.round(((order.refundDue || 0) - (order.refunds || []).reduce((sum, item) => sum + item.amount, 0)) * 100) / 100);
     const taxAmount = Number(order.taxAmount) || 0;
     const shippingFee = Number(order.shippingFee) || 0;
 
@@ -121,8 +130,8 @@ const OrderDetails = () => {
             {/* seperate item cancellation */}
             <CancellationModal
                 isOpen={cancelModal.isOpen}
-                onClose={handleOpenOrderCancelModal}
-                onConfirm={handleConfirmItemCancel}
+                onClose={() => setCancelModal({ isOpen: false, itemId: null })}
+                onConfirm={handleCancelItemConfirm}
                 loading={cancelLoading}
                 title="Cancel Item"
                 description="Are you sure you want to cancel this item? Stock will be restored and the order total will be adjusted."
@@ -140,7 +149,7 @@ const OrderDetails = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <button
+                    <button aria-label="Go back"
                         onClick={() => navigate(-1)}
                         className="p-2.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                     >
@@ -182,7 +191,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {!order.payment?.ispaid && (
+                    {!order.payment?.ispaid && order.status !== "cancelled" && (
                         <button
                             onClick={handlePaymentVerify}
                             disabled={paymentLoading}
@@ -227,7 +236,7 @@ const OrderDetails = () => {
                             </span>
                         </div>
 
-                        <div className="overflow-x-auto">
+                        <div role="region" aria-label="OrderDetails table" tabIndex={0} className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50">
                                     <tr>
@@ -384,11 +393,7 @@ const OrderDetails = () => {
                                         Update Order Status
                                     </p>
                                     <div className="flex flex-wrap gap-2">
-                                        {[
-                                            "pending",
-                                            "shipped",
-                                            "delivered",
-                                        ].map((status) => (
+                                        {[order.status, ...({ pending: ["shipped"], shipped: ["delivered"] }[order.status] || [])].map((status) => (
                                             <button
                                                 disabled={Boolean(
                                                     order.status ===
@@ -490,6 +495,24 @@ const OrderDetails = () => {
                             </p>
                         </div>
                     </section>
+
+                    {(order.refundDue > 0) && (
+                        <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                            <h3 className="text-sm font-semibold">Refund records</h3>
+                            <p className="text-sm my-2">Outstanding: Rs. {refundOutstanding.toFixed(2)}</p>
+                            {(order.refunds || []).map(refund => <p key={refund._id} className="text-xs mb-2">Rs. {refund.amount.toFixed(2)} — {refund.reference}</p>)}
+                            {refundOutstanding > 0 && <form className="space-y-3" onSubmit={async event => {
+                                event.preventDefault();
+                                const result = await recordRefund({ orderId, amount: Number(refundAmount), reference: refundReference });
+                                if (result?.success) { setRefundAmount(""); setRefundReference(""); }
+                            }}>
+                                <p className="text-xs text-gray-600">Record a refund after completing it through your payment provider. This form does not transfer money.</p>
+                                <label className="block text-sm">Amount (Rs.)<input required type="number" min="0.01" step="0.01" max={refundOutstanding} value={refundAmount} onChange={event => setRefundAmount(event.target.value)} className="block w-full border rounded p-2 mt-1" /></label>
+                                <label className="block text-sm">Transaction reference<input required maxLength={200} value={refundReference} onChange={event => setRefundReference(event.target.value)} className="block w-full border rounded p-2 mt-1" /></label>
+                                <button disabled={refundLoading} className="bg-primary text-white rounded px-3 py-2 text-sm disabled:opacity-50">{refundLoading ? "Recording…" : "Record completed refund"}</button>
+                            </form>}
+                        </section>
+                    )}
 
                     {/* Shipping Info */}
                     <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">

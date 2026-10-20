@@ -12,8 +12,8 @@ const VARIANTS = {
 };
 
 const SIZES = {
-    sm: "h-8 px-3 text-sm",
-    md: "h-10 px-4 text-sm",
+    sm: "h-10 px-3 text-sm",
+    md: "h-11 px-4 text-sm",
     lg: "h-12 px-6 text-base",
 };
 
@@ -31,11 +31,12 @@ const Button = ({
     return (
         <button
             type={type}
+            aria-busy={loading || undefined}
             disabled={disabled || loading}
             onClick={onClick}
             className={clsx(
                 "inline-flex items-center justify-center gap-2 cursor-pointer",
-                "rounded-md font-medium transition-all",
+                "rounded-xl font-semibold transition-colors",
                 "focus:outline-none focus:ring-2 focus:ring-offset-1",
                 VARIANTS[variant],
                 SIZES[size],

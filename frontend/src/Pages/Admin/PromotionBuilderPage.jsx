@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { QueryLoading } from "../../UI/QueryState";
+import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
+import { useState } from "react";
 import {
     Zap,
     Settings,
@@ -18,17 +20,29 @@ import Input from "../../UI/Input";
 import Select from "../../UI/Select";
 
 const PromotionBuilder = () => {
+    const [searchParams] = useSearchParams();
+    const editId = searchParams.get("id");
+    const { data, loading, error } = useGetPromotionById(editId);
+    if (loading) return <QueryLoading label="Loading promotion..." />;
+    if (error || (editId && !data?.promotion)) return <p role="alert">Could not load this promotion. Please refresh to try again.</p>;
+    return <PromotionForm key={editId || "new"} promotion={data?.promotion} />;
+};
+
+const PromotionForm = ({ promotion }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const editId = searchParams.get("id");
 
     const { addPromotion, loading: addLoading } = useAddPromotion();
     const { updatePromotion, loading: updateLoading } = useUpdatePromotion();
-    const { getPromotionById, loading: fetchLoading } = useGetPromotionById();
 
-    const loading = addLoading || updateLoading || (editId && fetchLoading);
+    const loading = addLoading || updateLoading;
 
-    const [promotionData, setPromotionData] = useState({
+    const [promotionData, setPromotionData] = useState(() => promotion ? {
+        title: promotion.title, type: promotion.type, discountType: promotion.discountType,
+        discountValue: promotion.discountValue, startTime: new Date(promotion.startTime).toISOString().slice(0, 16),
+        endTime: new Date(promotion.endTime).toISOString().slice(0, 16),
+    } : {
         title: "",
         type: "FLASH_DEAL",
         discountType: "PERCENTAGE",
@@ -37,31 +51,8 @@ const PromotionBuilder = () => {
         endTime: "",
     });
 
-    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState(promotion?.products || []);
     const [errors, setErrors] = useState({});
-
-    // Fetch existing promotion if editing
-    useEffect(() => {
-        if (editId) {
-            const loadPromotion = async () => {
-                const data = await getPromotionById(editId);
-                if (data && data.promotion) {
-                    const p = data.promotion;
-                    setPromotionData({
-                        title: p.title,
-                        type: p.type,
-                        discountType: p.discountType,
-                        discountValue: p.discountValue,
-                        startTime: new Date(p.startTime).toISOString().slice(0, 16),
-                        endTime: new Date(p.endTime).toISOString().slice(0, 16),
-                    });
-                    setSelectedProducts(p.products);
-                }
-            };
-            loadPromotion();
-        }
-    }, [editId, getPromotionById]);
-
 
 
     const handleDataChange = (name, value) => {
@@ -84,7 +75,7 @@ const PromotionBuilder = () => {
         } else {
             setSelectedProducts((prev) => [...prev, product]);
         }
-        setNoProductFound(false);
+        setErrors((previous) => ({ ...previous, products: undefined }));
     };
 
     const validateEndTime = (endTime) => {
@@ -222,12 +213,12 @@ const PromotionBuilder = () => {
                                 />
                             </div>
 
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            <FormField className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <FieldLabel className="text-sm font-medium text-gray-700 mb-2 block">
                                     Discount Value
-                                </label>
+                                </FieldLabel>
                                 <div className="flex items-center gap-2">
-                                    <input
+                                    <FieldControl
                                         type="number"
                                         value={promotionData.discountValue}
                                         onChange={(e) =>
@@ -251,7 +242,7 @@ const PromotionBuilder = () => {
                                         {errors.discountValue}
                                     </p>
                                 )}
-                            </div>
+                            </FormField>
                         </div>
                     </section>
 
@@ -262,11 +253,11 @@ const PromotionBuilder = () => {
                         </h3>
 
                         <div className="space-y-3">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-400">
+                            <FormField className="space-y-1.5">
+                                <FieldLabel className="text-sm font-medium text-gray-400">
                                     Start Time
-                                </label>
-                                <input
+                                </FieldLabel>
+                                <FieldControl
                                     type="datetime-local"
                                     value={promotionData.startTime}
                                     onChange={(e) =>
@@ -277,13 +268,13 @@ const PromotionBuilder = () => {
                                 {errors.startTime && (
                                     <p className="text-xs text-red-400">{errors.startTime}</p>
                                 )}
-                            </div>
+                            </FormField>
 
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-400">
+                            <FormField className="space-y-1.5">
+                                <FieldLabel className="text-sm font-medium text-gray-400">
                                     End Time
-                                </label>
-                                <input
+                                </FieldLabel>
+                                <FieldControl
                                     type="datetime-local"
                                     value={promotionData.endTime}
                                     onChange={(e) =>
@@ -294,7 +285,7 @@ const PromotionBuilder = () => {
                                 {errors.endTime && (
                                     <p className="text-xs text-red-400">{errors.endTime}</p>
                                 )}
-                            </div>
+                            </FormField>
                         </div>
                     </section>
                 </div>
@@ -360,6 +351,7 @@ const PromotionBuilder = () => {
                                         </div>
                                         <button
                                             type="button"
+                                            aria-label={`Remove ${p.name} from promotion`}
                                             onClick={() => toggleProduct(p)}
                                             className="w-6 h-6 shrink-0 rounded flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
                                         >

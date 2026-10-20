@@ -46,18 +46,18 @@ export const isAuth = expressAsyncHandler(async (req, res, next) => {
 
     const user = await UserModel.findById(decode.id);
 
-    if (!user) {
-        return next(new ErrorResponse("User not found", 404));
+    if (!user || decode.version !== (user.sessionVersion || 0)) {
+        return next(new ErrorResponse("Session expired. Login again", 401));
     }
 
     if (!accessDecode && refreshDecode) {
         const newAcessToken = generateToken(
             user,
-            "1d",
+            "15m",
             process.env.JWT_ACCESS_SECRET,
         );
 
-        setCookie(res, newAcessToken, 1000 * 60 * 60 * 24, "accessToken");
+        setCookie(res, newAcessToken, 900000, "accessToken");
     }
 
     req.user = user;
@@ -102,7 +102,7 @@ export const optionalAuth = expressAsyncHandler(async (req, res, next) => {
 
     const user = await UserModel.findById(decode.id);
 
-    if (user) {
+    if (user && decode.version === (user.sessionVersion || 0)) {
         req.user = user;
     }
 
@@ -117,3 +117,10 @@ export const authorize = (role = []) =>
         }
         return next();
     });
+
+export const authorizeUserAccess = (req, res, next) => {
+    if (req.user?.role === "admin" || String(req.user?._id) === req.params.id) {
+        return next();
+    }
+    return next(new ErrorResponse("Not authorized to access this account", 403));
+};

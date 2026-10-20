@@ -1,13 +1,13 @@
 import { Star, Heart, ShoppingCart, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
-import { toggleWishlist } from "../store/slices/wishlistSlice";
 import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const ProductCard = ({ product }) => {
+    const dispatch = useDispatch();
     const { data } = useGetWishlist();
     const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
@@ -73,8 +73,8 @@ const ProductCard = ({ product }) => {
         }
     }
 
-    const ratingVal = Number(product?.rating || 5);
-    const roundedRating = Math.min(5, Math.max(1, Math.round(ratingVal)));
+    const ratingVal = Number(product?.averageRating || 0);
+    const hasRating = Number(product?.reviewCount) > 0 && ratingVal > 0;
 
     const imageSrc = getImageUrl(product?.image);
 
@@ -86,28 +86,30 @@ const ProductCard = ({ product }) => {
     };
 
     return (
-        <div className="group relative flex flex-col h-full bg-white rounded-3xl border-2 border-transparent hover:border-primary-light p-3 shadow-sm hover:shadow-xl hover:shadow-primary-pale/40 transition-all duration-300">
+        <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-gray-200 hover:border-primary p-3 shadow-sm hover:shadow-md transition-all duration-300">
             {/* Top Image Box */}
             <div className={`relative aspect-square w-full bg-gray-50/80 rounded-2xl overflow-hidden mb-4 flex items-center justify-center transition-colors duration-300 ${!isOutOfStock ? "group-hover:bg-primary-pale/30" : "opacity-80"}`}>
                 {/* Out of Stock Overlay */}
                 {isOutOfStock && (
                     <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
-                        <span className="bg-red-500 text-white font-black text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm border border-white">
+                        <span className="bg-red-500 text-white font-black text-xs uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm border border-white">
                             Out of Stock
                         </span>
                     </div>
                 )}
                 {/* Discount Badge */}
                 {isDiscounted && (
-                    <div className="absolute top-3 left-3 z-10 bg-amber-400 text-amber-900 font-black text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg shadow-sm">
+                    <div className="absolute top-3 left-3 z-10 bg-amber-400 text-amber-900 font-black text-xs uppercase tracking-wider px-2 py-1 rounded-lg shadow-sm">
                         {discountBadgeText}
                     </div>
                 )}
 
                 {/* Wishlist Button */}
                 <button
+                    aria-label={`${isInWishlist ? "Remove" : "Save"} ${product?.name || "product"} ${isInWishlist ? "from" : "to"} wishlist`}
+                    aria-pressed={isInWishlist}
                     onClick={handleWishlist}
-                    className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                    className="absolute top-3 right-3 z-30 w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer"
                 >
                     <Heart
                         size={16}
@@ -132,21 +134,21 @@ const ProductCard = ({ product }) => {
             <div className="flex flex-col flex-1 px-1.5 pb-1">
                 {/* Brand & Rating Line */}
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate pr-2 group-hover:text-primary transition-colors">
+                    <span className="text-xs font-medium text-gray-600 truncate pr-2 group-hover:text-primary transition-colors">
                         {getBrandOrCategory()}
                     </span>
-                    <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                    {hasRating ? <div aria-label={`${ratingVal.toFixed(1)} out of 5 from ${product.reviewCount} reviews`} className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-md">
                         <Star size={10} className="text-amber-400 fill-amber-400" />
-                        <span className="text-[10px] font-black text-amber-600">
-                            {roundedRating}.0
+                        <span className="text-xs font-black text-amber-600">
+                            {ratingVal.toFixed(1)}
                         </span>
-                    </div>
+                    </div> : <span className="text-xs text-gray-500 whitespace-nowrap">No reviews</span>}
                 </div>
 
                 {/* Product Title */}
                 <Link
                     to={`/product/${productId}`}
-                    className="text-sm font-black text-gray-900 leading-snug line-clamp-2 mb-3 group-hover:text-primary-dark transition-colors"
+                    className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 mb-3 group-hover:text-primary-dark transition-colors"
                     style={{ minHeight: '2.5rem' }}
                 >
                     {product?.name || "Unnamed Product"}
@@ -156,7 +158,7 @@ const ProductCard = ({ product }) => {
                 <div className="mt-auto flex items-end justify-between">
                     <div className="flex flex-col">
                         {strikePrice && (
-                            <span className="text-[11px] font-bold text-gray-400 line-through leading-none mb-1">
+                            <span className="text-xs font-bold text-gray-400 line-through leading-none mb-1">
                                 Rs {strikePrice.toLocaleString()}
                             </span>
                         )}
@@ -172,11 +174,12 @@ const ProductCard = ({ product }) => {
                         type="button"
                         onClick={handleAddToCart}
                         disabled={isOutOfStock}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shadow-sm ${
                             isOutOfStock 
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none" 
                             : "bg-primary-pale text-primary-dark hover:bg-primary hover:text-white hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
                         }`}
+                        aria-label={isOutOfStock ? `${product?.name}: Out of stock` : `Add ${product?.name} to cart`}
                         title={isOutOfStock ? "Out of Stock" : "Add to Cart"}
                     >
                         <Plus size={20} strokeWidth={2.5} className={isOutOfStock ? "pointer-events-none" : ""} />

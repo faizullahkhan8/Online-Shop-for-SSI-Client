@@ -13,7 +13,8 @@ export const useRegisterUser = () => {
         },
         onSuccess: (data) => {
             if (data) {
-                toast.success("User registered successfully");
+                if (data.smsSent) toast.success(data.message);
+                else toast.warn(data.message);
                 queryClient.invalidateQueries({ queryKey: ["users"] });
             }
         },
@@ -147,7 +148,11 @@ export const useLogoutUser = () => {
     const logoutUser = async () => {
         try {
             return await mutation.mutateAsync();
-        } catch {
+        } catch (error) {
+            if ([401, 404].includes(error.response?.status)) {
+                queryClient.clear();
+                return { success: true };
+            }
             return undefined;
         }
     };
@@ -157,12 +162,13 @@ export const useLogoutUser = () => {
 export const useGetUser = (defaultUserId = null) => {
     const queryClient = useQueryClient();
 
-    const { data, isLoading: loading, error } = useQuery({
+    const { data, isLoading: loading, isFetching: fetching, isFetchedAfterMount: fetchedAfterMount, error } = useQuery({
         queryKey: ["user", defaultUserId],
         queryFn: async () => {
             const response = await apiClient.get(`${USER_ROUTES.GET_USER}/${defaultUserId}`);
             return response.data;
         },
+        refetchOnMount: "always",
         enabled: defaultUserId !== null
     });
 
@@ -182,7 +188,7 @@ export const useGetUser = (defaultUserId = null) => {
             return undefined;
         }
     };
-    return { getUser, loading, data, error };
+    return { getUser, loading, fetching, fetchedAfterMount, data, error };
 };
 
 export const useAddUserFromAdmin = () => {

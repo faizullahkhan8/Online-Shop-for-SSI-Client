@@ -20,7 +20,7 @@ const OrderSuccessPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const orderId = location.state?.orderId;
-    const { data, isLoading: loading } = useGetOrderById(orderId);
+    const { data, loading, error } = useGetOrderById(orderId);
     const order = data?.order || null;
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const OrderSuccessPage = () => {
         }
     }, [orderId, navigate]);
 
-    if (loading || (!order && orderId)) {
+    if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
                 <Loader2 className="animate-spin text-primary mb-4" size={48} />
@@ -39,6 +39,8 @@ const OrderSuccessPage = () => {
             </div>
         );
     }
+
+    if (error || !order) return <p role="alert" className="p-8">Could not load the order. <Link to="/orders">View your orders</Link></p>;
 
     const itemsSubtotal = order.items?.reduce(
         (sum, item) => sum + (item.totalAmount || item.quantity * item.price),
@@ -197,7 +199,7 @@ const InfoTile = ({ label, value, icon, highlight = false }) => (
         <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${highlight ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-500'}`}>
             {icon}
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">
             {label}
         </span>
         <span className={`text-sm font-bold ${highlight ? "text-primary" : "text-gray-900"}`}>

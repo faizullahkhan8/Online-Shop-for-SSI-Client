@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../apiClient";
 import { PRODUCT_ROUTES } from "../routes";
@@ -42,7 +42,7 @@ export const useGetAllProducts = (defaultParams = null) => {
     const queryClient = useQueryClient();
 
     // Declarative query (only runs automatically if defaultParams are provided)
-    const { data, isLoading: loading, error, refetch } = useQuery({
+    const { data, isLoading: loading, error } = useQuery({
         queryKey: ["products", defaultParams],
         queryFn: async () => {
             const response = await apiClient.get(PRODUCT_ROUTES.GET_ALL, { params: defaultParams || {} });
@@ -55,7 +55,7 @@ export const useGetAllProducts = (defaultParams = null) => {
     });
 
     // Imperative backwards-compatible fetch that STILL leverages React Query cache
-    const getAllProducts = async (params = {}) => {
+    const getAllProducts = useCallback(async (params = {}) => {
         try {
             return await queryClient.fetchQuery({
                 queryKey: ["products", params],
@@ -73,7 +73,7 @@ export const useGetAllProducts = (defaultParams = null) => {
             console.log("Error in Get All Products", error);
             return { success: false };
         }
-    };
+    }, [queryClient]);
 
     return { getAllProducts, loading, data, error };
 };
@@ -161,7 +161,7 @@ export const useGetProductById = (defaultId = null) => {
     });
 
     // Imperative fetch
-    const getProductById = async (id) => {
+    const getProductById = useCallback(async (id) => {
         try {
             return await queryClient.fetchQuery({
                 queryKey: ["products", id],
@@ -179,7 +179,7 @@ export const useGetProductById = (defaultId = null) => {
             console.log("Error in get Product by id", error);
             return undefined;
         }
-    };
+    }, [queryClient]);
 
     return { getProductById, loading, data, error };
 };

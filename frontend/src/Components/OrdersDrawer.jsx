@@ -1,29 +1,17 @@
+import { createPortal } from "react-dom";
+import { useDialog } from "../hooks/useDialog";
 import { X, Package, Calendar, Clock, ChevronRight, ShoppingBag, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useGetUserOrders } from "../api/hooks/orders.api";
 
 const OrdersDrawer = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const drawerRef = useRef(null);
-    const { data, isLoading: loading } = useGetUserOrders();
+    useDialog(isOpen, onClose, drawerRef);
+    const { data, loading, error } = useGetUserOrders();
     const orders = data?.orders?.slice(0, 5) || [];
 
-    // Close on escape key
-    useEffect(() => {
-        const handleEsc = (e) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
-    }, [onClose]);
-
-    // Close on click outside
-    const handleOutsideClick = (e) => {
-        if (drawerRef.current && !drawerRef.current.contains(e.target)) {
-            onClose();
-        }
-    };
 
     const getStatusStyles = (status) => {
         switch (status?.toLowerCase()) {
@@ -41,11 +29,13 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
         }
     };
 
-    return (
+    if (!isOpen) return null;
+
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[90] ${
+                data-dialog-backdrop="" aria-hidden="true" className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[1000] ${
                     isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                 }`}
                 onClick={onClose}
@@ -54,7 +44,8 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
             {/* Drawer Panel */}
             <div
                 ref={drawerRef}
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[100] transform transition-transform duration-300 ease-in-out ${
+                role="dialog" aria-modal="true" aria-label="Recent orders" tabIndex={-1}
+                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[1001] transform transition-transform duration-300 ease-in-out ${
                     isOpen ? "translate-x-0" : "translate-x-full"
                 }`}
             >
@@ -75,12 +66,12 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
 
                 {/* Scrollable Area */}
                 <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
-                    {loading && !hasFetched ? (
+                    {loading ? (
                         <div className="h-full flex flex-col items-center justify-center space-y-4">
                             <Loader2 size={32} className="animate-spin text-primary" />
                             <p className="text-sm font-bold text-gray-500">Loading orders...</p>
                         </div>
-                    ) : orders.length === 0 ? (
+                    ) : error ? (<p role="alert">Could not load orders. Close this panel and try again.</p>) : orders.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                             <div className="w-20 h-20 bg-primary-pale rounded-full flex items-center justify-center text-primary-dark">
                                 <ShoppingBag size={32} />
@@ -117,7 +108,7 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
                                                 year: "numeric"
                                             })}
                                         </div>
-                                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${getStatusStyles(order.status)}`}>
+                                        <span className={`text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded border ${getStatusStyles(order.status)}`}>
                                             {order.status}
                                         </span>
                                     </div>
@@ -138,12 +129,12 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
                                     <div className="mt-3 pt-3 border-t border-dashed border-gray-100 flex gap-2 overflow-hidden">
                                         {/* Show small thumbnails of items if possible */}
                                         {order.items?.slice(0, 4).map((item, idx) => (
-                                            <div key={idx} className="w-8 h-8 rounded bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                            <div key={idx} className="w-8 h-8 rounded bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center text-xs font-bold text-gray-400">
                                                 {item.quantity}x
                                             </div>
                                         ))}
                                         {order.items?.length > 4 && (
-                                            <div className="w-8 h-8 rounded bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                            <div className="w-8 h-8 rounded bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center text-xs font-bold text-gray-400">
                                                 +{order.items.length - 4}
                                             </div>
                                         )}
@@ -170,7 +161,7 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
                 )}
             </div>
         </>
-    );
+    , document.body);
 };
 
 export default OrdersDrawer;

@@ -1,5 +1,6 @@
-import { getLocalSmsTemplateModel, getLocalSettingsModel } from "../config/localDb.js";
-import { decrypt } from "./encryption.js";
+import { getLocalSmsTemplateModel, getLocalSettingsModel, getLocalSmsAttemptModel } from "../config/localDb.js";
+import { resolveSmsConfig, normalizePhone } from "../services/sms/config.js";
+import { sendWithProvider } from "../services/sms/providers.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,111 +24,45 @@ const interpolateTemplate = (template, payload) => {
     });
 };
 
-/**
- * Normalizes phone numbers to E.164 format.
- * If number starts with 03 (Pakistan), it converts to +923.
- */
-const normalizePhoneNumber = (phone) => {
-    if (!phone) return "";
-    let clean = phone.replace(/[^0-9+]/g, ''); // keep only digits and +
-    
-    // Auto convert Pakistani 0300 to +92300
-    if (clean.startsWith('03') && clean.length === 11) {
-        return '+92' + clean.substring(1);
-    }
-    
-    // If user entered just numbers without +, but starts with 92
-    if (clean.startsWith('92') && clean.length === 12) {
-        return '+' + clean;
-    }
-
-    // If it doesn't start with +, just prepend + assuming they typed country code
-    if (!clean.startsWith('+')) {
-        return '+' + clean;
-    }
-
-    return clean;
-};
-
-export const sendSMS = async (eventName, phone, payload = {}) => {
+/** Common transport API; provider acceptance is not handset delivery. */
+export async function sendTextSMS(phone, message, { eventName = "ADMIN_TEST", settings, draft = {} } = {}) {
+    let result, provider = draft.smsProvider || settings?.smsProvider || "sms_gate";
     try {
-        const SmsTemplateModel = getLocalSmsTemplateModel();
-        const SettingsModel = getLocalSettingsModel();
-        
-        if (!SmsTemplateModel || !SettingsModel) {
-            console.warn("SMS Service: Database model not found.");
-            return false;
-        }
-
-        const templateDoc = await SmsTemplateModel.findOne({ eventName });
-        const settingsDoc = await SettingsModel.findOne();
-        
-        let messageText = "";
-
-        if (templateDoc) {
-            if (!templateDoc.isActive) {
-                console.log(`SMS Service: Template for ${eventName} is disabled. Skipping SMS.`);
-                return false;
-            }
-            messageText = templateDoc.messageTemplate;
+        const normalized = normalizePhone(phone);
+        if (!normalized || typeof message !== "string" || !message.trim()) {
+            result = { status: "skipped", errorCode: "invalid_message_or_phone" };
         } else {
-            // Fallback to default if not seeded yet
-            if (DEFAULT_TEMPLATES[eventName]) {
-                messageText = DEFAULT_TEMPLATES[eventName];
-            } else {
-                console.warn(`SMS Service: No template found for ${eventName}`);
-                return false;
-            }
+            const current = settings ?? await getLocalSettingsModel()?.findOne();
+            provider = draft.smsProvider || current?.smsProvider || "sms_gate";
+            const config = resolveSmsConfig(current, draft);
+            provider = config.provider;
+            result = await sendWithProvider(config, normalized, message);
         }
+    } catch {
+        result = { status: "skipped", errorCode: "configuration_error" };
+    }
+    if (typeof provider !== "string" || !/^[a-z][a-z0-9_]{0,63}$/.test(provider)) provider = "unconfigured";
+    try {
+        await getLocalSmsAttemptModel()?.create({ eventName, provider, ...result });
+    } catch {
+        console.error("SMS attempt metadata could not be stored.");
+    }
+    return { provider, ...result };
+}
 
-        const finalMessage = interpolateTemplate(messageText, payload);
-        const normalizedPhone = normalizePhoneNumber(phone);
-
-        if (!normalizedPhone || !finalMessage) {
-            console.error("SMS Service: Missing phone or message content");
-            return false;
-        }
-
-        // 1. Check DB first for dynamic settings
-        let username = settingsDoc?.smsGatewayUsername;
-        let password = settingsDoc?.smsGatewayPassword ? decrypt(settingsDoc.smsGatewayPassword) : null;
-        
-        // 2. Fallback to ENV if DB is empty
-        if (!username || !password) {
-            username = process.env.SMS_GATE_USERNAME;
-            password = process.env.SMS_GATE_PASSWORD;
-        }
-
-        if (!username || !password) {
-            console.warn("SMS Service: SMS_GATE_USERNAME or SMS_GATE_PASSWORD is not set. SMS not sent.");
-            return false;
-        }
-
-        const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
-
-        const res = await fetch('https://api.sms-gate.app/3rdparty/v1/message', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${basicAuth}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                textMessage: { text: finalMessage },
-                phoneNumbers: [normalizedPhone],
-            }),
-        });
-
-        const data = await res.json();
-        
-        if (res.ok) {
-            console.log(`SMS Service: Successfully sent SMS for ${eventName} to ${normalizedPhone}`);
-            return true;
-        } else {
-            console.error(`SMS Service: Failed to send SMS via sms-gate.app. Response:`, data);
-            return false;
-        }
-    } catch (error) {
-        console.error("SMS Service Error:", error);
+// Existing event callers retain their boolean contract and template behavior.
+export async function sendSMS(eventName, phone, payload = {}) {
+    try {
+        const Model = getLocalSmsTemplateModel();
+        if (!Model || !getLocalSettingsModel()) return false;
+        const template = await Model.findOne({ eventName });
+        if (template && !template.isActive) return false;
+        const message = template?.messageTemplate || DEFAULT_TEMPLATES[eventName];
+        if (!message) return false;
+        const result = await sendTextSMS(phone, interpolateTemplate(message, payload), { eventName });
+        return result.status === "accepted";
+    } catch {
+        console.error("SMS event could not be processed.");
         return false;
     }
-};
+}

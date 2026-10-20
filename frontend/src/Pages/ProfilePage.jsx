@@ -1,5 +1,9 @@
+import { useSavedUser } from "../hooks/useSavedUser.js";
+import { useAddressLookup } from "../hooks/useAddressLookup.js";
+import { validPosition, addressFields } from "../utils/location.js";
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import { useEffect, useState, useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../store/slices/authSlice";
 import { useUpdateUser, useLogoutUser } from "../api/hooks/user.api";
 import {
@@ -15,7 +19,7 @@ import { toast } from "react-toastify";
 import LocationPicker from "../Components/LocationPicker.jsx";
 
 const ProfilePage = () => {
-    const { user } = useSelector((state) => state.auth);
+    const user = useSavedUser();
     const [userData, setUserData] = useState(null);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -24,114 +28,16 @@ const ProfilePage = () => {
     const { logoutUser, loading: logoutLoading } = useLogoutUser({});
 
     const [mapPosition, setMapPosition] = useState(null);
-    const [isFetchingAddress, setIsFetchingAddress] = useState(false);
-    const lastReverseGeocodedAddress = useRef("");
-
+    const hydratedUser = useRef(null);
     useEffect(() => {
-        if (user) {
-            setUserData(user);
-            if (user.addresses?.[0]?.lat && user.addresses?.[0]?.lng) {
-                setMapPosition({ lat: user.addresses[0].lat, lng: user.addresses[0].lng });
-            }
+        if (user && hydratedUser.current !== user._id) {
+            hydratedUser.current = user._id;
+            setUserData(user); setMapPosition(validPosition(user.addresses?.[0]));
         }
     }, [user]);
-
-    useEffect(() => {
-        // Immediately sync the coordinates to userData so they get saved 
-        // even if reverse-geocoding fails or is skipped
-        if (mapPosition && user && (userData?.addresses?.[0]?.lat !== mapPosition.lat || userData?.addresses?.[0]?.lng !== mapPosition.lng)) {
-            setUserData((prev) => ({
-                ...prev,
-                addresses: [
-                    {
-                        ...(prev?.addresses?.[0] || {}),
-                        lat: mapPosition.lat,
-                        lng: mapPosition.lng,
-                    }
-                ]
-            }));
-        }
-
-        const fetchAddress = async () => {
-            if (!mapPosition) return;
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPosition.lat}&lon=${mapPosition.lng}`
-                );
-                const data = await response.json();
-                if (data && data.display_name) {
-                    lastReverseGeocodedAddress.current = data.display_name;
-                    setUserData((prev) => {
-                        const existingAddress = prev?.addresses?.[0] || {};
-                        return {
-                            ...prev,
-                            addresses: [
-                                {
-                                    ...existingAddress,
-                                    lat: mapPosition.lat,
-                                    lng: mapPosition.lng,
-                                    street: data.display_name,
-                                    city: data.address?.city || data.address?.town || data.address?.state_district || existingAddress.city,
-                                    state: data.address?.state || existingAddress.state,
-                                    postalCode: data.address?.postcode || existingAddress.postalCode,
-                                    country: data.address?.country || existingAddress.country,
-                                }
-                            ]
-                        };
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        // Don't auto-fetch if we just set it from the user's existing DB record
-        if (user && user.addresses?.[0]?.lat === mapPosition?.lat && user.addresses?.[0]?.lng === mapPosition?.lng) {
-            return;
-        }
-
-        const timeoutId = setTimeout(() => {
-            fetchAddress();
-        }, 800);
-
-        return () => clearTimeout(timeoutId);
-    }, [mapPosition, user]);
-
-    // Forward Geocoding: Update map when typing address manually
-    useEffect(() => {
-        const addressText = userData?.addresses?.[0]?.street;
-        if (!addressText || addressText.length < 5) return;
-        
-        // Prevent infinite loop if the address change came from the map's reverse geocode
-        if (addressText === lastReverseGeocodedAddress.current) return;
-
-        const fetchCoordinates = async () => {
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
-                );
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const { lat, lon } = data[0];
-                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
-                }
-            } catch (error) {
-                console.error("Error forward geocoding address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchCoordinates();
-        }, 1500); // 1.5s debounce for typing
-
-        return () => clearTimeout(timeoutId);
-    }, [userData?.addresses?.[0]?.street]);
+    const isFetchingAddress = useAddressLookup({ position: mapPosition, text: userData?.addresses?.[0]?.street || "",
+        savedPosition: user?.addresses?.[0], savedText: user?.addresses?.[0]?.street || "", onPosition: setMapPosition,
+        onAddress: data => setUserData(prev => ({ ...prev, addresses: [{ ...(prev?.addresses?.[0] || {}), ...addressFields(data), ...mapPosition }, ...(prev?.addresses?.slice(1) || [])] })) });
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -145,6 +51,7 @@ const ProfilePage = () => {
                     ...(prev?.addresses?.[0] || {}),
                     [field]: value,
                 },
+                ...(prev?.addresses?.slice(1) || []),
             ],
         }));
     };
@@ -152,7 +59,7 @@ const ProfilePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
-        formData.append("data", JSON.stringify(userData));
+        formData.append("data", JSON.stringify({ ...userData, addresses: [{ ...(userData?.addresses?.[0] || {}), ...(mapPosition || {}) }, ...(userData?.addresses?.slice(1) || [])] }));
 
         const response = await updateUser({ userId: user._id, user: formData });
 
@@ -194,7 +101,7 @@ const ProfilePage = () => {
                             {user?.phone || "No phone added"}
                         </h2>
                         {user?.phone && (
-                            <span className="bg-primary text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
+                            <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
                                 Verified
                             </span>
                         )}
@@ -267,11 +174,12 @@ const ProfilePage = () => {
                                         if ("geolocation" in navigator) {
                                             navigator.geolocation.getCurrentPosition(
                                                 (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                                                (err) => alert("Please allow location access to auto-detect your location.")
+                                                () => alert("Unable to detect location. Allow location access or select a point on the map."),
+                                                            { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
                                             );
                                         }
                                     }}
-                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
+                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors flex items-center gap-1"
                                 >
                                     <MapPin size={12} />
                                     Locate Me
@@ -343,12 +251,12 @@ const ProfilePage = () => {
 };
 
 const DVAGOInput = ({ label, name, value, onChange, disabled }) => (
-    <div className="flex flex-col gap-2">
-        <label className="text-[13px] font-bold text-gray-900 ml-1">
+    <FormField className="flex flex-col gap-2">
+        <FieldLabel className="text-[13px] font-bold text-gray-900 ml-1">
             {label}
-        </label>
+        </FieldLabel>
         <div className="relative">
-            <input
+            <FieldControl
                 name={name}
                 value={value || ""}
                 onChange={onChange}
@@ -362,7 +270,7 @@ const DVAGOInput = ({ label, name, value, onChange, disabled }) => (
                 <Edit3 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none" />
             )}
         </div>
-    </div>
+    </FormField>
 );
 
 export default ProfilePage;

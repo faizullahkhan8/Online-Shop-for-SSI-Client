@@ -101,7 +101,7 @@ const ProductListItem = ({ product }) => {
                     type="button"
                     onClick={handleWishlist}
                     aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                    className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    className={`absolute top-2.5 right-2.5 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                         isInWishlist
                             ? "bg-rose-50 text-rose-500 border border-rose-200 shadow-2xs"
                             : "bg-white/90 text-gray-400 hover:text-rose-500 hover:bg-white shadow-2xs border border-gray-200"
@@ -118,7 +118,7 @@ const ProductListItem = ({ product }) => {
                 <div>
                     <div className="flex justify-between items-start mb-2">
                         <div className="space-y-1">
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#74AA34] bg-[#EDF6E5] px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-[#74AA34] bg-[#EDF6E5] px-2 py-0.5 rounded-md">
                                 {product?.category?.name || "Healthcare"}
                             </span>
                             <Link to={`/product/${productId}`}>
@@ -175,7 +175,7 @@ const ProductListItem = ({ product }) => {
                                 size={13}
                                 className="text-[#74AA34]"
                             />
-                            <span className="text-[11px] font-bold text-[#3E6913]">
+                            <span className="text-xs font-bold text-[#3E6913]">
                                 100% Genuine
                             </span>
                         </div>

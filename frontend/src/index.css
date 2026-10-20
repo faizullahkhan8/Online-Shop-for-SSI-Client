@@ -181,3 +181,30 @@ p {
 .marquee-container:hover .animate-marquee {
     animation-play-state: paused;
 }
+/* Keep keyboard focus visible, including inside modal panels. */
+:focus-visible {
+    outline: 2px solid #1e4d28;
+    outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+    [role="dialog"], [role="dialog"] * {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Shared finish: practical hit areas, readable forms, and stable operational tables. */
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+input, select, textarea { scroll-margin-block: 9rem; }
+.admin-workspace table { min-width: 680px; }
+.admin-workspace th { font-size: .75rem; font-weight: 600; letter-spacing: .025em; color: #4b5563; white-space: nowrap; }
+.admin-workspace td { font-size: .875rem; vertical-align: middle; }
+.admin-workspace td button, .admin-workspace td a { min-height: 40px; min-width: 40px; }
+.admin-workspace td .font-mono { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 639px) {
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

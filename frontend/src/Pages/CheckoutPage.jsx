@@ -1,10 +1,14 @@
+import { useSavedUser } from "../hooks/useSavedUser.js";
+import { useAddressLookup } from "../hooks/useAddressLookup.js";
+import { validPosition, samePosition, savedRecipient, addressFields } from "../utils/location.js";
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { usePlaceOrder } from "../api/hooks/orders.api";
 import { useGetSettings } from "../api/hooks/settings.api";
 import { useUpdateUser } from "../api/hooks/user.api";
-import { removeSelectedItems, clearCart } from "../store/slices/cartSlice";
+import { consumeCheckoutItems } from "../store/slices/cartSlice";
 import { loginSuccess } from "../store/slices/authSlice";
 import {
     Truck,
@@ -24,7 +28,7 @@ import LocationPicker from "../Components/LocationPicker.jsx";
 
 const CheckoutPage = () => {
     const { items: allItems } = useSelector((state) => state.cart);
-    const { user } = useSelector((state) => state.auth);
+    const user = useSavedUser();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -56,83 +60,12 @@ const CheckoutPage = () => {
     });
     const [settingsLoaded, setSettingsLoaded] = useState(false);
     const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
-    const [mapPosition, setMapPosition] = useState(null);
-    const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+    const [mapPosition, setMapPosition] = useState(() => validPosition(user?.addresses?.[0]));
     const [baseShippingFee, setBaseShippingFee] = useState(0);
     const [advShippingConfig, setAdvShippingConfig] = useState(null);
-    const lastReverseGeocodedAddress = useRef("");
-
-    useEffect(() => {
-        const fetchAddress = async () => {
-            if (!mapPosition) return;
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPosition.lat}&lon=${mapPosition.lng}`
-                );
-                const data = await response.json();
-                if (data && data.display_name) {
-                    lastReverseGeocodedAddress.current = data.display_name;
-                    setFormData((prev) => {
-                        return {
-                            ...prev,
-                            recipient: {
-                                ...prev.recipient,
-                                street: data.display_name,
-                                city: data.address?.city || data.address?.town || data.address?.state_district || prev.recipient.city,
-                                state: data.address?.state || prev.recipient.state,
-                                postalCode: data.address?.postcode || prev.recipient.postalCode,
-                                country: data.address?.country || prev.recipient.country,
-                            }
-                        };
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchAddress();
-        }, 800);
-
-        return () => clearTimeout(timeoutId);
-    }, [mapPosition]);
-
-    // Forward Geocoding: Update map when typing address manually
-    useEffect(() => {
-        const addressText = formData.recipient.street;
-        if (!addressText || addressText.length < 5) return;
-        
-        // Prevent infinite loop if the address change came from the map's reverse geocode
-        if (addressText === lastReverseGeocodedAddress.current) return;
-
-        const fetchCoordinates = async () => {
-            setIsFetchingAddress(true);
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText)}`
-                );
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const { lat, lon } = data[0];
-                    setMapPosition({ lat: parseFloat(lat), lng: parseFloat(lon) });
-                }
-            } catch (error) {
-                console.error("Error forward geocoding address:", error);
-            } finally {
-                setIsFetchingAddress(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchCoordinates();
-        }, 1500); // 1.5s debounce for typing
-
-        return () => clearTimeout(timeoutId);
-    }, [formData.recipient.street]);
+    const isFetchingAddress = useAddressLookup({ position: mapPosition, text: formData.recipient.street,
+        savedPosition: user?.addresses?.[0], savedText: user?.addresses?.[0]?.street || "",
+        onPosition: setMapPosition, onAddress: data => setFormData(prev => ({ ...prev, recipient: { ...prev.recipient, ...addressFields(data) } })) });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -189,7 +122,7 @@ const CheckoutPage = () => {
 
     // Calculate distance between two coordinates in km using Haversine formula
     const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-        if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+        if (!validPosition({ lat: lat1, lng: lon1 }) || !validPosition({ lat: lat2, lng: lon2 })) return null;
         const R = 6371; // Radius of the earth in km
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -210,7 +143,7 @@ const CheckoutPage = () => {
         if (advShippingConfig) {
             const { calculationMethod, storeLocation, distanceRatePerKm, percentageRate, cityRates, conditionalOverride } = advShippingConfig;
 
-            if (calculationMethod === "distance" && mapPosition && storeLocation?.lat) {
+            if (calculationMethod === "distance" && mapPosition && validPosition(storeLocation)) {
                 const distanceKm = getDistanceFromLatLonInKm(storeLocation.lat, storeLocation.lng, mapPosition.lat, mapPosition.lng);
                 if (distanceKm !== null) {
                     calculatedFee = distanceKm * (distanceRatePerKm || 0);
@@ -254,28 +187,12 @@ const CheckoutPage = () => {
         }
     }, [totalAmount, formData.recipient.city, mapPosition, advShippingConfig, settingsLoaded, baseShippingFee]);
 
+    const hydratedUser = useRef(user?._id);
     useEffect(() => {
-        if (!user) return;
-        setFormData((prev) => ({
-            ...prev,
-            recipient: {
-                ...prev.recipient,
-                name: user?.name || prev.recipient.name,
-                phone: user?.phone || prev.recipient.phone,
-                street:
-                    user?.addresses?.[0]?.street || prev.recipient.street,
-                addressLine2:
-                    user?.addresses?.[0]?.addressLine2 ||
-                    prev.recipient.addressLine2,
-                city: user?.addresses?.[0]?.city || prev.recipient.city,
-                state: user?.addresses?.[0]?.state || prev.recipient.state,
-                postalCode:
-                    user?.addresses?.[0]?.postalCode ||
-                    prev.recipient.postalCode,
-                country:
-                    user?.addresses?.[0]?.country || prev.recipient.country,
-            },
-        }));
+        if (!user || hydratedUser.current === user._id) return;
+        hydratedUser.current = user._id;
+        setFormData(prev => ({ ...prev, recipient: { ...savedRecipient(user), ...Object.fromEntries(Object.entries(prev.recipient).filter(([, value]) => value !== "" && value != null)) } }));
+        setMapPosition(prev => prev || validPosition(user.addresses?.[0]));
     }, [user]);
 
     useEffect(() => {
@@ -293,7 +210,7 @@ const CheckoutPage = () => {
         if (!user) return;
         setMapPosition(prev => {
             if (prev) return prev;
-            if (user.addresses?.[0]?.lat && user.addresses?.[0]?.lng) {
+            if (validPosition(user.addresses?.[0])) {
                 return { lat: user.addresses[0].lat, lng: user.addresses[0].lng };
             }
             return null;
@@ -311,15 +228,8 @@ const CheckoutPage = () => {
         
         if (currentStreet !== dbStreet) return true;
         
-        // Check map position with tolerance for float precision
-        if (mapPosition?.lat && dbAddr.lat) {
-            const latDiff = Math.abs(mapPosition.lat - dbAddr.lat);
-            const lngDiff = Math.abs(mapPosition.lng - dbAddr.lng);
-            if (latDiff > 0.00001 || lngDiff > 0.00001) return true;
-        } else if (mapPosition?.lat && !dbAddr.lat) {
-            return true; // Map position added but none in DB
-        }
-        
+        if (!samePosition(mapPosition, dbAddr)) return true;
+
         return false;
     };
 
@@ -360,27 +270,20 @@ const CheckoutPage = () => {
                             country: orderData.recipient.country,
                             lat: orderData.recipient.lat,
                             lng: orderData.recipient.lng,
-                        }
+                        },
+                        ...(user.addresses?.slice(1) || [])
                     ]
                 };
                 const updateFormData = new FormData();
                 updateFormData.append("data", JSON.stringify(updatedUser));
                 const res = await updateUser({ userId: user._id, user: updateFormData });
-                if (res?.user) {
-                    dispatch(loginSuccess(res.user));
-                }
+                if (!res?.success || !res?.user) return;
+                dispatch(loginSuccess(res.user));
             }
 
             const response = await placeOrder(orderData);
             if (response?.success && response?.order?._id) {
-                const checkedOutProductIds = orderData.items.map(item => String(item.product));
-                
-                // If they are checking out everything in their cart, clear it completely
-                if (checkedOutProductIds.length === allItems.length) {
-                    dispatch(clearCart());
-                } else {
-                    dispatch(removeSelectedItems({ productIds: checkedOutProductIds }));
-                }
+                dispatch(consumeCheckoutItems({ items: orderData.items }));
 
                 navigate("/orders/success", {
                     state: { orderId: response.order._id },
@@ -518,19 +421,22 @@ const CheckoutPage = () => {
                                     />
                                     
                                     {/* Map Picker */}
-                                    <div className="md:col-span-2 flex flex-col gap-2 pt-2">
+                                    <details className="md:col-span-2 rounded-xl border border-gray-200 p-3" open={advShippingConfig?.calculationMethod === "distance" || undefined}>
+                                        <summary className="cursor-pointer py-2 text-sm font-semibold text-primary-dark">Choose a delivery pin on the map</summary>
+                                        <div className="flex flex-col gap-3 pt-3">
                                         <div className="flex items-center justify-between">
-                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600 flex items-center gap-2">
                                                 <span>Pin Exact Location</span>
                                                 {isFetchingAddress && <Loader2 size={12} className="animate-spin text-primary" />}
-                                            </label>
+                                            </span>
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     if ("geolocation" in navigator) {
                                                         navigator.geolocation.getCurrentPosition(
                                                             (pos) => setMapPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                                                            (err) => alert("Please allow location access to auto-detect your location.")
+                                                            () => alert("Unable to detect location. Allow location access or select a point on the map."),
+                                                            { timeout: 10000, maximumAge: 60000, enableHighAccuracy: true }
                                                         );
                                                     }
                                                 }}
@@ -541,10 +447,11 @@ const CheckoutPage = () => {
                                             </button>
                                         </div>
                                         <div className="rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm h-48 relative z-0">
-                                            <LocationPicker position={mapPosition} setPosition={setMapPosition} />
+                                            <LocationPicker position={mapPosition} setPosition={setMapPosition} className="h-full" />
                                         </div>
                                     </div>
 
+                                    </details>
                                     <div className="md:col-span-2">
                                         <CheckoutInput
                                             label="Street Address"
@@ -789,15 +696,15 @@ const CheckoutInput = ({
     type = "text",
     required = true,
 }) => (
-    <div className="space-y-1.5 flex flex-col">
-        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+    <FormField className="space-y-1.5 flex flex-col">
+        <FieldLabel className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
             {label} {required && <span className="text-red-500">*</span>}
-        </label>
+        </FieldLabel>
         <div className="relative">
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                 {icon}
             </div>
-            <input
+            <FieldControl
                 required={required}
                 type={type}
                 name={name}
@@ -807,7 +714,7 @@ const CheckoutInput = ({
                 className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl pl-11 pr-4 py-3.5 text-sm font-bold text-gray-900 focus:outline-none focus:ring-0 focus:border-primary focus:bg-white transition-all placeholder:text-gray-400 placeholder:font-medium"
             />
         </div>
-    </div>
+    </FormField>
 );
 
 const PaymentCard = ({ active, onClick, title, description, icon }) => (

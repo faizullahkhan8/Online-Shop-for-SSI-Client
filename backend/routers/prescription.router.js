@@ -3,6 +3,7 @@ import { isAuth, authorize, optionalAuth } from "../middlewares/auth.middleware.
 import { upload, imagekitUpload } from "../middlewares/multer.middleware.js";
 import {
     uploadPrescription,
+    validatePrescriptionLocation,
     getAllPrescriptions,
     getUserPrescriptions,
     updatePrescriptionStatus,
@@ -15,7 +16,7 @@ const router = express.Router();
 
 router
     .route("/")
-    .post(optionalAuth, upload.single("image"), imagekitUpload, uploadPrescription)
+    .post(optionalAuth, upload.single("image"), validatePrescriptionLocation, imagekitUpload, uploadPrescription)
     .get(isAuth, authorize("admin"), getAllPrescriptions);
 
 router.route("/my").get(isAuth, getUserPrescriptions);

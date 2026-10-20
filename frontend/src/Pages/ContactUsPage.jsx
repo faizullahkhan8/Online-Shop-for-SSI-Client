@@ -1,3 +1,4 @@
+import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -134,11 +135,11 @@ const ContactPage = () => {
                             </div>
 
                             <form onSubmit={handleSendEmail} className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-gray-700">
+                                <FormField className="space-y-1.5">
+                                    <FieldLabel className="text-sm font-medium text-gray-700">
                                         Your Name
-                                    </label>
-                                    <input
+                                    </FieldLabel>
+                                    <FieldControl
                                         type="text"
                                         required
                                         value={formData.name}
@@ -151,13 +152,13 @@ const ContactPage = () => {
                                         placeholder="Enter your full name"
                                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                     />
-                                </div>
+                                </FormField>
 
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-gray-700">
+                                <FormField className="space-y-1.5">
+                                    <FieldLabel className="text-sm font-medium text-gray-700">
                                         Message
-                                    </label>
-                                    <textarea
+                                    </FieldLabel>
+                                    <FieldControl as="textarea"
                                         required
                                         rows={5}
                                         value={formData.message}
@@ -170,7 +171,7 @@ const ContactPage = () => {
                                         placeholder="How can we help you?"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                                     />
-                                </div>
+                                </FormField>
                                 <button
                                     type="submit"
                                     className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"

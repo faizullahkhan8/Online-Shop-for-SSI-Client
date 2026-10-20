@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { QueryError, QueryLoading } from "../UI/QueryState";
+import { useEffect, useState } from "react";
 
 // ─── Reusable product filter ────────────────────────────────────────────────
 // Filters & sorts the shared products pool according to the productSource
@@ -82,12 +83,12 @@ import CategoriesSection from "../Components/HomeSections/CategoriesSection";
 
 /* ─── HomePage ────────────────────────────────────────────────────── */
 const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
-    const { getAllProducts } = useGetAllProducts();
-    const [products, setProducts] = useState([]);
+    const { data: catalogData, loading: productsLoading, error: productsError } = useGetAllProducts({ limit: 24 });
+    const products = catalogData?.products || [];
     const [seoExpanded, setSeoExpanded] = useState(false);
     const { data: categoriesData } = useGetAllCategories();
     const [dbCategories, setDbCategories] = useState([]);
-    const { data: homePageData, isLoading: homePageLoading } = useGetHomePage();
+    const { data: homePageData, loading: homePageLoading, error: homePageError } = useGetHomePage();
     const [pageConfig, setPageConfig] = useState({});
     const [orderedSections, setOrderedSections] = useState([]);
 
@@ -192,28 +193,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         }
     }, [categoriesData]);
 
-    useEffect(() => {
-        // Fetch real data (products, deals) regardless of preview mode
-        (async () => {
-            const response = await getAllProducts({ limit: 24 });
-            if (response?.success && Array.isArray(response.products)) {
-                setProducts(response.products);
-            }
-        })();
-    }, [getAllProducts]);
-
-    const fallbackProducts = useMemo(() => [
-        { _id: "p-1", name: "Panadol Tablets 500mg (1 Strip = 10 Tablets)", price: 40, effectivePrice: 35, rating: 5 },
-        { _id: "p-2", name: "Sensodyne Toothpaste Rapid Relief 75ml", price: 450, effectivePrice: 395, rating: 5 },
-        { _id: "p-3", name: "CAC 1000 Plus Effervescent Tablets Orange (10s)", price: 320, effectivePrice: 285, rating: 5 },
-        { _id: "p-4", name: "Surbex-Z High Potency Zinc & B-Complex (30s)", price: 580, effectivePrice: 510, rating: 5 },
-        { _id: "p-5", name: "Disprin Direct Chewable 300mg (10s)", price: 60, effectivePrice: 52, rating: 5 },
-        { _id: "p-6", name: "Dettol Antiseptic Liquid 250ml", price: 380, effectivePrice: 340, rating: 5 },
-        { _id: "p-7", name: "Strepsils Honey & Lemon Lozenges (24s)", price: 260, effectivePrice: 230, rating: 5 },
-        { _id: "p-8", name: "Voltral Emulgel Fast Pain Relief Gel 50g", price: 290, effectivePrice: 255, rating: 5 },
-    ], []);
-
-    const displayProducts = products.length > 0 ? products : fallbackProducts;
+    const displayProducts = products;
 
 
 
@@ -303,7 +283,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 iconClass: color.text,
                 label: color.label,
                 border: color.border,
-                path: `/products?category=${encodeURIComponent(cat.name)}`
+                path: `/products?category=${encodeURIComponent(cat._id)}`
             };
         })
         : fallbackCategories;
@@ -311,6 +291,13 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
 
 
 
+    const shownProducts = new Set();
+    const uniqueProducts = entries => {
+        if (previewSections) return entries;
+        const result = entries.filter(product => !shownProducts.has(String(product._id || product.id)));
+        result.forEach(product => shownProducts.add(String(product._id || product.id)));
+        return result;
+    };
     const renderSection = (section, idx) => {
         const { type } = section;
         const gridVariant = section.gridVariant || section.config?.gridVariant;
@@ -346,7 +333,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 <TrustBadges config={getSectionConfig("trust_badges")} />
             )}</div>;
             case "stats_counter": return <div key={idx}>{wrap(
-                <StatsCounter config={getSectionConfig("stats_counter", { stats: [{ value: "50K+", label: "Happy Customers" }, { value: "2 hrs", label: "Avg. Delivery" }] })} />
+                <StatsCounter config={getSectionConfig("stats_counter", { stats: [] })} />
             )}</div>;
             case "categories": return <div key={idx}>{wrap(
                 <CategoriesSection
@@ -364,7 +351,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 return (
                     <RibbonSection
                         config={cfg}
-                        products={ribbonProducts.length ? ribbonProducts : displayProducts.slice(0, cfg.productCount || 6)}
+                        products={uniqueProducts(ribbonProducts.length ? ribbonProducts : displayProducts.slice(0, cfg.productCount || 6))}
                     />
                 );
             })())}</div>;
@@ -381,8 +368,8 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "payment_strip": return <div key={idx}>{wrap(
                 <PaymentStrip
                     config={getSectionConfig("payment_strip", {
-                        title: "EXTRA 25% OFF with Bank Debit & Credit Cards",
-                        subtitle: "Applies at checkout on all prescription & OTC orders. No minimum order required.",
+                        title: "Explore current pharmacy offers",
+                        subtitle: "See available discounts and product pricing before you order.",
                         ctaText: "View Offers",
                         ctaLink: "/promotions",
                     })}
@@ -396,7 +383,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                 return (
                     <FlashSale
                         config={cfg}
-                        products={filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6)}
+                        products={uniqueProducts(filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6))}
                     />
                 );
             })())}</div>;
@@ -406,7 +393,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                     return (
                         <ProductsGrid
                             config={cfg}
-                            products={filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6)}
+                            products={uniqueProducts(filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6))}
                         />
                     );
                 })())}</div>;
@@ -415,7 +402,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
                     return (
                         <ProductsGrid
                             config={cfg}
-                            products={filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6)}
+                            products={uniqueProducts(filterProductsBySource(displayProducts, cfg.productSource, cfg.productCount || 6))}
                         />
                     );
                 })())}</div>;
@@ -440,7 +427,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "app_download": return <div key={idx}>{wrap(
                 <AppDownload
                     config={getSectionConfig("app_download", {
-                        title: "Download & Get\n10% Off Your First Order",
+                        title: "Shop with Zada",
                         subtitle: "Upload prescriptions, track 2-hour deliveries in real time & set medication reminders — all in one app.",
                         appStoreBadge: "App Store",
                         playStoreBadge: "Google Play",
@@ -454,8 +441,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
             case "featured_category": return <div key={idx}>{wrap(
                 <ProductsGrid
                     config={getSectionConfig("featured_category", { title: "Featured Products", subtitle: "Editor's Picks", ctaText: "View All", ctaLink: "/products" })}
-                    products={displayProducts}
-                    sliceRange={[1, 7]}
+                    products={uniqueProducts(displayProducts.slice(1, 7))}
                 />
             )}</div>;
             case "conditions": return <div key={idx}>{wrap(
@@ -499,6 +485,9 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         }
     };
     const sectionsToRender = previewSections || orderedSections;
+
+    if (!previewSections && (productsError || homePageError)) return <QueryError message="Could not load the store. Please refresh to try again." />;
+    if (!previewSections && (productsLoading || homePageLoading)) return <QueryLoading label="Loading the store..." />;
 
     return (
         <div className="bg-gray-50 min-h-screen text-gray-900 antialiased">

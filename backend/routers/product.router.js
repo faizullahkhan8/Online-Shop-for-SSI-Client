@@ -1,3 +1,4 @@
+import { validateProductInput } from "../middlewares/productInput.js";
 import { Router } from "express";
 import {
     handleOptionalBackgroundRemoval,
@@ -20,6 +21,7 @@ router.post(
     isAuth,
     authorize(["admin"]),
     upload.array("images", 5),
+    validateProductInput,
     handleOptionalBackgroundRemoval,
     imagekitUpload,
     createProduct,
@@ -29,6 +31,7 @@ router.patch(
     isAuth,
     authorize(["admin"]),
     upload.array("images", 5),
+    validateProductInput,
     handleOptionalBackgroundRemoval,
     imagekitUpload,
     updateProduct,

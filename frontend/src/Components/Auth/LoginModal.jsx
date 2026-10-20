@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useDialog } from "../../hooks/useDialog";
+import { useState, useRef } from "react";
 import { X, User, Phone, Loader2, ChevronRight, ShieldCheck, Mail } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/slices/authSlice.js";
 import { useLoginUser } from "../../api/hooks/user.api";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 
     const LoginModal = ({ isOpen, onClose, onSwitchToRegister, onRequireVerification }) => {
-        const dispatch = useDispatch();
-        const navigate = useNavigate();
+        const panelRef = useRef(null);
+    useDialog(isOpen, onClose, panelRef);
+    const dispatch = useDispatch();
         const { loginUser } = useLoginUser();
 
         const [loading, setLoading] = useState(false);
@@ -17,13 +19,6 @@ import { useNavigate } from "react-router-dom";
         const [identifier, setIdentifier] = useState("");
         const [password, setPassword] = useState("");
 
-        // Reset state when modal opens/closes
-        useEffect(() => {
-            if (isOpen) {
-                setIdentifier("");
-                setPassword("");
-            }
-        }, [isOpen]);
 
         const handleCompleteLogin = async (e) => {
             e.preventDefault();
@@ -55,7 +50,7 @@ import { useNavigate } from "react-router-dom";
                         onRequireVerification(response.error.userId);
                     }
                 }
-            } catch (error) {
+            } catch {
                 toast.error("Login failed.");
             } finally {
                 setLoading(false);
@@ -64,15 +59,16 @@ import { useNavigate } from "react-router-dom";
 
         if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
+    return createPortal(
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 sm:p-6">
+            <div data-dialog-backdrop="" aria-hidden="true" className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
             
-            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Log in" tabIndex={-1} className="max-h-[90dvh] overflow-y-auto relative bg-white rounded-3xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-300">
                 {/* Close Button */}
                 <button 
+                    aria-label="Close log in"
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center transition-colors z-10 cursor-pointer"
+                    className="absolute top-4 right-4 w-11 h-11 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center transition-colors z-10 cursor-pointer"
                 >
                     <X size={18} />
                 </button>
@@ -94,10 +90,10 @@ import { useNavigate } from "react-router-dom";
 
                     <form onSubmit={handleCompleteLogin} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or Phone *</label>
+                            <label htmlFor="loginmodal-field-1" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email or Phone *</label>
                             <div className="relative">
                                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
+                                <input id="loginmodal-field-1"
                                     type="text"
                                     required
                                     placeholder="Enter email or phone number"
@@ -110,10 +106,10 @@ import { useNavigate } from "react-router-dom";
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password *</label>
+                            <label htmlFor="loginmodal-field-2" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password *</label>
                             <div className="relative">
                                 <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
+                                <input id="loginmodal-field-2"
                                     type="password"
                                     required
                                     placeholder="Enter your password"
@@ -158,7 +154,7 @@ import { useNavigate } from "react-router-dom";
                 </div>
             </div>
         </div>
-    );
+    , document.body);
 };
 
 export default LoginModal;
