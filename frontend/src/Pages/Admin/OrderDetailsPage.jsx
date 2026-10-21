@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -84,19 +85,7 @@ const OrderDetails = () => {
 
 
 
-    if (loading) {
-        return (
-            <div className="h-[60vh] flex flex-col items-center justify-center">
-                <Loader2
-                    className="animate-spin text-primary mb-3"
-                    size={32}
-                />
-                <p className="text-sm font-medium text-gray-500">
-                    Loading order details...
-                </p>
-            </div>
-        );
-    }
+    if (loading) return <PageLoading variant="order" />;
 
     if (error || !order) {
         return <p role="alert" className="p-6 text-red-700">Unable to load this order. Return to the orders list and try again.</p>;

@@ -1,4 +1,4 @@
-import { QueryLoading } from "../../UI/QueryState";
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState } from "react";
 import {
@@ -23,7 +23,7 @@ const PromotionBuilder = () => {
     const [searchParams] = useSearchParams();
     const editId = searchParams.get("id");
     const { data, loading, error } = useGetPromotionById(editId);
-    if (loading) return <QueryLoading label="Loading promotion..." />;
+    if (loading) return <PageLoading variant="form" />;
     if (error || (editId && !data?.promotion)) return <p role="alert">Could not load this promotion. Please refresh to try again.</p>;
     return <PromotionForm key={editId || "new"} promotion={data?.promotion} />;
 };

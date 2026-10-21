@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect } from "react";
 import { useGetAllUsers } from "../../api/hooks/user.api";
@@ -8,6 +9,8 @@ const UserListPage = () => {
     const users = data?.users || [];
 
     if (queryError) return <QueryError />;
+
+    if (loading) return <PageLoading variant="table" />;
 
     return (
         <div className="space-y-6">

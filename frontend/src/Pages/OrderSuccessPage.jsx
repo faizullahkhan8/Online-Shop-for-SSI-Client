@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useGetOrderById } from "../api/hooks/orders.api";
@@ -29,16 +30,7 @@ const OrderSuccessPage = () => {
         }
     }, [orderId, navigate]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
-                <Loader2 className="animate-spin text-primary mb-4" size={48} />
-                <p className="text-sm font-bold uppercase tracking-widest text-primary/70">
-                    Verifying transaction...
-                </p>
-            </div>
-        );
-    }
+    if (loading) return <PageLoading variant="order" />;
 
     if (error || !order) return <p role="alert" className="p-8">Could not load the order. <Link to="/orders">View your orders</Link></p>;
 

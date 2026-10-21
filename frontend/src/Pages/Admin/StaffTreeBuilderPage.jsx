@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
 import { useGetStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "../../api/hooks/staff.api";
@@ -170,6 +171,8 @@ const StaffTreeBuilderPage = () => {
         });
     };
 
+    if (getLoading) return <PageLoading variant="builder" />;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -187,10 +190,7 @@ const StaffTreeBuilderPage = () => {
 
             <TeamHeroEditor />
 
-            {getLoading ? (
-                <LoadingSpinner />
-            ) : (
-                <div className="bg-white p-6 md:p-8 rounded-2xl border-2 border-transparent shadow-sm transition-colors duration-200 min-h-[400px]">
+            {<div className="bg-white p-6 md:p-8 rounded-2xl border-2 border-transparent shadow-sm transition-colors duration-200 min-h-[400px]">
                     {treeData.length === 0 ? (
                         <div className="text-center py-12 text-gray-400">
                             No staff nodes found. Click "Add Staff Node" to create the root.
@@ -198,8 +198,7 @@ const StaffTreeBuilderPage = () => {
                     ) : (
                         renderTree(treeData)
                     )}
-                </div>
-            )}
+                </div>}
 
             {/* Modal */}
             {isModalOpen && (

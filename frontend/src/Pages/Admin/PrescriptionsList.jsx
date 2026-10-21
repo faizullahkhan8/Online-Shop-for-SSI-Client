@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -314,16 +315,13 @@ const PrescriptionsList = () => {
 
     if (queryError) return <QueryError />;
 
+    if (loading) return <PageLoading variant="table" />;
+
     return (
         <div className="p-6">
             <h1 className="text-3xl font-display text-gray-900 mb-6">Prescriptions Management</h1>
 
-            {loading ? (
-                <div className="flex justify-center py-20">
-                    <Loader size={32} className="animate-spin text-[#74AA34]" />
-                </div>
-            ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            {<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div role="region" aria-label="Prescriptions table" tabIndex={0} className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600">
                             <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-100">
@@ -428,8 +426,7 @@ const PrescriptionsList = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
-            )}
+                </div>}
 
             {/* Image Modal with Print Toolbar */}
             {selectedImage && (

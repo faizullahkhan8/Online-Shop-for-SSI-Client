@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import {
     useDeleteProduct,
@@ -45,6 +46,8 @@ const ProductList = () => {
     };
 
     if (queryError) return <QueryError />;
+
+    if (getAllProductsLoading) return <PageLoading variant="table" />;
 
     return (
         <div className="space-y-6">

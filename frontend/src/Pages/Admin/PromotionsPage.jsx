@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -69,17 +70,7 @@ const PromotionManager = () => {
         ]);
     };
 
-    if (fetchLoading && promotions.length === 0) {
-
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <Loader2 className="animate-spin text-primary" size={32} />
-                <p className="text-sm text-gray-500 mt-3">
-                    Loading promotions...
-                </p>
-            </div>
-        );
-    }
+    if (fetchLoading && promotions.length === 0) return <PageLoading variant="promotions" />;
 
     if (queryError) return <QueryError />;
 

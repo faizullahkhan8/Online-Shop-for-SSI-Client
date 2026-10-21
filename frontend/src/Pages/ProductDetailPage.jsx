@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { safeHtml } from "../utils/safeHtml";
 import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -221,16 +222,7 @@ const ProductDetailPage = () => {
     const nextFbt = () => setFbtIndex((prev) => Math.min(maxFbtIndex, prev + 1));
     const visibleFbt = fbtItems.slice(fbtIndex, fbtIndex + 2);
 
-    if (productLoading || (!product && !productError)) {
-        return (
-            <div className="w-full min-h-[70vh] flex flex-col items-center justify-center bg-white">
-                <Loader2 className="animate-spin text-[#74AA34] mb-4" size={44} />
-                <p className="text-sm font-semibold text-gray-600">
-                    Loading product details...
-                </p>
-            </div>
-        );
-    }
+    if (productLoading || (!product && !productError)) return <PageLoading variant="product" />;
 
     if (productError || !product) return <p role="alert" className="p-8">Could not load this product. <Link to="/products">Browse products</Link></p>;
 

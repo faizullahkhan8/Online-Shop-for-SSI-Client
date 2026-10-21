@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { QueryError } from "../UI/QueryState";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
@@ -12,6 +13,8 @@ const WishlistPage = () => {
     const items = data?.wishlist || [];
 
     if (queryError) return <QueryError />;
+
+    if (loading) return <PageLoading variant="catalog" />;
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">

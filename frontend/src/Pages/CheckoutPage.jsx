@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useSavedUser } from "../hooks/useSavedUser.js";
 import { useAddressLookup } from "../hooks/useAddressLookup.js";
 import { validPosition, samePosition, savedRecipient, addressFields } from "../utils/location.js";
@@ -37,7 +38,7 @@ const CheckoutPage = () => {
     const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
     const { placeOrder, loading: isLoading } = usePlaceOrder();
-    const { data: settingsData } = useGetSettings();
+    const { data: settingsData, loading: settingsLoading } = useGetSettings();
 
     const [formData, setFormData] = useState({
         recipient: {
@@ -367,6 +368,8 @@ const CheckoutPage = () => {
             </div>
         );
     }
+
+    if (settingsLoading) return <PageLoading variant="form" />;
 
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">

@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import RouteLoading from "../Components/UI/PageLoading";
 import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Header from "../Components/Bars/Header";
@@ -64,7 +66,7 @@ const BaseLayout = () => {
             <Header />
 
             <main className="flex-1 bg-surface text-slate-900 pb-20 md:pb-0">
-                <Outlet />
+                <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
             </main>
 
             <Footer />

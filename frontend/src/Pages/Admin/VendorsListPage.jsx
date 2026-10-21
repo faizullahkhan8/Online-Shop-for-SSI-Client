@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState } from "react";
 import {
@@ -149,6 +150,8 @@ const VendorsListPage = () => {
         (v.name || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    if (getAllVendorsLoading) return <PageLoading variant="table" />;
+
     return (
         <div className="bg-[#FAFBF9] min-h-screen font-sans selection:bg-primary/10 selection:text-primary pb-12">
             <div className="p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto space-y-6">
@@ -180,7 +183,7 @@ const VendorsListPage = () => {
                         >
                             <RefreshCw
                                 size={16}
-                                className={getAllVendorsLoading ? "animate-spin" : ""}
+                                className={""}
                             />
                             Refresh
                         </Button>
@@ -223,14 +226,7 @@ const VendorsListPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {getAllVendorsLoading ? (
-                                    <tr>
-                                        <td colSpan="3" className="p-8 text-center text-gray-400">
-                                            <Loader size={24} className="animate-spin mx-auto mb-2 text-primary" />
-                                            <p className="text-sm">Loading vendors...</p>
-                                        </td>
-                                    </tr>
-                                ) : getAllVendorsError ? (
+                                {getAllVendorsError ? (
                                     <tr>
                                         <td colSpan="3" className="p-8 text-center">
                                             <Building2 size={32} className="mx-auto mb-3 text-red-300" />

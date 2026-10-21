@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect } from "react";
@@ -222,6 +223,8 @@ const CategoriesListPage = () => {
     };
 
     if (queryError) return <QueryError />;
+
+    if (getAllCategoriesLoading) return <PageLoading variant="table" />;
 
     return (
         <div className="space-y-6">

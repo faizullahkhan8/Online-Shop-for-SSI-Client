@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useEffect, useState } from "react";
 import { useGetActiveDeals } from "../api/hooks/promotion.api";
 import PromotionCard from "../Components/Promotion/PromotionCard";
@@ -23,6 +24,8 @@ const PromotionsPage = () => {
         });
     }, [getActiveDeals]);
 
+    if (loading) return <PageLoading variant="promotions" />;
+
     return (
         <div className="min-h-screen bg-gray-50">
             <main className="py-8">
@@ -42,11 +45,7 @@ const PromotionsPage = () => {
                         </p>
                     </div>
 
-                    {loading ? (
-                        <div className="flex justify-center py-20">
-                            <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-600 border-t-transparent"></div>
-                        </div>
-                    ) : deals.length === 0 ? (
+                    {deals.length === 0 ? (
                         <div className="text-center py-20 bg-white border border-gray-200 rounded-lg">
                             <h3 className="text-lg font-semibold text-gray-400">
                                 No Active Promotions

@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import React, { useState, useEffect } from "react";
@@ -199,6 +200,8 @@ const MenuBuilderPage = () => {
 
     if (queryError) return <QueryError />;
 
+    if (fetchLoading) return <PageLoading variant="builder" />;
+
     return (
         <div className="p-6 max-w-5xl mx-auto">
             <div className="flex justify-between items-end mb-6">
@@ -216,11 +219,7 @@ const MenuBuilderPage = () => {
                 </button>
             </div>
 
-            {fetchLoading ? (
-                <div className="flex justify-center py-20">
-                    <Loader size={32} className="animate-spin text-primary" />
-                </div>
-            ) : menus.length === 0 ? (
+            {menus.length === 0 ? (
                 <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center flex flex-col items-center">
                     <ListTree size={48} className="text-gray-300 mb-4" />
                     <h3 className="text-lg font-bold text-gray-900 mb-1">No Menu Items</h3>

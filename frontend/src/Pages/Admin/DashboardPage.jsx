@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { useState } from "react";
 import { useDashboardStats } from "../../api/hooks/dashboard.api";
 import {
@@ -69,19 +70,7 @@ const DashboardHome = () => {
         setDateRange({ startDate, endDate });
     };
 
-    if (loading) {
-        return (
-            <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
-                <Loader2
-                    className="animate-spin mb-4 text-primary"
-                    size={32}
-                />
-                <p className="text-sm font-medium text-gray-500">
-                    Loading dashboard...
-                </p>
-            </div>
-        );
-    }
+    if (loading) return <PageLoading variant="dashboard" />;
 
     if (error) {
         return (

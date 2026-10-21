@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion as Motion, useReducedMotion } from "framer-motion";
@@ -86,7 +87,7 @@ export default function StaffTreePage() {
         const leader = list.find((member) => /\bceo\b|chief executive/i.test(member.role)) || list.find((member) => !member.parentId) || list[0];
         return { owner: leader, members: list.filter((member) => member._id !== leader?._id) };
     }, [staff]);
-    if (loading) return <div className="team-loading"><LoadingSpinner /></div>;
+    if (loading) return <PageLoading variant="team" />;
     if (!owner) return <section className="team-empty"><h1>Meet our team</h1><p>Team profiles will appear here when they are available.</p></section>;
     return <section className="team-page">
         <div className="site-shell">

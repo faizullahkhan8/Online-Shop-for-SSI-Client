@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { useEffect, useState } from "react";
 import { useSmsTemplates } from "../../api/hooks/smsTemplate.api";
 import { Loader2, Save, Power, CheckCircle, RefreshCw, MessageSquare } from "lucide-react";
@@ -19,6 +20,8 @@ const SmsTemplatesPage = () => {
         }
     };
 
+    if (loading && !templates.length) return <PageLoading variant="form" />;
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -39,12 +42,7 @@ const SmsTemplatesPage = () => {
                 </button>
             </div>
 
-            {loading && !templates.length ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="animate-spin text-primary" size={32} />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {templates.map((template) => (
                         <div key={template._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
                             <div className="flex justify-between items-start mb-4">
@@ -116,8 +114,7 @@ const SmsTemplatesPage = () => {
                             </button>
                         </div>
                     )}
-                </div>
-            )}
+                </div>}
         </div>
     );
 };

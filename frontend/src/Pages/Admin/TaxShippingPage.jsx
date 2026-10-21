@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { useAddressLookup } from "../../hooks/useAddressLookup.js";
 import { QueryError } from "../../UI/QueryState";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
@@ -195,6 +196,8 @@ const TaxShippingSettings = () => {
     };
 
     if (queryError) return <QueryError />;
+
+    if (settingsLoading) return <PageLoading variant="form" />;
 
     return (
         <div className="space-y-6">

@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { QueryError, QueryLoading } from "../UI/QueryState";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Tag } from "lucide-react";
@@ -187,7 +188,7 @@ const HomePage = ({ previewSections = null, activePreviewIdx = null }) => {
         return result;
     };
 
-    if (!previewSections && homePageLoading) return <QueryLoading label="Loading store" />;
+    if (!previewSections && (homePageLoading || productsLoading)) return <PageLoading variant="home" />;
     if (!previewSections && homePageError) return <QueryError message="Could not load store" />;
     return (
         <div className="bg-gray-50 min-h-screen text-gray-900 antialiased">

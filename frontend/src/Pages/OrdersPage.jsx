@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { QueryError } from "../UI/QueryState";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -62,6 +63,8 @@ const OrdersPage = () => {
 
     if (queryError) return <QueryError />;
 
+    if (loading) return <PageLoading variant="orders" />;
+
     return (
         <div className="bg-gray-50 min-h-[85vh] py-8 lg:py-12">
             <div className="site-shell">
@@ -88,14 +91,7 @@ const OrdersPage = () => {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-32 bg-white border border-gray-100 rounded-3xl shadow-sm">
-                        <Loader2 className="animate-spin text-primary mb-4" size={40} />
-                        <p className="text-gray-500 text-sm font-bold">
-                            Loading your orders...
-                        </p>
-                    </div>
-                ) : orders.length === 0 ? (
+                {orders.length === 0 ? (
                     <div className="bg-white border border-gray-100 shadow-sm rounded-3xl py-24 px-6 flex flex-col items-center justify-center text-center">
                         <div className="w-24 h-24 bg-primary-pale rounded-full flex items-center justify-center mb-6">
                             <ShoppingBag size={40} className="text-primary-dark" />

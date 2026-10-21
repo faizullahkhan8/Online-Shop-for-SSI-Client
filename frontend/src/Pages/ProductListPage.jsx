@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useState, useRef, useEffect } from "react";
 import {
     LayoutGrid,
@@ -51,6 +52,8 @@ const ProductListPage = () => {
 
     // Searching is now handled on the server side
     const displayProducts = products;
+
+    if (productLoading) return <PageLoading variant="catalog" />;
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -116,17 +119,7 @@ const ProductListPage = () => {
                             </div>
                         </div>
 
-                        {productLoading ? (
-                            <div className="flex flex-col items-center justify-center py-24 bg-white border border-gray-200/80 rounded-2xl shadow-2xs">
-                                <Loader2
-                                    className="animate-spin text-[#74AA34] mb-3"
-                                    size={32}
-                                />
-                                <p className="text-gray-500 text-sm font-medium">
-                                    Loading products...
-                                </p>
-                            </div>
-                        ) : error ? (<p role="alert" className="p-6 text-red-700">Could not load products. Please try again.</p>) : products?.length === 0 ? (
+                        {error ? (<p role="alert" className="p-6 text-red-700">Could not load products. Please try again.</p>) : products?.length === 0 ? (
                             <div className="bg-white border border-gray-200/80 rounded-2xl py-16 px-6 flex flex-col items-center justify-center shadow-2xs">
                                 <div className="w-20 h-20 bg-[#F4F8EE] rounded-2xl flex items-center justify-center mb-4 text-[#74AA34]">
                                     <PackageSearch

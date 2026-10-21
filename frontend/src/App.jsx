@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import LoadingSpinner from "./Components/LoadingSpinner";
+import RouteLoading from "./Components/UI/PageLoading";
 import ScrollToTop from "./Components/ScrollToTop";
 const AboutPage = lazy(() => import("./Pages/AboutUsPage"));
 const AdminLayout = lazy(() => import("./Layout/AdminLayout.jsx"));
@@ -57,7 +57,7 @@ const App = () => {
                 pauseOnHover={false}
                 closeOnClick={true}
             />
-            <Suspense fallback={<LoadingSpinner message={"Loading..."} />}>
+            <Suspense fallback={<RouteLoading />}>
                 <Routes>
                     <Route path="/" element={<BaseLayout />}>
                         <Route index element={<HomePage />} />

@@ -1,7 +1,7 @@
 const Skeleton = ({ className = "", ...props }) => {
     return (
         <div
-            className={`animate-pulse bg-gray-200 rounded-lg ${className}`}
+            className={`motion-safe:animate-pulse motion-reduce:animate-none bg-gray-200 rounded-lg ${className}`}
             {...props}
         />
     );
@@ -63,7 +63,7 @@ export const PageSkeleton = () => {
 
 export const HeroSkeleton = () => {
     return (
-        <div className="w-full h-[250px] sm:h-[350px] md:h-[450px] xl:h-[500px] bg-gray-200 animate-pulse rounded-none" />
+        <div className="w-full h-[250px] sm:h-[350px] md:h-[450px] xl:h-[500px] bg-gray-200 motion-safe:animate-pulse motion-reduce:animate-none rounded-none" />
     );
 };
 

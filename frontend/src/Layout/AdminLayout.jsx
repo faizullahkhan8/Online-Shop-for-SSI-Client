@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import RouteLoading from "../Components/UI/PageLoading";
 import { useEffect, useState, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import AdminSidebar from "../Components/Admin/AdminSidebar";
@@ -124,7 +126,7 @@ const AdminLayout = () => {
                 </header>
                 <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 custom-scrollbar">
                     <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <Outlet />
+                        <Suspense fallback={<RouteLoading />}><Outlet /></Suspense>
                     </div>
                 </main>
             </div>

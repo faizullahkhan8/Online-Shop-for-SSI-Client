@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { savedRecipient } from "../../utils/location.js";
 import { FormField, FieldLabel } from "../../UI/FormField";
 import { useState } from "react";
@@ -158,6 +159,8 @@ const AddOrderPage = () => {
             recipient: savedRecipient(selectedUser),
         }));
     };
+
+    if ((productsLoading && !productsData) || (usersLoading && !usersData)) return <PageLoading variant="form" />;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">

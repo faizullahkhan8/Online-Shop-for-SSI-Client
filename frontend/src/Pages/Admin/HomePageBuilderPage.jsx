@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { FormField, FieldLabel, FieldControl } from "../../UI/FormField";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -1490,16 +1491,7 @@ const HomePageBuilderPage = () => {
 
     if (homePageError) return <QueryError message="Could not load the homepage configuration. Please refresh to try again." />;
 
-    if (pageLoading) {
-        return (
-            <div className="flex items-center justify-center h-full min-h-screen bg-gray-50">
-                <div className="text-center">
-                    <Loader2 size={32} className="animate-spin text-primary mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">Loading Page Builder...</p>
-                </div>
-            </div>
-        );
-    }
+    if (pageLoading) return <PageLoading variant="builder" />;
 
     return (
         <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50 overflow-hidden">

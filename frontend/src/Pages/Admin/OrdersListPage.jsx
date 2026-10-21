@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { useState, useEffect } from "react";
 import { useGetAllOrder, useMarkOrderViewed } from "../../api/hooks/orders.api.js";
@@ -58,6 +59,8 @@ const OrdersList = () => {
 
     if (queryError) return <QueryError />;
 
+    if (loading) return <PageLoading variant="table" />;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -105,9 +108,7 @@ const OrdersList = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <TableLoadingState />
-                        ) : orders?.length > 0 ? (
+                        {orders?.length > 0 ? (
                             orders.map((order) => (
                                 <tr
                                     key={order._id}

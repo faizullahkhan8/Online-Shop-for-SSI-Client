@@ -1,3 +1,4 @@
+import { PageLoading } from "../../Components/UI/PageLoading";
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import Input from "../../UI/Input.jsx";
@@ -71,7 +72,7 @@ const AddProduct = () => {
     const [productData, setProductData] = useState(parseProductFromParams);
     const isEditing = Boolean(productData?._id);
 
-    const { data: categoriesData } = useGetAllCategories();
+    const { data: categoriesData, loading: categoriesLoading } = useGetAllCategories();
     const categories = categoriesData?.categories || [];
     const [vendors, setVendors] = useState([]);
     const [previewUrl, setPreviewUrl] = useState("");
@@ -80,7 +81,7 @@ const AddProduct = () => {
         useCreateProuduct();
     const { updateProduct, loading: updateProductLoading } = useUpdateProduct();
 
-    const { data: vendorsData } = useGetAllVendors();
+    const { data: vendorsData, loading: vendorsLoading } = useGetAllVendors();
 
     useEffect(() => {
         if (vendorsData?.success) {
@@ -227,6 +228,8 @@ const AddProduct = () => {
                 navigate("/admin-dashboard/products");
         }
     };
+
+    if (categoriesLoading || vendorsLoading) return <PageLoading variant="form" />;
 
     return (
         <div className="space-y-6">

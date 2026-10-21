@@ -1,3 +1,4 @@
+import { PageLoading } from "../Components/UI/PageLoading";
 import { useSavedUser } from "../hooks/useSavedUser.js";
 import { useAddressLookup } from "../hooks/useAddressLookup.js";
 import { validPosition, addressFields } from "../utils/location.js";
@@ -78,7 +79,7 @@ const ProfilePage = () => {
         }
     };
 
-    if (!userData) return null;
+    if (!userData) return <PageLoading variant="form" />;
 
     return (
         <div className="bg-white min-h-screen pb-20">
