@@ -153,8 +153,8 @@ export const useUpdatePrescriptionStatus = () => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async ({ id, status }) => {
-            const response = await apiClient.put(`/prescriptions/${id}/status`, { status });
+        mutationFn: async ({ id, status, options }) => {
+            const response = await apiClient.put(`/prescriptions/${id}/status`, { status, ...options });
             return response.data;
         },
         onSuccess: () => {
@@ -165,9 +165,9 @@ export const useUpdatePrescriptionStatus = () => {
         }
     });
 
-    const updatePrescriptionStatus = async (id, status) => {
+    const updatePrescriptionStatus = async (id, status, options = {}) => {
         try {
-            return await mutation.mutateAsync({ id, status });
+            return await mutation.mutateAsync({ id, status, options });
         } catch (error) {
             throw error;
         }

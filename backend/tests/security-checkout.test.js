@@ -1,3 +1,4 @@
+process.env.NOTIFICATION_WORKER = "off";
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -93,6 +94,224 @@ describe("P1 and P2 account, shopping, reporting, and socket regressions", { con
         if (getIO()) await new Promise((resolve) => getIO().close(resolve));
         if (db.getLocalUserModel()) await db.getLocalUserModel().db.close();
         await replica?.stop();
+    });
+
+    it("rejects stale catalog balances and records replay-safe stock adjustments", async () => {
+        const p = await product(10);
+        const placed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        assert.equal(placed.status, 201);
+        const stale = await request(`/products/update/${p._id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ name: "Stale edit", stock: 10, revision: 0 }) } });
+        assert.equal(stale.status, 409);
+        assert.equal((await db.getLocalProductModel().findById(p._id)).stock, 9);
+        const revision = (await db.getLocalProductModel().findById(p._id)).revision;
+        const path = `/products/${p._id}/stock-adjustments`;
+        const body = { delta: 4, expectedRevision: revision, reason: "Received four units" }, key = randomUUID();
+        assert.equal((await request(path, { method: "POST", cookie: customerAuth.cookie, body })).status, 401);
+        const results = await Promise.all([1, 2].map(() => request(path, { method: "POST", cookie: adminAuth.cookie, body, key })));
+        assert.ok(results.every(result => result.status === 200));
+        assert.equal((await db.getLocalProductModel().findById(p._id)).stock, 13);
+        assert.equal((await request(path, { method: "POST", cookie: adminAuth.cookie, body: { ...body, delta: 5 }, key })).status, 409);
+        assert.equal((await request(path, { method: "POST", cookie: adminAuth.cookie, body: { delta: -100, expectedRevision: revision + 1, reason: "Invalid correction" } })).status, 409);
+        const { businessModels } = await import("../services/businessRecords.js");
+        const movements = await businessModels().Movement.find({ product: p._id });
+        assert.equal(movements.length, 2); assert.equal(movements.reduce((sum, row) => sum + row.delta, 0), 3);
+    });
+
+    it("archives ordered products without losing snapshots or the cancellation path", async () => {
+        const p = await product(4);
+        const placed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        const renamed = await request(`/products/update/${p._id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ name: "New catalog name", revision: 1 }) } });
+        assert.equal(renamed.status, 200);
+        assert.equal((await request(`/products/delete/${p._id}`, { method: "DELETE", cookie: adminAuth.cookie })).status, 200);
+        assert.equal((await request(`/products/get/${p._id}`)).status, 404);
+        const history = await request(`/orders/${placed.body.order._id}`, { cookie: customerAuth.cookie });
+        assert.equal(history.body.order.items[0].name, p.name);
+        assert.equal((await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) })).status, 404);
+        assert.equal((await request(`/orders/${placed.body.order._id}/cancel`, { method: "PUT", cookie: customerAuth.cookie, body: {} })).status, 200);
+        assert.equal((await db.getLocalProductModel().findById(p._id)).stock, 4);
+        assert.equal((await request("/products/archived", { cookie: customerAuth.cookie })).status, 401);
+        const archivedList = await request("/products/archived", { cookie: adminAuth.cookie });
+        assert.ok(archivedList.body.products.some(row => row._id === String(p._id)));
+        assert.equal((await request(`/products/${p._id}/restore`, { method: "POST", cookie: adminAuth.cookie, body: {} })).status, 200);
+    });
+
+    it("preserves ordered variants and allows cancellation after variant deactivation", async () => {
+        const p = await product(4); p.variants = [{ name: "Option", price: 20, stock: 4 }]; await p.save();
+        const body = orderPayload(p, { items: [{ product: String(p._id), variantId: String(p.variants[0]._id), quantity: 1 }] });
+        const placed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body });
+        assert.equal((await request(`/products/update/${p._id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ variants: [], revision: 1 }) } })).status, 409);
+        const variant = (await db.getLocalProductModel().findById(p._id)).variants[0].toObject();
+        assert.equal((await request(`/products/update/${p._id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ variants: [{ ...variant, active: false }], revision: 1 }) } })).status, 200);
+        assert.equal((await request(`/orders/${placed.body.order._id}/cancel`, { method: "PUT", cookie: customerAuth.cookie, body: {} })).status, 200);
+        assert.equal((await db.getLocalProductModel().findById(p._id)).variants[0].stock, 4);
+    });
+
+    it("rounds posted unit prices consistently and records initial paid-order metadata", async () => {
+        const p = await product(5); p.price = 0.335; await p.save();
+        const result = await request("/orders/place-order", { method: "POST", cookie: adminAuth.cookie, body: orderPayload(p, { payment: { method: "COD", ispaid: true, reference: "cash-review-123" }, items: [{ product: String(p._id), quantity: 3 }] }) });
+        assert.equal(result.status, 201);
+        const order = result.body.order, line = order.items[0];
+        assert.equal(line.price, 0.34); assert.equal(line.totalAmount, 1.02); assert.equal(order.currency, "PKR");
+        assert.equal(order.payment.paidAmount, order.grandTotal); assert.equal(order.payment.recordedBy, String(admin._id));
+        assert.ok(order.payment.paidAt); assert.equal(order.payment.reference, "cash-review-123");
+        assert.equal(order.originalGrandTotal, order.grandTotal);
+        assert.equal((await request(`/orders/payment/${order._id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { ispaid: true, reference: "different-reference" } })).status, 409);
+        assert.ok(order.history.some(event => event.action === "payment_recorded"));
+    });
+
+    it("commits encrypted notification intent with an order and rolls back if the outbox fails", async () => {
+        const { businessModels } = await import("../services/businessRecords.js");
+        const { Outbox } = businessModels();
+        const p = await product(3);
+        const result = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        const queued = await Outbox.findOne({ sourceId: result.body.order._id }).select("+encryptedPayload");
+        assert.equal(queued.status, "pending"); assert.match(queued.encryptedPayload, /^v2:/); assert.ok(!queued.encryptedPayload.includes("00000000000"));
+        const safe = await request("/business/notifications", { cookie: adminAuth.cookie });
+        assert.equal(safe.status, 200); assert.ok(safe.body.events.every(event => !event.encryptedPayload));
+        assert.equal((await request("/business/notifications", { cookie: customerAuth.cookie })).status, 401);
+        const create = Outbox.create;
+        try {
+            Outbox.create = async () => { throw new Error("Synthetic outbox failure"); };
+            const failed = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+            assert.equal(failed.status, 500); assert.equal((await db.getLocalProductModel().findById(p._id)).stock, 2);
+        } finally { Outbox.create = create; }
+    });
+
+    it("leases outbox work once and requires confirmed recovery for uncertain sends", async () => {
+        const { businessModels } = await import("../services/businessRecords.js");
+        const { processNotificationOutbox, manageNotification } = await import("../services/notificationOutbox.js");
+        const { Outbox } = businessModels(); await Outbox.deleteMany({});
+        const p = await product();
+        const created = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        let calls = 0;
+        const sender = async () => { calls++; await new Promise(resolve => setTimeout(resolve, 15)); return { status: "accepted", messageId: "synthetic-accepted" }; };
+        await Promise.all([1, 2].map(() => processNotificationOutbox({ sender })));
+        assert.equal(calls, 1); assert.equal((await Outbox.findOne({ sourceId: created.body.order._id })).status, "accepted");
+        const next = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        await processNotificationOutbox({ sender: async () => { calls++; throw new Error("Response lost"); } });
+        const unknown = await Outbox.findOne({ sourceId: next.body.order._id }); assert.equal(unknown.status, "unknown");
+        await assert.rejects(manageNotification(unknown._id, admin, { action: "retry", reason: "Blind retry" }), error => error.statusCode === 409);
+        await manageNotification(unknown._id, admin, { action: "confirm_not_sent", reference: "provider-case-1", reason: "Provider confirmed no acceptance" });
+        await manageNotification(unknown._id, admin, { action: "retry", reason: "Safe resend after confirmation" });
+        await processNotificationOutbox({ sender }); assert.equal((await Outbox.findById(unknown._id)).status, "accepted");
+        assert.equal(calls, 3);
+        const expired = await request("/orders/place-order", { method: "POST", cookie: customerAuth.cookie, body: orderPayload(p) });
+        await Outbox.updateOne({ sourceId: expired.body.order._id }, { $set: { status: "processing", leaseUntil: new Date(0) } });
+        await processNotificationOutbox({ sender }); assert.equal(calls, 3);
+        assert.equal((await Outbox.findOne({ sourceId: expired.body.order._id })).status, "unknown");
+    });
+
+    it("enforces prescription decisions, expected state and audited reopening", async () => {
+        const rx = await db.getLocalPrescriptionModel().create({ userId: customer._id, name: "Review", phone: "00000000000", address: { lat: 0, lng: 0 }, image: "/test", imagekitFileId: "test" });
+        const path = `/prescriptions/${rx._id}/status`;
+        const decide = body => request(path, { method: "PUT", cookie: adminAuth.cookie, body });
+        assert.equal((await decide({ status: "completed" })).status, 409);
+        assert.equal((await decide({ status: "processing", expectedStatus: "pending" })).status, 200);
+        assert.equal((await decide({ status: "rejected", expectedStatus: "pending" })).status, 409);
+        assert.equal((await decide({ status: "completed", expectedStatus: "processing" })).status, 200);
+        assert.equal((await decide({ status: "pending" })).status, 409);
+        assert.equal((await decide({ status: "pending", action: "reopen" })).status, 400);
+        assert.equal((await decide({ status: "pending", action: "reopen", expectedStatus: "completed", reason: "New evidence supplied" })).status, 200);
+        const stored = await db.getLocalPrescriptionModel().findById(rx._id);
+        assert.equal(stored.history.length, 3); assert.equal(String(stored.history[2].actor), String(admin._id));
+        assert.equal(stored.history[2].reason, "New evidence supplied");
+    });
+
+    it("rejects one of two independent stock corrections based on the same revision", async () => {
+        const p = await product(5);
+        const body = { delta: 2, expectedRevision: 0, reason: "Independent receipt" };
+        const results = await Promise.all([1, 2].map(() => request(`/products/${p._id}/stock-adjustments`, { method: "POST", cookie: adminAuth.cookie, body })));
+        assert.deepEqual(results.map(result => result.status).sort(), [200, 409]);
+        assert.equal((await db.getLocalProductModel().findById(p._id)).stock, 7);
+    });
+
+    it("plans and resumes legacy observations without inventing past payments or sending notifications", async () => {
+        const { migrateBusinessRecords } = await import("../services/businessMigration.js");
+        const { businessModels } = await import("../services/businessRecords.js");
+        const p = await product(5);
+        const old = await db.getLocalOrderModel().create({ userId: customer._id, ...orderPayload(p), items: [{ product: p._id, quantity: 1, price: 100, totalAmount: 100 }], grandTotal: 100, payment: { method: "COD", ispaid: true } });
+        const beforeTime = old.updatedAt.getTime();
+        const beforeOutbox = await businessModels().Outbox.countDocuments();
+        const plan = await migrateBusinessRecords();
+        assert.ok(plan.orders >= 1); assert.equal((await db.getLocalOrderModel().findById(old._id)).businessMigrationVersion, undefined);
+        await migrateBusinessRecords({ apply: true });
+        const migrated = await db.getLocalOrderModel().findById(old._id);
+        assert.equal(migrated.items[0].name, p.name); assert.equal(migrated.items[0].snapshotSource, "legacy_catalog");
+        assert.equal(migrated.legacyPaymentProvenanceUnknown, true); assert.equal(migrated.payment.paidAt, undefined);
+        assert.equal(migrated.updatedAt.getTime(), beforeTime);
+        assert.equal(await businessModels().Outbox.countDocuments(), beforeOutbox);
+        assert.equal(await businessModels().Movement.countDocuments({ key: `baseline:${p._id}` }), 1);
+        const second = await migrateBusinessRecords({ apply: true }); assert.equal(second.orders, 0); assert.equal(second.products, 0);
+        assert.equal(await businessModels().Event.countDocuments({ key: `legacy-order:${old._id}` }), 1);
+    });
+
+    it("filters and sorts catalog products before pagination with honest facets and review averages", async () => {
+        const prefix = `Catalog ${randomUUID()}`;
+        const root = await db.getLocalCategoryModel().create({ name: `Root ${randomUUID()}` });
+        const child = await db.getLocalCategoryModel().create({ name: `Child ${randomUUID()}`, parentId: root._id });
+        const [vendorA, vendorB] = await db.getLocalVendorModel().create([{ name: `Supplier A ${randomUUID()}` }, { name: `Supplier B ${randomUUID()}` }]);
+        const Product = db.getLocalProductModel();
+        const [a, b, c] = await Product.create([
+            { name: `${prefix} A`, price: 100, stock: 5, lowStock: 1, category: child._id, brand: "Alpha", vendor: vendorA._id, sold: 2 },
+            { name: `${prefix} B`, price: 200, stock: 0, lowStock: 1, category: root._id, brand: "Beta", vendor: vendorB._id, sold: 8 },
+            { name: `${prefix} C`, price: 300, stock: 4, lowStock: 1, category: root._id, brand: "Alpha", vendor: vendorA._id, sold: 20 },
+        ]);
+        await Product.create({ name: `${prefix} Archived`, price: 10, stock: 10, lowStock: 1, category: root._id, isArchived: true });
+        await db.getLocalReviewModel().create([{ product: a._id, user: customer._id, name: "Synthetic", rating: 5, comment: "Good" }, { product: a._id, user: other._id, name: "Synthetic", rating: 3, comment: "Okay" }, { product: b._id, user: customer._id, name: "Synthetic", rating: 5, comment: "Good" }]);
+        const base = new URLSearchParams({ search: prefix, category: String(root._id), facets: "true" });
+        const get = async extras => { const q = new URLSearchParams(base); for (const [key, value] of Object.entries(extras || {})) q.set(key, value); return request(`/products/all?${q}`); };
+        const page = await get({ sort: "price_desc", limit: "1", page: "2" });
+        assert.equal(page.status, 200); assert.equal(page.body.totalProducts, 3); assert.equal(page.body.totalPages, 3); assert.equal(page.body.products[0]._id, String(b._id));
+        assert.equal((await get({ brand: "Alpha" })).body.totalProducts, 2);
+        assert.equal((await get({ vendor: String(vendorB._id) })).body.products[0]._id, String(b._id));
+        assert.equal((await get({ availability: "in_stock" })).body.totalProducts, 2);
+        assert.equal((await get({ availability: "out_of_stock" })).body.products[0]._id, String(b._id));
+        assert.equal((await get({ minRating: "4" })).body.totalProducts, 2);
+        assert.equal((await get({ sort: "rating" })).body.products[0]._id, String(b._id));
+        assert.equal((await get({ sort: "bestselling" })).body.products[0]._id, String(c._id));
+        const zero = await get({ brand: "Alpha", vendor: String(vendorB._id) });
+        assert.equal(zero.body.totalProducts, 0); assert.equal(zero.body.totalPages, 0);
+        assert.ok(zero.body.facets.vendors.some(v => v.value === String(vendorB._id) && v.label === vendorB.name));
+        const category = page.body.facets.categories.find(option => option.value === String(root._id)); assert.equal(category.count, 3);
+        const multi = new URLSearchParams(base); multi.append("brand", "Alpha"); multi.append("brand", "Beta"); multi.append("vendor", String(vendorA._id)); multi.append("vendor", String(vendorB._id));
+        assert.equal((await request(`/products/all?${multi}`)).body.totalProducts, 3);
+    });
+
+    it("matches real variant prices, shared stock and active discounts without range false positives", async () => {
+        const p = await product(5); p.variants = [{ name: "Small", sku: `SKU-${randomUUID()}`, price: 100, stock: 0 }, { name: "Large", price: 300, stock: 5 }, { name: "Inactive", price: 200, stock: 50, active: false }]; await p.save();
+        const search = new URLSearchParams({ search: p.name });
+        const get = async extras => { const q = new URLSearchParams(search); Object.entries(extras || {}).forEach(([k, v]) => q.set(k, v)); return request(`/products/all?${q}`); };
+        assert.equal((await get({ minPrice: "150", maxPrice: "250" })).body.totalProducts, 0);
+        assert.equal((await get({ maxPrice: "120", availability: "in_stock" })).body.totalProducts, 0);
+        assert.equal((await get({ minPrice: "290", maxPrice: "310", availability: "in_stock" })).body.totalProducts, 1);
+        const skuQuery = new URLSearchParams({ search: p.variants[0].sku }); assert.equal((await request(`/products/all?${skuQuery}`)).body.products[0]._id, String(p._id));
+        await db.getLocalPromotionModel().create({ title: "Synthetic half price", type: "OFFER", discountType: "PERCENTAGE", discountValue: 50, startTime: new Date(Date.now() - 60000), endTime: new Date(Date.now() + 60000), status: "ACTIVE", products: [p._id] });
+        const discounted = await get({ minPrice: "145", maxPrice: "155", availability: "in_stock", onSale: "true" });
+        assert.equal(discounted.body.totalProducts, 1); assert.equal(discounted.body.products[0].effectivePrice, 50); assert.equal(discounted.body.products[0].effectiveMaxPrice, 150);
+        assert.equal((await get({ maxPrice: "60", availability: "in_stock" })).body.totalProducts, 0);
+        await db.getLocalPromotionModel().updateOne({ products: p._id }, { $set: { status: "CANCELLED" } });
+        assert.equal((await get({ onSale: "true" })).body.totalProducts, 0);
+        const { getEffectivePrice } = await import("../utils/promotionHelper.js");
+        assert.equal((await getEffectivePrice(p._id, 300)).price, 300);
+        const shared = await product(3); shared.variants = [{ name: "Shared A", price: 75, stock: 0 }, { name: "Shared B", price: 95, stock: 0 }]; await shared.save();
+        const q = new URLSearchParams({ search: shared.name, availability: "in_stock", minPrice: "70", maxPrice: "80" }); assert.equal((await request(`/products/all?${q}`)).body.totalProducts, 1);
+    });
+
+    it("searches literal names and brands safely and validates malformed catalog filters", async () => {
+        const p = await product(); p.name = `Literal (test)+ ${randomUUID()}`; p.brand = `Brand ${randomUUID()}`; await p.save();
+        for (const search of [p.name, p.brand]) { const q = new URLSearchParams({ search }); assert.equal((await request(`/products/all?${q}`)).body.products[0]._id, String(p._id)); }
+        assert.equal((await request("/products/all?category=constructor")).body.totalProducts, 0);
+        const { money } = await import("../utils/orderPricing.js");
+        for (const price of [0.335, 1.005, 0.33499999999999]) {
+            const tiny = await product(2); tiny.price = price; await tiny.save();
+            const bound = String(money(price));
+            const q = new URLSearchParams({ search: tiny.name, minPrice: bound, maxPrice: bound });
+            const result = await request(`/products/all?${q}`);
+            assert.equal(result.body.totalProducts, 1); assert.equal(result.body.products[0].effectivePrice, money(price));
+        }
+        for (const extras of [{ minPrice: "-1" }, { minPrice: "2", maxPrice: "1" }, { minPrice: "NaN" }, { minRating: "6" }, { vendor: "bad-id" }, { availability: "maybe" }, { sort: "unknown" }, { sort: "constructor" }, { onSale: "yes" }, { page: "1.5" }]) {
+            assert.equal((await request(`/products/all?${new URLSearchParams(extras)}`)).status, 400);
+        }
     });
 
     it("merges variant checkout with authoritative pricing, atomic stock and once-only restoration", async () => {
@@ -741,6 +960,69 @@ describe("P1 and P2 account, shopping, reporting, and socket regressions", { con
         assert.equal(settings.taxAmount, 20); assert.equal(settings.shippingFee, 150);
     });
 
+    it("persists multiple variant images with a legacy main image and rejects invalid selections", async () => {
+        const p = await product();
+        p.images = [{ url: "https://example.test/front.webp", filePath: "front.webp", fileId: "front" }, { url: "https://example.test/back.webp", filePath: "back.webp", fileId: "back" }];
+        p.variants = [{ name: "Blue", price: 100, stock: 10, imageIndex: 1, active: true }];
+        p.hasVariants = true;
+        await p.save();
+        const variant = { _id: String(p.variants[0]._id), name: "Blue", price: 100, lowStock: 5, active: true };
+        const patch = async imageIndices => {
+            const form = new FormData();
+            form.set("data", JSON.stringify({ revision: 0, variants: [{ ...variant, imageIndices }] }));
+            return fetch(base + `/api/products/update/${p._id}`, { method: "PATCH", headers: { cookie: adminAuth.cookie }, body: form });
+        };
+        for (const selection of [[-1], [2], [1.5], [0, 0], ["0"], "0", null]) assert.equal((await patch(selection)).status, 400);
+        assert.equal((await patch([1, 0])).status, 200);
+        const loaded = await request(`/products/get/${p._id}`);
+        assert.deepEqual(loaded.body.product.variants[0].imageIndices, [1, 0]);
+        assert.equal(loaded.body.product.variants[0].imageIndex, 1);
+        assert.equal(loaded.body.product.variants[0].stock, 10);
+    });
+
+    it("serves fresh, minimal admin edit data and preserves revision-safe saves", async () => {
+        const p = await product();
+        const path = `/products/admin/${p._id}/edit`;
+        assert.equal((await request(path)).status, 401);
+        assert.equal((await request(path, { cookie: customerAuth.cookie })).status, 401);
+        assert.equal((await request("/products/admin/not-an-id/edit", { cookie: adminAuth.cookie })).status, 400);
+        assert.equal((await request("/products/admin/000000000000000000000001/edit", { cookie: adminAuth.cookie })).status, 404);
+        let loaded = await request(path, { cookie: adminAuth.cookie });
+        assert.equal(loaded.status, 200);
+        assert.equal(loaded.body.product._id, String(p._id));
+        assert.equal(loaded.body.product.category, String(p.category));
+        assert.equal(loaded.body.product.price, 100);
+        for (const field of ["effectivePrice", "promotion", "reviews", "researchSources"]) assert.equal(field in loaded.body.product, false);
+        const response = await fetch(base + "/api" + path, { headers: { cookie: adminAuth.cookie } });
+        assert.equal(response.headers.get("cache-control"), "no-store");
+        const form = new FormData();
+        form.set("data", JSON.stringify({ name: "Edited through ID route", revision: loaded.body.product.revision || 0 }));
+        const saved = await fetch(base + `/api/products/update/${p._id}`, { method: "PATCH", headers: { cookie: adminAuth.cookie }, body: form });
+        assert.equal(saved.status, 200);
+        loaded = await request(path, { cookie: adminAuth.cookie });
+        assert.equal(loaded.body.product.name, "Edited through ID route");
+        assert.equal(loaded.body.product.revision, 1);
+        assert.equal((await fetch(base + `/api/products/update/${p._id}`, { method: "PATCH", headers: { cookie: adminAuth.cookie }, body: form })).status, 409);
+        await db.getLocalProductModel().updateOne({ _id: p._id }, { $set: { isArchived: true } });
+        assert.equal((await request(path, { cookie: adminAuth.cookie })).status, 404);
+    });
+
+    it("persists radius settings and rejects invalid radius configuration without changing saved values", async () => {
+        const advancedShipping = { calculationMethod: "flat", freeDeliveryEnabled: true, freeDeliveryRadiusKm: 3, storeLocation: { lat: 0, lng: 0 } };
+        assert.equal((await request("/settings", { method: "PUT", cookie: adminAuth.cookie, body: { advancedShipping } })).status, 200);
+        const publicSettings = await request("/settings");
+        assert.equal(publicSettings.body.settings.advancedShipping.freeDeliveryRadiusKm, 3);
+        assert.equal(publicSettings.body.settings.advancedShipping.freeDeliveryEnabled, true);
+        for (const invalid of [0, -1, "invalid", null]) {
+            assert.equal((await request("/settings", { method: "PUT", cookie: adminAuth.cookie, body: { advancedShipping: { ...advancedShipping, freeDeliveryRadiusKm: invalid } } })).status, 400);
+        }
+        assert.equal((await request("/settings", { method: "PUT", cookie: adminAuth.cookie, body: { advancedShipping: { ...advancedShipping, storeLocation: { lat: 91, lng: 0 } } } })).status, 400);
+        assert.equal((await request("/settings", { method: "PUT", cookie: adminAuth.cookie, body: { advancedShipping: { ...advancedShipping, freeDeliveryEnabled: "true" } } })).status, 400);
+        const saved = await db.getLocalSettingsModel().findOne();
+        assert.equal(saved.advancedShipping.freeDeliveryRadiusKm, 3);
+        assert.equal(saved.advancedShipping.storeLocation.lat, 0);
+    });
+
     it("supports zero-stock admin products and validates edits without altering sales counters", async () => {
         const { getImageKit } = await import("../config/imagekit.js");
         const sharp = (await import("sharp")).default;
@@ -767,7 +1049,9 @@ describe("P1 and P2 account, shopping, reporting, and socket regressions", { con
             for (const fields of [{ stock: -1 }, { stock: 1.5 }, { price: -2 }, { images: "bad" }])
                 assert.equal((await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify(fields) } })).status, 400);
             const edited = await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ stock: 5, sold: 999, price: 10 }) } });
-            assert.equal(edited.status, 200); assert.equal(edited.body.product.stock, 5); assert.equal(edited.body.product.sold, 0);
+            assert.equal(edited.status, 409);
+            const adjustment = await request(`/products/${id}/stock-adjustments`, { method: "POST", cookie: adminAuth.cookie, body: { delta: 5, expectedRevision: 0, reason: "Opening receipt" } });
+            assert.equal(adjustment.status, 200); assert.equal(adjustment.body.product.stock, 5); assert.equal(adjustment.body.product.sold, 0);
             for (const variant of [{ name: "Bad", price: -1, stock: 1 }, { name: "Bad", price: 5, stock: 0.5 }, { name: "Bad", price: "", stock: 1 }]) {
                 const rejectedVariant = await request(`/products/update/${id}`, { method: "PATCH", cookie: adminAuth.cookie, body: { data: JSON.stringify({ variants: [variant] }) } });
                 assert.equal(rejectedVariant.status, 400);

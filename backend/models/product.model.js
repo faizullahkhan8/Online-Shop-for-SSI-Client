@@ -3,6 +3,8 @@ import { safeHtml } from "../utils/safeHtml.js";
 
 const productSchema = new Schema(
     {
+        revision: { type: Number, default: 0 },
+        isArchived: { type: Boolean, default: false },
         name: { type: String, required: true },
         slug: { type: String, unique: true, sparse: true },
         productType: { type: String, default: "" },
@@ -50,6 +52,7 @@ const productSchema = new Schema(
                 stock: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
                 lowStock: { type: Number, default: 5, min: 0, validate: Number.isSafeInteger },
                 imageIndex: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
+                imageIndices: { type: [{ type: Number, min: 0, validate: Number.isSafeInteger }], default: undefined },
                 active: { type: Boolean, default: true },
             },
         ],

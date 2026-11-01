@@ -1,24 +1,31 @@
+import StockAdjustmentModal from "../../Components/Admin/StockAdjustmentModal";
+import { toast } from "react-toastify";
 import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import {
     useDeleteProduct,
+    useRestoreProduct,
     useGetAllProducts,
 } from "../../api/hooks/product.api.js";
-import { useState, useEffect } from "react";
-import { Edit, MoreVertical, PackageOpen, Trash } from "lucide-react";
+import { useState, useRef } from "react";
+import { Edit, MoreVertical, PackageOpen, Trash, PackagePlus } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import DeleteDialog from "../../UI/DialogBox.jsx";
 import Pagination from "../../Components/Pagination.jsx";
 
 const ProductList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const archived = searchParams.get("archived") === "1";
+    const [stockProductId, setStockProductId] = useState(null);
+    const { restoreProduct, loading: restoring } = useRestoreProduct();
+    const restoreLock = useRef(false);
     const page = parseInt(searchParams.get("page") || "1");
 
     const {
         data: productsData,
         loading: getAllProductsLoading,
         error: getAllProductsError,
-    } = useGetAllProducts({ page, limit: 10 });
+    } = useGetAllProducts({ page, limit: 10, archived });
     const queryError = getAllProductsError;
     const products = productsData?.products || [];
     const totalPages = productsData?.totalPages || 1;
@@ -45,19 +52,33 @@ const ProductList = () => {
         }
     };
 
-    if (queryError) return <QueryError />;
+    const handleRestore = async () => {
+        if (restoreLock.current || productState.type !== "restore" || !productState.data?._id) return;
+        restoreLock.current = true;
+        try {
+            const result = await restoreProduct(productState.data._id);
+            if (result?.success) setProductState({ type: "", data: null });
+        } catch { /* The API hook reports the error; retain the confirmation for retry. */ }
+        finally { restoreLock.current = false; }
+    };
+    const isRestore = productState.type === "restore";
+
+    if (queryError && !productsData) return <QueryError />;
 
     if (getAllProductsLoading) return <PageLoading variant="table" />;
 
     return (
         <div className="space-y-6">
+            <StockAdjustmentModal productId={stockProductId} onClose={() => setStockProductId(null)} onAdjusted={() => { setStockProductId(null); toast.success("Stock adjustment recorded."); }} />
             <DeleteDialog
-                isOpen={Boolean(productState.type === "delete")}
-                onClose={() => setProductState({ type: "", data: null })}
-                onConfirm={handleDelete}
-                title="Delete Product"
-                message="Are you sure you want to delete this product? This action cannot be undone."
-                loading={deleteProductLoading}
+                isOpen={productState.type === "delete" || isRestore}
+                onClose={() => { if (!restoring && !restoreLock.current && !deleteProductLoading) setProductState({ type: "", data: null }); }}
+                onConfirm={isRestore ? handleRestore : handleDelete}
+                title={isRestore ? "Restore Product" : "Archive Product"}
+                confirmLabel={isRestore ? "Restore product" : "Archive product"}
+                tone={isRestore ? "positive" : "danger"}
+                message={isRestore ? `Restore "${productState.data?.name || "this product"}" to the store? Its stock and order history will be preserved.` : "Archive this product from the store? Existing orders and stock history will be preserved."}
+                loading={isRestore ? restoring : deleteProductLoading}
             />
 
             {/* Header */}
@@ -72,6 +93,7 @@ const ProductList = () => {
                 </div>
             </header>
 
+            <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={archived} onChange={e => setSearchParams(prev => { prev.set("archived", e.target.checked ? "1" : "0"); prev.delete("page"); return prev; })} />Show archived products</label>
             {/* Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 overflow-hidden">
                 <div role="region" aria-label="Products table" tabIndex={0} className="overflow-x-auto">
@@ -178,7 +200,7 @@ const ProductList = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right flex gap-2 justify-end">
                                             <Link
-                                                to={`/admin-dashboard/products/add?isEditing=true&product=${encodeURIComponent(JSON.stringify(product))}`}
+                                                to={`/admin-dashboard/products/${product._id}/edit`}
                                                 className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                                             >
                                                 <Edit
@@ -186,7 +208,9 @@ const ProductList = () => {
                                                     className="text-primary hover:text-primary-dark transition-colors"
                                                 />
                                             </Link>
-                                            <button aria-label="Delete item"
+                                            {!archived && <button type="button" onClick={() => setStockProductId(product._id)} aria-label={`Adjust stock for ${product.name}`} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary-dark hover:bg-primary-pale"><PackagePlus size={17} aria-hidden="true" />Adjust stock</button>}
+                                            {archived && <button disabled={restoring} onClick={() => setProductState({ type: "restore", data: product })} className="rounded-lg border px-3 py-2 text-sm">Restore</button>}
+                                            <button disabled={archived} aria-label="Archive product"
                                                 onClick={() => {
                                                     setProductState({
                                                         type: "delete",

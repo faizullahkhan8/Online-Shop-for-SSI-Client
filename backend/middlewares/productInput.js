@@ -16,6 +16,14 @@ export const validateProductInput = asyncHandler(async (req, res, next) => {
     if (Array.isArray(data.variants)) {
         for (const variant of merged.variants) {
             if (!variant || typeof variant.name !== "string" || !variant.name.trim()) throw new ErrorResponse("Variant name is required", 400);
+            if (variant.imageIndices !== undefined) {
+                const imageCount = (Array.isArray(data.images) ? data.images.length : current?.images?.length || 0) + (req.files?.length || 0);
+                if (!Array.isArray(variant.imageIndices) || new Set(variant.imageIndices).size !== variant.imageIndices.length ||
+                    variant.imageIndices.some(index => !Number.isSafeInteger(index) || index < 0 || index >= imageCount)) {
+                    throw new ErrorResponse("Variant images must be unique valid product image numbers", 400);
+                }
+                variant.imageIndex = variant.imageIndices[0] ?? 0;
+            }
             for (const field of ["price", "stock", "lowStock", "imageIndex"]) {
                 const value = variant[field] ?? (field === "lowStock" ? 5 : field === "price" ? NaN : 0);
                 if (!["number", "string"].includes(typeof value) || value === "" || !Number.isFinite(Number(value)) || Number(value) < 0 || (field !== "price" && !Number.isSafeInteger(Number(value)))) throw new ErrorResponse(`Invalid variant ${field}`, 400);
@@ -27,7 +35,7 @@ export const validateProductInput = asyncHandler(async (req, res, next) => {
             merged.price = Math.min(...active.map(variant => Number(variant.price)));
             merged.stock = active.reduce((total, variant) => total + Number(variant.stock || 0), 0);
         }
-        Object.assign(data, { hasVariants: merged.hasVariants, price: merged.price, stock: merged.stock });
+        Object.assign(data, { hasVariants: merged.hasVariants, price: merged.price, ...(!current ? { stock: merged.stock } : {}) });
     }
     req.body.data = JSON.stringify(data);
     for (const field of ["price", "stock", "lowStock", "minPrice", "maxPrice"]) {

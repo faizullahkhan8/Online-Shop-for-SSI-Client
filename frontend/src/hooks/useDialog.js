@@ -27,7 +27,7 @@ export function useDialog(isOpen, onClose, panelRef) {
         openDialogs.push(panel);
         const isTop = () => openDialogs.at(-1) === panel;
         const controls = () => [...panel.querySelectorAll(focusable)].filter(node => node.getClientRects().length && !node.closest('[inert]'));
-        const focusFirst = () => (panel.querySelector('input:not(:disabled)') || controls()[0] || panel).focus();
+        const focusFirst = () => (panel.querySelector('input:not(:disabled)') || controls()[0] || panel).focus({ preventScroll: true });
         focusFirst();
         const onKeyDown = event => {
             if (!isTop()) return;

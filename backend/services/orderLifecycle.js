@@ -1,3 +1,6 @@
+import { postFullPayment } from "./paymentPosting.js";
+import { prepareBusinessRecords, recordEvent, recordMovement } from "./businessRecords.js";
+import { enqueueNotification } from "./notificationOutbox.js";
 import { getLocalOrderModel, getLocalProductModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 
@@ -7,11 +10,13 @@ const money = value => Math.round(value * 100) / 100;
 export async function changeOrder(id, actor, action, data = {}) {
     if (!/^[a-f\d]{24}$/i.test(id)) throw new ErrorResponse("Invalid order ID", 400);
     const Order = getLocalOrderModel();
+    await prepareBusinessRecords();
     let changed = false;
     await Order.db.transaction(async session => {
         changed = false;
         const order = await Order.findOne({ _id: id, isDeleted: false }).session(session);
         if (!order) throw new ErrorResponse("Order not found", 404);
+        const oldStatus = order.status;
         if (actor.role !== "admin" && (action !== "cancel" || String(order.userId) !== String(actor._id)))
             throw new ErrorResponse("Not authorized", 403);
         if (action === "status" && data.status === "cancelled") action = "cancel";
@@ -31,9 +36,10 @@ export async function changeOrder(id, actor, action, data = {}) {
                 if (variantStock && !variant) throw new ErrorResponse("Cannot restore stock: ordered variant missing", 409);
                 const result = await getLocalProductModel().updateOne(
                     { _id: line.product, ...(variantStock ? { "variants._id": line.variantId } : {}) },
-                    { $inc: { stock: variant?.active === false ? 0 : line.quantity, sold: -Math.min(product.sold, line.quantity),
+                    { $inc: { revision: 1, stock: variant?.active === false ? 0 : line.quantity, sold: -Math.min(product.sold, line.quantity),
                         ...(variantStock ? { "variants.$.stock": line.quantity } : {}) } }, { session });
                 if (!result.matchedCount) throw new ErrorResponse("Cannot restore stock: product missing", 409);
+                await recordMovement(session, { key: `cancel:${order._id}:${line._id}`, product: line.product, variantId: line.variantId, delta: line.quantity, balance: (variantStock ? variant.stock : product.stock) + line.quantity, actor: actor._id, reason: "Order cancelled", sourceType: "order", sourceId: String(order._id) });
                 line.status = "cancelled";
                 line.cancellationReason = typeof data.reason === "string" ? data.reason.slice(0, 1000) : "Cancelled";
                 line.cancelledBy = actor._id;
@@ -59,11 +65,12 @@ export async function changeOrder(id, actor, action, data = {}) {
             order.status = data.status;
         } else if (action === "payment") {
             if (typeof data.ispaid !== "boolean") throw new ErrorResponse("ispaid must be boolean", 400);
-            if (data.ispaid === order.payment.ispaid) return;
+            if (data.ispaid === order.payment.ispaid) {
+                if (data.reference && data.reference !== order.payment.reference) throw new ErrorResponse("Payment was already recorded with a different reference", 409);
+                return;
+            }
             if (!data.ispaid || order.status === "cancelled") throw new ErrorResponse("Payment cannot be reversed; record a refund instead", 409);
-            order.payment.ispaid = true;
-            order.payment.paidAmount = order.grandTotal;
-            order.payment.paidAt = new Date();
+            postFullPayment(order, actor, data.reference);
         } else if (action === "refund") {
             const { amount, reference } = data;
             if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0 || money(amount) !== amount || typeof reference !== "string" || !reference.trim() || reference.length > 200)
@@ -81,7 +88,11 @@ export async function changeOrder(id, actor, action, data = {}) {
                 throw new ErrorResponse("Complete or cancel the order and settle refunds before archiving", 409);
             order.isDeleted = true;
         } else throw new ErrorResponse("Unknown order action", 400);
+        order.history.push({ action, actor: actor._id, at: new Date(), from: oldStatus, to: order.status, reason: typeof data.reason === "string" ? data.reason.slice(0, 1000) : "", reference: action === "payment" ? order.payment.reference : data.reference });
         await order.save({ session });
+        const eventKey = `order:${order._id}:${order.history.length}`;
+        await recordEvent(session, { key: eventKey, aggregate: "order", recordId: order._id, action, actor: actor._id, reason: typeof data.reason === "string" ? data.reason.slice(0, 1000) : undefined, details: { from: oldStatus, to: order.status, amount: data.amount, reference: action === "payment" ? order.payment.reference : data.reference } });
+        if (["status", "cancel", "cancelItem"].includes(action)) await enqueueNotification(session, { key: eventKey, sourceType: "order", sourceId: order._id, eventName: "ORDER_UPDATE", phone: order.recipient?.phone, payload: { name: order.recipient?.name, orderId: String(order._id), status: order.status } });
         changed = true;
     });
     return { order: await Order.findById(id).populate("userId").populate("items.product"), changed };

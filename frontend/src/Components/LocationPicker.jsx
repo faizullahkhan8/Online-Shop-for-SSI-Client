@@ -1,7 +1,7 @@
 import { validPosition } from "../utils/location.js";
 import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Locate } from "lucide-react";
@@ -96,29 +96,42 @@ const LocationMarker = ({ position, setPosition }) => {
     );
 };
 
-const MapSizeObserver = () => {
+const fitDeliveryRadius = (map, position, radiusKm) => {
+    if (position && radiusKm > 0 && map.getContainer().clientWidth > 0) {
+        map.fitBounds(L.latLng(position.lat, position.lng).toBounds(radiusKm * 2000), { padding: [24, 24], maxZoom: 14, animate: false });
+    }
+};
+
+const MapSizeObserver = ({ position, radiusKm }) => {
     const map = useMap();
     useEffect(() => {
         const container = map.getContainer();
         const observer = new ResizeObserver(() => {
-            if (container.isConnected && container.clientWidth > 0) map.invalidateSize({ pan: false });
+            if (container.isConnected && container.clientWidth > 0) {
+                map.invalidateSize({ pan: false });
+                fitDeliveryRadius(map, position, radiusKm);
+            }
         });
         observer.observe(container);
         return () => observer.disconnect();
-    }, [map]);
+    }, [map, position?.lat, position?.lng, radiusKm]);
     return null;
 };
 
-const Recenter = ({ position }) => {
+const Recenter = ({ position, radiusKm }) => {
     const map = useMap();
     useEffect(() => {
-        if (position) map.setView([position.lat, position.lng], Math.max(map.getZoom(), 14));
-    }, [map, position?.lat, position?.lng]);
+        if (!position) return;
+        if (radiusKm > 0) {
+            fitDeliveryRadius(map, position, radiusKm);
+        } else map.setView([position.lat, position.lng], Math.max(map.getZoom(), 14));
+    }, [map, position?.lat, position?.lng, radiusKm]);
     return null;
 };
 
-const LocationPicker = ({ position, setPosition, className = "h-64" }) => {
+const LocationPicker = ({ position, setPosition, className = "h-64", radiusKm = 0 }) => {
     position = validPosition(position);
+    radiusKm = Number.isFinite(radiusKm) && radiusKm >= 0.01 ? radiusKm : 0;
     const defaultCenter = [33.6844, 73.0479]; // Islamabad as default
 
     return (
@@ -134,10 +147,12 @@ const LocationPicker = ({ position, setPosition, className = "h-64" }) => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; OpenStreetMap contributors'
                 />
+                {position && radiusKm > 0 && <Circle center={[position.lat, position.lng]} radius={radiusKm * 1000}
+                    pathOptions={{ color: "#4d8d3a", fillColor: "#4d8d3a", fillOpacity: 0.12, weight: 2 }} interactive={false} />}
                 <LocationMarker position={position} setPosition={setPosition} />
                 <LocateControl setPosition={setPosition} />
-                <MapSizeObserver />
-                <Recenter position={position} />
+                <MapSizeObserver position={position} radiusKm={radiusKm} />
+                <Recenter position={position} radiusKm={radiusKm} />
             </MapContainer>
         </div>
     );

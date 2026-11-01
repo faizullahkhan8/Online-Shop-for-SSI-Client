@@ -1,3 +1,4 @@
+import { getImageUrl } from "../../utils/imageHelper";
 import { PageLoading } from "../../Components/UI/PageLoading";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -40,6 +41,7 @@ const OrderDetails = () => {
     const { cancelOrderItem, loading: cancelLoading } = useCancelOrderItem();
 
     const { recordRefund, loading: refundLoading } = useRecordRefund();
+    const [paymentReference, setPaymentReference] = useState("");
     const [refundReference, setRefundReference] = useState("");
     const [refundAmount, setRefundAmount] = useState("");
     const [orderCancelModal, setOrderCancelModal] = useState(false);
@@ -56,7 +58,7 @@ const OrderDetails = () => {
 
     const handlePaymentVerify = async () => {
         if (!orderId) return;
-        await updatePaymentStatus({ orderId, ispaid: true });
+        await updatePaymentStatus({ orderId, ispaid: true, reference: paymentReference });
     };
 
     const handleDelete = async () => {
@@ -180,6 +182,7 @@ const OrderDetails = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {!order.payment?.ispaid && order.status !== "cancelled" && <label className="text-sm">Payment reference (optional)<input value={paymentReference} maxLength={200} onChange={e => setPaymentReference(e.target.value)} className="ml-2 rounded-lg border p-2" /></label>}
                     {!order.payment?.ispaid && order.status !== "cancelled" && (
                         <button
                             onClick={handlePaymentVerify}
@@ -255,14 +258,14 @@ const OrderDetails = () => {
                                             <td className="px-5 py-4">
                                                 <div className="flex items-start gap-3">
                                                     <img
-                                                        src={`${import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT}/${item.product?.image}`}
+                                                        src={getImageUrl(item.image || item.product?.image)}
                                                         className={`w-12 h-12 object-cover rounded-lg border border-gray-200 ${
                                                             item.status ===
                                                             "cancelled"
                                                                 ? "grayscale opacity-50"
                                                                 : ""
                                                         }`}
-                                                        alt={item.product?.name}
+                                                        alt={item.name || item.product?.name || "Historical product"}
                                                     />
 
                                                     <div className="flex-1">
@@ -277,8 +280,8 @@ const OrderDetails = () => {
                                                                 }`}
                                                             >
                                                                 {
-                                                                    item.product
-                                                                        ?.name
+                                                                    item.name || item.product
+                                                                        ?.name || "Historical product"
                                                                 }
                                                             </p>
 
@@ -565,6 +568,7 @@ const OrderDetails = () => {
                     </section>
                 </aside>
             </div>
+            <section className="rounded-2xl border bg-white p-5 space-y-3"><h3 className="font-semibold">Payment and order history</h3>{order.originalGrandTotal != null && <p className="text-sm">Original accepted total: {order.currency || "PKR"} {order.originalGrandTotal.toFixed(2)}</p>}{order.items?.some(item => ["legacy_catalog", "unavailable"].includes(item.snapshotSource)) && <p className="text-sm text-amber-800">Some historical product details were reconstructed from the current catalog; original names are unavailable.</p>}{order.legacyPaymentProvenanceUnknown && <p className="text-sm text-amber-800">Original payment confirmation details are unavailable for this historical order.</p>}{order.payment?.reference && <p className="text-sm">Receipt: {order.payment.reference} · {order.payment.paidAt ? new Date(order.payment.paidAt).toLocaleString() : "Historical payment time unavailable"}</p>}{(order.history || []).map((event, index) => <p key={event._id || index} className="text-sm text-gray-600">{event.action} · {event.at ? new Date(event.at).toLocaleString() : "Unknown time"}{event.reference ? ` · ${event.reference}` : ""}{event.reason ? ` · ${event.reason}` : ""}</p>)}</section>
         </div>
     );
 };

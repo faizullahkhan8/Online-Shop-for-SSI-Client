@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -29,7 +29,6 @@ const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("./Pages/Admin/DashboardPage"));
 const ProductsListPage = lazy(() => import("./Pages/Admin/ProductsListPage"));
 const AddProductPage = lazy(() => import("./Pages/Admin/AddProductPage"));
-const TaxShippingPage = lazy(() => import("./Pages/Admin/TaxShippingPage"));
 const SettingsPage = lazy(() => import("./Pages/Admin/SettingsPage"));
 const CategoriesListPage = lazy(() => import("./Pages/Admin/CategoriesListPage"));
 const VendorsListPage = lazy(() => import("./Pages/Admin/VendorsListPage"));
@@ -44,6 +43,7 @@ const PrescriptionsListPage = lazy(() => import("./Pages/Admin/PrescriptionsList
 const MenuBuilderPage = lazy(() => import("./Pages/Admin/MenuBuilderPage"));
 const HomePageBuilderPage = lazy(() => import("./Pages/Admin/HomePageBuilderPage"));
 const StaffTreeBuilderPage = lazy(() => import("./Pages/Admin/StaffTreeBuilderPage"));
+const NotificationOutboxPage = lazy(() => import("./Pages/Admin/NotificationOutboxPage"));
 const SmsTemplatesPage = lazy(() => import("./Pages/Admin/SmsTemplatesPage"));
 
 
@@ -138,8 +138,9 @@ const App = () => {
                         <Route index element={<DashboardPage />} />
                         <Route path="products" element={<ProductsListPage />} />
                         <Route path="products/add" element={<AddProductPage />} />
+                        <Route path="products/:id/edit" element={<AddProductPage />} />
                         <Route path="settings" element={<SettingsPage />} />
-                        <Route path="settings/tax-shipping" element={<TaxShippingPage />} />
+                        <Route path="settings/tax-shipping" element={<Navigate to="/admin-dashboard/settings" replace />} />
                         <Route path="categories" element={<CategoriesListPage />} />
                         <Route path="vendors" element={<VendorsListPage />} />
                         <Route path="orders" element={<OrdersListPage />} />
@@ -152,6 +153,7 @@ const App = () => {
                         <Route path="menu-builder" element={<MenuBuilderPage />} />
                         <Route path="homepage-builder" element={<HomePageBuilderPage />} />
                         <Route path="staff-tree" element={<StaffTreeBuilderPage />} />
+                        <Route path="notifications" element={<NotificationOutboxPage />} />
                         <Route path="sms-templates" element={<SmsTemplatesPage />} />
 
                         {/* Prescriptions Management */}

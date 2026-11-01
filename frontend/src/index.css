@@ -297,3 +297,11 @@ input, select, textarea { scroll-margin-block: 9rem; }
 .product-card-enter.is-visible {
     animation: fadeInUp 0.4s ease-out forwards;
 }
+
+/* Image browsing keeps swipe/keyboard scrolling and uses explicit arrow controls. */
+.product-image-strip {
+    scrollbar-width: none;
+}
+.product-image-strip::-webkit-scrollbar {
+    display: none;
+}

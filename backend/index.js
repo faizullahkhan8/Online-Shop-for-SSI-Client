@@ -1,3 +1,5 @@
+import businessRouter from "./routers/business.router.js";
+import { startNotificationWorker } from "./services/notificationOutbox.js";
 import { allowedOrigins } from "./utils/allowedOrigins.js";
 import { securityConfigIssues } from "./utils/securityConfig.js";
 import { safeError } from "./utils/safeLog.js";
@@ -89,10 +91,12 @@ app.use("/api/vendors", vendorRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/sms-templates", smsTemplateRouter);
 
+app.use("/api/business", businessRouter);
+
 app.use(errorHandler);
 
 // Initial connection attempt
-connectToDB().catch((err) =>
+connectToDB().then(() => startNotificationWorker()).catch((err) =>
     safeError("Initial DB connection failed", err),
 );
 

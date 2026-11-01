@@ -12,7 +12,6 @@ import {
     ChevronRight,
     LayoutDashboardIcon,
     Globe,
-    Receipt,
     LogOut,
     Loader2,
     Percent,
@@ -185,10 +184,7 @@ const AdminSidebar = ({ mobile = false, onNavigate }) => {
                     <SubMenu
                         label="Products"
                         icon={<Package size={18} />}
-                        defaultOpen={
-                            location.pathname.includes("products") ||
-                            location.pathname.includes("settings")
-                        }
+                        defaultOpen={location.pathname.includes("products")}
                     >
                         <MenuItem
                             component={
@@ -205,14 +201,6 @@ const AdminSidebar = ({ mobile = false, onNavigate }) => {
                             icon={<Plus size={16} />}
                         >
                             Add Product
-                        </MenuItem>
-                        <MenuItem
-                            component={
-                                <NavLink to="/admin-dashboard/settings/tax-shipping" />
-                            }
-                            icon={<Receipt size={16} />}
-                        >
-                            Tax & Shipping
                         </MenuItem>
                     </SubMenu>
 

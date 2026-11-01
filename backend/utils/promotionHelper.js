@@ -14,11 +14,12 @@ export const getEffectivePrice = async (productId, basePrice, { session } = {}) 
     // Find an active promotion that contains this product
     const query = PromotionModel.findOne({
         products: productId,
+        status: { $in: ["ACTIVE", "SCHEDULED"] },
         startTime: { $lte: now },
         endTime: { $gte: now },
     });
     if (session) query.session(session);
-    const activePromotion = await query;
+    const activePromotion = await query.sort({ _id: 1 });
 
     if (!activePromotion) {
         return { price: basePrice, promotion: null };

@@ -1,14 +1,10 @@
-import { createPortal } from "react-dom";
-import { useDialog } from "../hooks/useDialog";
+import AnimatedDrawer from "./AnimatedDrawer";
 import { X, Package, Calendar, Clock, ChevronRight, ShoppingBag, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useRef } from "react";
 import { useGetUserOrders } from "../api/hooks/orders.api";
 
 const OrdersDrawer = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
-    const drawerRef = useRef(null);
-    useDialog(isOpen, onClose, drawerRef);
     const { data, loading, error } = useGetUserOrders();
     const orders = data?.orders?.slice(0, 5) || [];
 
@@ -29,26 +25,8 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
         }
     };
 
-    if (!isOpen) return null;
-
-    return createPortal(
-        <>
-            {/* Backdrop */}
-            <div
-                data-dialog-backdrop="" aria-hidden="true" className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[1000] ${
-                    isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-                }`}
-                onClick={onClose}
-            />
-
-            {/* Drawer Panel */}
-            <div
-                ref={drawerRef}
-                role="dialog" aria-modal="true" aria-label="Recent orders" tabIndex={-1}
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[1001] transform transition-transform duration-300 ease-in-out ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
-                }`}
-            >
+    return (
+        <AnimatedDrawer isOpen={isOpen} onClose={onClose} label="Recent orders">
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                     <div className="flex items-center gap-2">
@@ -159,9 +137,8 @@ const OrdersDrawer = ({ isOpen, onClose }) => {
                         </button>
                     </div>
                 )}
-            </div>
-        </>
-    , document.body);
+        </AnimatedDrawer>
+    );
 };
 
 export default OrdersDrawer;

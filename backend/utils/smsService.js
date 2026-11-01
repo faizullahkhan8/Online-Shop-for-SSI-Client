@@ -50,19 +50,18 @@ export async function sendTextSMS(phone, message, { eventName = "ADMIN_TEST", se
     return { provider, ...result };
 }
 
-// Existing event callers retain their boolean contract and template behavior.
-export async function sendSMS(eventName, phone, payload = {}) {
+// Return transport outcomes for durable business notifications; preserve OTP callers' boolean contract.
+export async function sendSMSResult(eventName, phone, payload = {}) {
     try {
         const Model = getLocalSmsTemplateModel();
-        if (!Model || !getLocalSettingsModel()) return false;
+        if (!Model || !getLocalSettingsModel()) return { status: "skipped", errorCode: "models_unavailable" };
         const template = await Model.findOne({ eventName });
-        if (template && !template.isActive) return false;
+        if (template && !template.isActive) return { status: "skipped", errorCode: "template_disabled" };
         const message = template?.messageTemplate || DEFAULT_TEMPLATES[eventName];
-        if (!message) return false;
-        const result = await sendTextSMS(phone, interpolateTemplate(message, payload), { eventName });
-        return result.status === "accepted";
-    } catch {
-        console.error("SMS event could not be processed.");
-        return false;
-    }
+        if (!message) return { status: "skipped", errorCode: "template_missing" };
+        return await sendTextSMS(phone, interpolateTemplate(message, payload), { eventName });
+    } catch { return { status: "skipped", errorCode: "configuration_error" }; }
+}
+export async function sendSMS(eventName, phone, payload = {}) {
+    return (await sendSMSResult(eventName, phone, payload)).status === "accepted";
 }

@@ -1,3 +1,7 @@
+import { searchCatalog } from "../services/catalogSearch.js";
+import { prepareBusinessRecords, recordMovement, recordEvent } from "../services/businessRecords.js";
+import { editCatalog, archiveCatalog, adjustInventory } from "../services/catalogLifecycle.js";
+import { checkoutKey } from "../utils/checkoutKey.js";
 import expressAsyncHandler from "express-async-handler";
 import {
     getLocalProductModel,
@@ -7,7 +11,6 @@ import {
 } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { getEffectivePrice } from "../utils/promotionHelper.js";
-import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 
 export const createProduct = expressAsyncHandler(async (req, res, next) => {
     const ProductModel = getLocalProductModel();
@@ -35,7 +38,7 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
         });
     }
 
-    const product = await ProductModel.create({
+    const product = new ProductModel({
         name,
         slug: finalSlug,
         productType,
@@ -56,6 +59,16 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
         images: req.uploadedImages,
     });
 
+    await prepareBusinessRecords();
+    await ProductModel.db.transaction(async session => {
+        await product.save({ session });
+        const variants = product.variants.filter(variant => variant.stock > 0);
+        if (variants.length) {
+            for (const variant of variants) await recordMovement(session, { key: `opening:${product._id}:${variant._id}`, product: product._id, variantId: variant._id, delta: variant.stock, balance: variant.stock, actor: req.user._id, reason: "Opening balance", sourceType: "catalog", sourceId: String(product._id) });
+        } else if (product.stock) await recordMovement(session, { key: `opening:${product._id}`, product: product._id, delta: product.stock, balance: product.stock, actor: req.user._id, reason: "Opening balance", sourceType: "catalog", sourceId: String(product._id) });
+        await recordEvent(session, { key: `catalog:${product._id}:created`, aggregate: "product", recordId: product._id, action: "created", actor: req.user._id });
+    });
+
     return res.status(201).json({
         success: true,
         message: "Product created successfully",
@@ -63,144 +76,22 @@ export const createProduct = expressAsyncHandler(async (req, res, next) => {
     });
 });
 
-export const getAllProducts = expressAsyncHandler(async (req, res, next) => {
-    const ProductModel = getLocalProductModel();
-    if (!ProductModel)
-        return next(new ErrorResponse("Product model not found", 500));
+export const getAllProducts = expressAsyncHandler(async (req, res) => {
+    res.json(await searchCatalog(req.query, { archived: req.archivedCatalog === true }));
+});
 
-    const {
-        category,
-        minPrice,
-        maxPrice,
-        search,
-        productType,
-        vendor,
-        page = 1,
-        limit = 9,
-        excludeActivePromotions,
-        currentPromotionId,
-    } = req.query;
-
-    let query = {};
-
-    if (category) {
-        // New links use category IDs; old bookmarks may contain names or legacy labels.
-        const Category = getLocalCategoryModel();
-        const aliases = {
-            baby: ["baby", "baby care", "baby & mother care"],
-            personal: ["personal", "personal care"],
-            nutrition: ["nutrition", "nutrition & supplements", "vitamins and supplements"],
-            beverages: ["beverages", "foods & beverages"],
-            devices: ["devices", "devices & appliances"],
-            otc: ["otc", "otc & health needs"],
-        };
-        const key = String(category).trim().toLowerCase();
-        const categories = await Category.find({}).select("name parentId").lean();
-        const names = aliases[key] || [key];
-        const ids = new Set(categories.filter(c => String(c._id) === key || names.includes(c.name.toLowerCase())).map(c => String(c._id)));
-        // Selecting a parent includes products assigned to its descendants.
-        let size;
-        do {
-            size = ids.size;
-            categories.forEach(c => { if (ids.has(String(c.parentId))) ids.add(String(c._id)); });
-        } while (ids.size !== size);
-        query.category = { $in: [...ids] };
-    }
-
-    if (productType) {
-        query.productType = productType;
-    }
-
-    if (vendor) {
-        query.vendor = vendor;
-    }
-
-    if (search) {
-        query.name = { $regex: String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
-    }
-
-    if (minPrice || maxPrice) {
-        query.price = {};
-        if (minPrice) query.price.$gte = Number(minPrice);
-        if (maxPrice) query.price.$lte = Number(maxPrice);
-    }
-
-    // Exclude products already in active promotions
-    if (excludeActivePromotions === "true") {
-        const PromotionModel = getLocalPromotionModel();
-        if (PromotionModel) {
-            const promotionQuery = {
-                status: { $in: ["ACTIVE", "SCHEDULED"] },
-            };
-
-            if (currentPromotionId) {
-                promotionQuery._id = { $ne: currentPromotionId };
-            }
-
-            const activePromotions =
-                await PromotionModel.find(promotionQuery).select("products");
-
-            const usedProductIds = activePromotions.reduce((acc, promo) => {
-                return acc.concat(promo.products);
-            }, []);
-
-            if (usedProductIds.length > 0) {
-                // Determine if we need to merge with existing _id query (unlikely here but safe)
-                if (query._id) {
-                    query._id.$nin = [
-                        ...(query._id.$nin || []),
-                        ...usedProductIds,
-                    ];
-                } else {
-                    query._id = { $nin: usedProductIds };
-                }
-            }
-        }
-    }
-
-    if (!Number.isSafeInteger(Number(page)) || Number(page) < 1 || !Number.isSafeInteger(Number(limit)) || Number(limit) < 1 || Number(limit) > 1000)
-        return next(new ErrorResponse("Page must be positive and limit must be between 1 and 1000", 400));
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const products = await ProductModel.find(query)
-        .populate("category", "name")
-        .populate("vendor", "name image")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit));
-
-    const totalProducts = await ProductModel.countDocuments(query);
-
-    const Review = getLocalReviewModel();
-    const reviewStats = Review && products.length ? await Review.aggregate([
-        { $match: { product: { $in: products.map(product => product._id) } } },
-        { $group: { _id: "$product", averageRating: { $avg: "$rating" }, reviewCount: { $sum: 1 } } },
-    ]) : [];
-    const ratings = new Map(reviewStats.map(stats => [String(stats._id), stats]));
-    // Enrich products with promotional pricing
-    const productsWithPromos = await Promise.all(
-        products.map(async (product) => {
-            const { price: effectivePrice, promotion } =
-                await getEffectivePrice(product._id, product.price);
-            return {
-                ...product.toObject(),
-                id: product._id,
-                averageRating: ratings.get(String(product._id))?.averageRating || 0,
-                reviewCount: ratings.get(String(product._id))?.reviewCount || 0,
-                effectivePrice,
-                promotion,
-            };
-        }),
-    );
-
-    return res.status(200).json({
-        success: true,
-        message: "Products fetched successfully",
-        products: productsWithPromos,
-        totalPages: Math.ceil(totalProducts / Number(limit)),
-        currentPage: Number(page),
-        totalProducts,
-    });
+// A single indexed lookup for the editor; no catalog promotions or populated documents.
+export const getProductForEdit = expressAsyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    res.set("Cache-Control", "no-store");
+    if (!/^[a-f0-9]{24}$/i.test(id)) return next(new ErrorResponse("Invalid product ID", 400));
+    const Product = getLocalProductModel();
+    if (!Product) return next(new ErrorResponse("Product model not found", 500));
+    const product = await Product.findOne({ _id: id, isArchived: { $ne: true } })
+        .select("_id revision name slug productType vendor price minPrice maxPrice description details category stock lowStock hasVariants variants badges image imagekitFileId images")
+        .lean();
+    if (!product) return next(new ErrorResponse("Product not found or archived. Restore archived products before editing.", 404));
+    return res.json({ success: true, product });
 });
 
 export const getProductById = expressAsyncHandler(async (req, res, next) => {
@@ -210,7 +101,7 @@ export const getProductById = expressAsyncHandler(async (req, res, next) => {
 
     const { id } = req.params;
 
-    const product = await ProductModel.findById(id)
+    const product = await ProductModel.findOne({ _id: id, isArchived: { $ne: true } })
         .populate("category")
         .populate("vendor", "name description image");
     if (!product) return next(new ErrorResponse("Product not found", 404));
@@ -266,31 +157,7 @@ export const updateProduct = expressAsyncHandler(async (req, res, next) => {
         updateData.image = updateData.images[0]?.filePath || "";
     }
 
-    if (Array.isArray(updateData.variants)) {
-        const activeVariants = updateData.variants.filter((variant) => variant.active !== false);
-        const variantPrices = activeVariants
-            .filter((variant) => variant.price !== "" && variant.price !== null && variant.price !== undefined)
-            .map((variant) => Number(variant.price))
-            .filter(Number.isFinite);
-        if (variantPrices.length !== activeVariants.length) {
-            return next(new ErrorResponse("Every active variant must have a valid price", 400));
-        }
-        updateData.hasVariants = activeVariants.length > 0;
-        if (activeVariants.length > 0) {
-            updateData.price = Math.min(...variantPrices);
-            updateData.stock = activeVariants.reduce(
-                (sum, variant) => sum + (Number(variant.stock) || 0),
-                0,
-            );
-        }
-    }
-
-
-    const updatedProduct = await ProductModel.findByIdAndUpdate(
-        id,
-        { $set: updateData },
-        { new: true, runValidators: true },
-    );
+    const updatedProduct = await editCatalog(id, { ...updateData, revision: JSON.parse(req.body.data).revision }, req.user);
 
     return res.status(200).json({
         success: true,
@@ -307,26 +174,15 @@ export const deleteProduct = expressAsyncHandler(async (req, res, next) => {
 
     const { id } = req.params;
 
-    const product = await ProductModel.findById(id);
-    if (!product) {
-        return next(new ErrorResponse("Product not found", 404));
-    }
+    const product = await archiveCatalog(id, req.user);
+    return res.json({ success: true, message: "Product archived. Historical orders and stock are preserved", product });
+});
 
-    try {
-        if (product.imagekitFileId) {
-            await deleteImageKitFile(product.imagekitFileId);
-        }
-    } catch (err) {
-        return next(
-            new ErrorResponse("Failed to delete old image from ImageKit", 500),
-        );
-    }
-
-    await product.deleteOne();
-
-    return res.status(200).json({
-        success: true,
-        message: "Product deleted successfully",
-        product,
-    });
+export const restoreProduct = expressAsyncHandler(async (req, res) => {
+    const product = await archiveCatalog(req.params.id, req.user, false);
+    res.json({ success: true, product });
+});
+export const adjustProductStock = expressAsyncHandler(async (req, res) => {
+    const result = await adjustInventory(req.params.id, req.user, req.body, checkoutKey(req));
+    res.json({ success: true, ...result });
 });

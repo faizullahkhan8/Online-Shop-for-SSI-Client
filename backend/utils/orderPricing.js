@@ -11,7 +11,7 @@ export const nonNegativeAmount = (value, name) => {
     return amount;
 };
 
-const coordinate = (value, limit) => value !== null && value !== undefined &&
+const coordinate = (value, limit) => ["number", "string"].includes(typeof value) && value !== null && value !== undefined &&
     value !== "" && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit;
 
 const normalizeCity = (city) => String(city || "").toLowerCase()
@@ -24,6 +24,21 @@ export const calculateOrderCharges = (settings, subtotal, recipient) => {
     let shippingFee = nonNegativeAmount(settings.shippingFee ?? 0, "Shipping");
     const config = settings.advancedShipping;
 
+    let distance = null;
+    if (shippingMethod !== "pickup" && (config?.calculationMethod === "distance" || config?.freeDeliveryEnabled)) {
+        const store = config.storeLocation;
+        if (!coordinate(store?.lat, 90) || !coordinate(store?.lng, 180) ||
+            !coordinate(recipient.lat, 90) || !coordinate(recipient.lng, 180)) {
+            throw new ErrorResponse("A valid delivery location is required for distance shipping or a free-delivery radius", 400);
+        }
+        const radians = degrees => Number(degrees) * Math.PI / 180;
+        const dLat = radians(recipient.lat - store.lat);
+        const dLng = radians(recipient.lng - store.lng);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(store.lat)) *
+            Math.cos(radians(recipient.lat)) * Math.sin(dLng / 2) ** 2;
+        distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+    }
+
     if (config?.calculationMethod === "percentage") {
         shippingFee = subtotal * nonNegativeAmount(config.percentageRate ?? 0, "Shipping rate") / 100;
     } else if (config?.calculationMethod === "city_based") {
@@ -34,17 +49,6 @@ export const calculateOrderCharges = (settings, subtotal, recipient) => {
         });
         if (rule) shippingFee = nonNegativeAmount(rule.fee, "City shipping fee");
     } else if (config?.calculationMethod === "distance" && shippingMethod !== "pickup") {
-        const store = config.storeLocation;
-        if (!coordinate(store?.lat, 90) || !coordinate(store?.lng, 180) ||
-            !coordinate(recipient.lat, 90) || !coordinate(recipient.lng, 180)) {
-            throw new ErrorResponse("A valid delivery location is required for distance shipping", 400);
-        }
-        const radians = (degrees) => Number(degrees) * Math.PI / 180;
-        const dLat = radians(recipient.lat - store.lat);
-        const dLng = radians(recipient.lng - store.lng);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(store.lat)) *
-            Math.cos(radians(recipient.lat)) * Math.sin(dLng / 2) ** 2;
-        const distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
         shippingFee = distance * nonNegativeAmount(config.distanceRatePerKm ?? 0, "Distance shipping rate");
     }
 
@@ -55,6 +59,12 @@ export const calculateOrderCharges = (settings, subtotal, recipient) => {
             (override.operator === "less_than" && subtotal < threshold)) {
             shippingFee = nonNegativeAmount(override.overrideFee ?? 0, "Shipping override");
         }
+    }
+    // The local free-delivery promise takes precedence over paid overrides.
+    if (config?.freeDeliveryEnabled && shippingMethod !== "pickup") {
+        const radius = nonNegativeAmount(config.freeDeliveryRadiusKm ?? 3, "Free-delivery radius");
+        if (radius < 0.01) throw new ErrorResponse("Free-delivery radius must be at least 0.01 km", 400);
+        if (distance <= radius + 1e-9) shippingFee = 0;
     }
     return { taxAmount, shippingMethod, shippingFee: shippingMethod === "pickup" ? 0 : Math.round(shippingFee) };
 };

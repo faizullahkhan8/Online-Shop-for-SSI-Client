@@ -2,6 +2,11 @@ import { Schema, SchemaTypes, Types } from "mongoose";
 
 const orderSchema = new Schema(
     {
+        businessMigrationVersion: Number,
+        legacyPaymentProvenanceUnknown: Boolean,
+        currency: { type: String, default: "PKR" },
+        pricingVersion: { type: String },
+        history: [{ action: String, actor: Schema.Types.ObjectId, at: Date, from: String, to: String, reference: String, reason: String }],
         checkoutKey: { type: String, select: false },
         checkoutHash: { type: String, select: false },
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -56,6 +61,11 @@ const orderSchema = new Schema(
                     type: Number,
                     required: true,
                 },
+                snapshotSource: { type: String, enum: ["checkout", "legacy_catalog", "unavailable"] },
+                name: String,
+                sku: String,
+                packSize: String,
+                image: String,
                 variantId: { type: Schema.Types.ObjectId },
                 variantName: { type: String, default: "" },
                 variantSku: { type: String, default: "" },
@@ -90,6 +100,7 @@ const orderSchema = new Schema(
                 },
             },
         ],
+        originalGrandTotal: Number,
         grandTotal: {
             type: Number,
             required: true,
@@ -110,6 +121,8 @@ const orderSchema = new Schema(
         refunds: [{ amount: Number, reference: String, recordedBy: { type: Schema.Types.ObjectId, ref: "User" }, recordedAt: Date }],
         payment: {
             paidAmount: Number,
+            recordedBy: Schema.Types.ObjectId,
+            reference: String,
             paidAt: Date,
             method: {
                 type: String,

@@ -1,12 +1,18 @@
+import { remapVariantAfterImageRemoval } from "../../utils/variantImages";
+import { Link } from "react-router-dom";
+import { QueryError } from "../../UI/QueryState";
+import ProductVariantsEditor from "../../Components/Admin/ProductVariantsEditor";
 import { PageLoading } from "../../Components/UI/PageLoading";
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Input from "../../UI/Input.jsx";
 import Button from "../../UI/Button.jsx";
 import Select from "../../UI/Select.jsx";
 import ProductDetailsBuilder from "../../Components/ProductDetailsBuilder.jsx";
 import {
     ImageIcon,
+    ChevronLeft,
+    ChevronRight,
     Loader,
     Plus,
     Save,
@@ -21,8 +27,9 @@ import {
 import {
     useCreateProuduct,
     useUpdateProduct,
+    useProductForEdit,
 } from "../../api/hooks/product.api.js";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useGetAllCategories } from "../../api/hooks/category.api.js";
 import { useGetAllVendors } from "../../api/hooks/vendor.api.js";
@@ -50,27 +57,41 @@ const INITAIL_STATE = {
 };
 
 const AddProduct = () => {
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+    const { id } = useParams();
+    const [params] = useSearchParams();
+    // Old bookmarked edit links are converted to an ID-only route; their fields are ignored.
+    if (!id && (params.has("product") || params.get("isEditing") === "true")) {
+        let legacyId;
+        try { legacyId = JSON.parse(params.get("product"))?._id; } catch { /* Invalid legacy URL. */ }
+        if (typeof legacyId === "string" && /^[a-f0-9]{24}$/i.test(legacyId)) return <Navigate to={`/admin-dashboard/products/${legacyId}/edit`} replace />;
+        return <QueryError message="This edit link is invalid. Open the product from the products list." />;
+    }
+    if (id && !/^[a-f0-9]{24}$/i.test(id)) return <QueryError message="Invalid product ID. Open the product from the products list." />;
+    return <ProductForm key={id || "new"} productId={id || null} />;
+};
 
-    const parseProductFromParams = () => {
-        try {
-            const raw = searchParams.get("product");
-            if (!raw) return INITAIL_STATE;
-            const parsed = JSON.parse(raw);
-            return {
-                ...INITAIL_STATE,
-                ...parsed,
-                category: parsed.category?._id || parsed.category || "",
-                vendor: parsed.vendor?._id || parsed.vendor || "",
-            };
-        } catch {
-            return INITAIL_STATE;
+const ProductForm = ({ productId }) => {
+    const navigate = useNavigate();
+    const [productData, setProductData] = useState(INITAIL_STATE);
+    const isEditing = Boolean(productId);
+    const hydratedProduct = useRef(null);
+    const galleryRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const { data: currentProduct, loading: productLoading, error: productError, refetch: refetchProduct } = useProductForEdit(productId);
+    useEffect(() => {
+        const fresh = currentProduct?.product;
+        if (!productLoading && fresh && fresh._id === productId && hydratedProduct.current !== fresh._id) {
+            hydratedProduct.current = fresh._id;
+            setProductData(prev => ({ ...prev, ...fresh, category: fresh.category?._id || fresh.category || "", vendor: fresh.vendor?._id || fresh.vendor || "" }));
         }
+    }, [currentProduct, productId, productLoading]);
+    const reloadProduct = async () => {
+        const result = await refetchProduct();
+        if (result.error) { toast.error(result.error.response?.data?.message || "Could not reload the product. Your unsaved changes are still here."); return; }
+        const response = result.data;
+        if (response?.product) setProductData(prev => ({ ...prev, ...response.product, category: response.product.category?._id || response.product.category || "", vendor: response.product.vendor?._id || response.product.vendor || "" }));
     };
 
-    const [productData, setProductData] = useState(parseProductFromParams);
-    const isEditing = Boolean(productData?._id);
 
     const { data: categoriesData, loading: categoriesLoading } = useGetAllCategories();
     const categories = categoriesData?.categories || [];
@@ -111,7 +132,17 @@ const AddProduct = () => {
     const handleChange = (e) => {
         const { id, value, files, type } = e.target;
         if (type === "file") {
-            const newFiles = Array.from(files);
+            const newFiles = Array.from(files || []);
+            e.target.value = "";
+            if (!newFiles.length) return;
+            if (newFiles.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                toast.error("Choose JPG, PNG or WebP images up to 5 MB each.");
+                return;
+            }
+            if ((productData.images || []).filter(image => image instanceof File).length + newFiles.length > 5) {
+                toast.error("You can upload up to 5 new images per save. Save these before adding more.");
+                return;
+            }
             setProductData((prev) => ({
                 ...prev,
                 images: [...(prev.images || []), ...newFiles]
@@ -134,7 +165,7 @@ const AddProduct = () => {
         setProductData((prev) => {
             const newImages = [...(prev.images || [])];
             newImages.splice(index, 1);
-            return { ...prev, images: newImages };
+            return { ...prev, images: newImages, variants: (prev.variants || []).map(variant => remapVariantAfterImageRemoval(variant, index, prev.images.length)) };
         });
     };
 
@@ -153,8 +184,9 @@ const AddProduct = () => {
             ...prev,
             hasVariants: true,
             variants: [...(prev.variants || []), {
+                _editorKey: crypto.randomUUID(),
                 name: "", color: "", sku: "", price: prev.price || "",
-                stock: 0, lowStock: 5, imageIndex: (prev.variants || []).length,
+                stock: 0, lowStock: 5, imageIndex: 0, imageIndices: [],
                 active: true,
             }],
         }));
@@ -163,7 +195,7 @@ const AddProduct = () => {
     const updateVariant = (index, field, value) => {
         setProductData((prev) => {
             const variants = [...(prev.variants || [])];
-            variants[index] = { ...variants[index], [field]: value };
+            variants[index] = { ...variants[index], [field]: value, ...(field === "imageIndices" ? { imageIndex: value[0] ?? 0 } : {}) };
             const active = variants.filter((variant) => variant.active !== false);
             const prices = active.map((variant) => Number(variant.price)).filter(Number.isFinite);
             const totalStock = active.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
@@ -200,6 +232,16 @@ const AddProduct = () => {
         const existingImages = images?.filter((img) => !(img instanceof File)) || [];
 
         textData.images = existingImages;
+        textData.variants = (textData.variants || []).map(({ _editorKey, ...variant }) => variant);
+        if (isEditing) {
+            delete textData.stock;
+            textData.revision = productData.revision || 0;
+            textData.variants = (textData.variants || []).map(variant => {
+                if (!variant._id) return variant;
+                const { stock: _stock, ...catalogVariant } = variant;
+                return catalogVariant;
+            });
+        }
 
         if (!isEditing && newImages.length === 0 && !image) {
             return toast.error("Please select at least one image");
@@ -229,7 +271,8 @@ const AddProduct = () => {
         }
     };
 
-    if (categoriesLoading || vendorsLoading) return <PageLoading variant="form" />;
+    if (isEditing && productError && !productData._id) return <QueryError message={productError.response?.data?.message || "Could not load the product. Please try again."} onRetry={() => refetchProduct()} />;
+    if (categoriesLoading || vendorsLoading || (isEditing && !productData._id)) return <PageLoading variant="form" />;
 
     return (
         <div className="space-y-6">
@@ -253,13 +296,15 @@ const AddProduct = () => {
                 </button>
             </header>
 
+            {isEditing && <button type="button" onClick={reloadProduct} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm">Reload saved product (discard unsaved edits)</button>}
+            {isEditing && <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">Stock is managed separately. Use <Link to="/admin-dashboard/products" className="font-semibold text-primary-dark underline underline-offset-2">Adjust stock in All Products</Link> to record inventory changes.</p>}
             {/* Form */}
             <form
                 onSubmit={handleSubmit}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-6"
             >
                 {/* Left Column - Product Details */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="min-w-0 lg:col-span-7 space-y-6">
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200 space-y-5">
                         {/* Product Name */}
                         <div>
@@ -353,38 +398,11 @@ const AddProduct = () => {
                             </div>
                         </div>
 
-                        {/* Pricing */}
-                        <div className="pt-2 border-t border-gray-100">
-                            <div className="flex items-center justify-between mb-3">
-                                <div>
-                                    <label className="text-sm font-semibold text-gray-800">Product Variants</label>
-                                    <p className="text-xs text-gray-500 mt-0.5">Add colours, scents or pack options under one product.</p>
-                                </div>
-                                <button type="button" onClick={addVariant} className="px-3 py-2 rounded-lg bg-primary-pale text-primary-dark text-xs font-bold hover:bg-primary hover:text-white transition-colors">
-                                    + Add Variant
-                                </button>
-                            </div>
-                            {(productData.variants || []).length > 0 && (
-                                <div className="space-y-3">
-                                    {productData.variants.map((variant, index) => (
-                                        <div key={index} className="grid grid-cols-2 sm:grid-cols-7 gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200">
-                                            <Input type="text" value={variant.name} aria-label="Variant name" placeholder="Variant name" onChange={(e) => updateVariant(index, "name", e.target.value)} required />
-                                            <Input type="text" value={variant.color} aria-label="Variant colour" placeholder="Colour" onChange={(e) => updateVariant(index, "color", e.target.value)} />
-                                            <Input type="text" value={variant.sku} aria-label="Variant SKU" placeholder="SKU" onChange={(e) => updateVariant(index, "sku", e.target.value)} />
-                                            <Input type="number" value={variant.price} aria-label="Variant price" min="0" step="0.01" placeholder="Price" onChange={(e) => updateVariant(index, "price", e.target.value)} required />
-                                            <Input type="number" value={variant.stock} aria-label="Variant stock" min="0" step="1" placeholder="Stock" onChange={(e) => updateVariant(index, "stock", e.target.value)} required />
-                                            <select aria-label="Variant image" value={variant.imageIndex} onChange={(e) => updateVariant(index, "imageIndex", Number(e.target.value))} className="rounded-lg border border-gray-200 px-2 text-xs bg-white">
-                                                {(productData.images || []).map((_, imageIndex) => <option key={imageIndex} value={imageIndex}>Image {imageIndex + 1}</option>)}
-                                            </select>
-                                            <button type="button" onClick={() => removeVariant(index)} className="rounded-lg border border-red-200 text-red-500 text-xs font-bold hover:bg-red-50">Remove</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <ProductVariantsEditor variants={productData.variants || []} images={productData.images || []} isEditing={isEditing}
+                            onAdd={addVariant} onChange={updateVariant} onRemove={removeVariant} />
 
                         {/* Pricing */}
-                        {(productData.variants || []).length === 0 ? (
+                        {(productData.variants || []).length === 0 && (
                         <div className="grid grid-cols-1 gap-4">
                             <div>
                                 <label htmlFor="price" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
@@ -406,10 +424,6 @@ const AddProduct = () => {
                                 />
                             </div>
                         </div>
-                        ) : (
-                            <div className="rounded-xl border border-primary/20 bg-primary-pale/30 px-4 py-3 text-sm text-gray-700">
-                                Variant price range is calculated automatically: <span className="font-bold text-primary-dark">Rs {Math.min(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()} – Rs {Math.max(...productData.variants.map((variant) => Number(variant.price) || 0)).toLocaleString()}</span>
-                            </div>
                         )}
 
                         {/* Stock Quantity */}
@@ -429,6 +443,7 @@ const AddProduct = () => {
                                 <Input
                                     type="number"
                                     id="stock"
+                                    readOnly={isEditing}
                                     value={productData?.stock}
                                     placeholder="0"
                                     className="w-full"
@@ -517,13 +532,16 @@ const AddProduct = () => {
                 </div>
 
                 {/* Right Column - Image Upload & Actions */}
-                <div className="lg:col-span-5 space-y-6">
+                <div className="min-w-0 space-y-6 lg:sticky lg:top-0 lg:col-span-5 lg:self-start">
                     {/* Image Upload */}
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm transition-colors duration-200">
                         <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">
-                                Product Image
-                            </label>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700">Product images</span>
+                                <span aria-live="polite" aria-atomic="true" className="rounded-full bg-primary-pale px-2 py-0.5 text-xs font-semibold tabular-nums text-primary-dark">
+                                    {productData.images?.length || (productData.image && previewUrl ? 1 : 0)} images
+                                </span>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <label htmlFor="remove-background" className="text-xs font-medium text-gray-600">
                                     Remove BG
@@ -542,37 +560,30 @@ const AddProduct = () => {
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <label
-                                htmlFor="image"
-                                className="group relative flex flex-col items-center justify-center w-full aspect-[2/1] border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-gray-50 transition-all cursor-pointer overflow-hidden"
-                            >
-                                <div className="text-center p-6">
-                                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-pale transition-colors">
-                                        <ImageIcon
-                                            size={24}
-                                            className="text-gray-400 group-hover:text-primary transition-colors"
-                                        />
-                                    </div>
-                                    <p className="text-sm font-medium text-gray-900 mb-1">
-                                        Upload Product Images
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        PNG, JPG, WEBP (Max 10MB) - Multi select allowed
-                                    </p>
-                                </div>
-                                <input
-                                    type="file"
-                                    id="image"
-                                    hidden
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleChange}
-                                />
-                            </label>
+                            <button type="button" onClick={() => imageInputRef.current?.click()}
+                                className="group flex min-h-24 w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary-pale/30 px-4 py-4 text-left transition-colors hover:border-primary hover:bg-primary-pale focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-primary-dark"><ImageIcon size={22} aria-hidden="true" /></span>
+                                <span className="min-w-0"><span className="block text-sm font-semibold text-primary-dark">{productData.images?.length ? "Add more images" : "Choose images"}</span><span className="mt-1 block text-xs text-gray-600">JPG, PNG, WebP · Up to 5 MB each</span></span>
+                                <Plus size={20} className="shrink-0 text-primary-dark" aria-hidden="true" />
+                            </button>
+                            <input ref={imageInputRef} type="file" id="image" aria-label="Choose product images" hidden accept="image/jpeg,image/png,image/webp" multiple onChange={handleChange} />
+                            <p className="text-xs leading-5 text-gray-500">Select multiple images together, or add them one by one. Up to 5 new images per save. Image numbers match the variant image selector.</p>
 
                             {/* Image Previews */}
                             {productData?.images && productData.images.length > 0 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div className="min-w-0 space-y-2">
+                                    {productData.images.length > 1 && <div className="flex items-center justify-between gap-3">
+                                        <p className="text-xs text-gray-500">Swipe or use the arrows to browse images.</p>
+                                        <div className="flex shrink-0 gap-2">
+                                            {[-1, 1].map(direction => <button key={direction} type="button" aria-label={direction < 0 ? "Previous product images" : "Next product images"}
+                                                onClick={() => galleryRef.current?.scrollBy({ left: direction * Math.max(160, galleryRef.current.clientWidth * 0.8), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
+                                                className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-primary-dark hover:bg-primary-pale focus-visible:outline-2 focus-visible:outline-primary-dark">
+                                                {direction < 0 ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+                                            </button>)}
+                                        </div>
+                                    </div>}
+                                <div ref={galleryRef} role="region" aria-label="Product image previews. Image numbers match the variant image selector." tabIndex={0}
+                                    className="product-image-strip flex min-w-0 max-w-full snap-x snap-proximity gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-lg pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-dark">
                                     {productData.images.map((img, idx) => {
                                         let imgUrl = "";
                                         if (img instanceof File) {
@@ -584,28 +595,33 @@ const AddProduct = () => {
                                         }
 
                                         return (
-                                            <div key={idx} className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden group bg-gray-50">
-                                                <img src={imgUrl} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
-                                                <button aria-label="Remove image"
+                                            <figure key={idx} className="w-36 shrink-0 snap-start space-y-2 sm:w-40">
+                                                <figcaption className="text-xs font-semibold tabular-nums text-gray-600">Image {idx + 1}</figcaption>
+                                                <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                                <img src={imgUrl} className="h-full w-full object-contain" alt={`Product image ${idx + 1}`} />
+                                                <button aria-label={`Remove image ${idx + 1}`}
                                                     type="button"
                                                     onClick={() => removeImage(idx)}
-                                                    className="absolute top-1.5 right-1.5 bg-white/90 text-red-500 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-red-50 shadow-sm"
+                                                    className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-lg bg-white/90 text-red-700 shadow-sm transition-colors hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-primary-dark"
                                                 >
                                                     <X size={14} />
                                                 </button>
-                                            </div>
+                                                </div>
+                                            </figure>
                                         );
                                     })}
+                                </div>
                                 </div>
                             )}
 
                             {/* Legacy Single Image Preview */}
                             {(!productData?.images || productData.images.length === 0) && productData?.image && previewUrl && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    <div className="relative aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-                                        <img src={previewUrl} className="w-full h-full object-cover" alt="Legacy Preview" />
+                                <figure className="w-36 space-y-2 sm:w-40">
+                                    <figcaption className="text-xs font-semibold text-gray-600">Image 1</figcaption>
+                                    <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                                        <img src={previewUrl} className="h-full w-full object-contain" alt="Product image 1" />
                                     </div>
-                                </div>
+                                </figure>
                             )}
                         </div>
                     </div>

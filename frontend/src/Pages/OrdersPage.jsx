@@ -172,7 +172,7 @@ const OrdersPage = () => {
                                         >
                                             <div className="w-16 h-16 bg-white border border-gray-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
                                                 <img
-                                                    src={getImageUrl(item.product?.image)}
+                                                    src={getImageUrl(item.image || item.product?.image)}
                                                     className="w-full h-full object-contain p-2 mix-blend-multiply"
                                                     alt="product"
                                                     onError={(e) => {
@@ -183,7 +183,7 @@ const OrdersPage = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-bold text-gray-900 text-sm truncate group-hover:text-primary transition-colors">
-                                                    {item.title || item.product?.name}
+                                                    {item.name || item.title || item.product?.name || "Historical product"}
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-1.5">
                                                     <span className="text-xs font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-md">

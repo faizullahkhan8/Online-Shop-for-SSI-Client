@@ -121,14 +121,14 @@ const OrderSuccessPage = () => {
                                             <div key={item.product?._id || item.product} className="flex gap-4">
                                                 <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center p-2 border border-gray-100 shrink-0">
                                                     <img
-                                                        src={getImageUrl(item.product?.image || item.image)}
+                                                        src={getImageUrl(item.image || item.product?.image)}
                                                         alt={item.name}
                                                         className="w-full h-full object-contain mix-blend-multiply"
                                                         onError={(e) => handleImageError(e, "product")}
                                                     />
                                                 </div>
                                                 <div className="flex-1 flex flex-col justify-center">
-                                                    <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.product?.name || item.name || "Product Item"}</p>
+                                                    <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.name || item.product?.name || "Product Item"}</p>
                                                     {item.variantName && (
                                                         <p className="text-xs font-semibold text-primary mt-0.5">{item.variantName}</p>
                                                     )}

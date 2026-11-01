@@ -292,8 +292,8 @@ export const useUpdatePaymentStatus = () => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async ({ orderId, ispaid }) => {
-            const response = await apiClient.patch(`${ORDER_ROUTES.UPDATE_PAYMENT || "/orders/payment"}/${orderId}`, { ispaid });
+        mutationFn: async ({ orderId, ispaid, reference }) => {
+            const response = await apiClient.patch(`${ORDER_ROUTES.UPDATE_PAYMENT || "/orders/payment"}/${orderId}`, { ispaid, reference });
             return response.data;
         },
         onSuccess: (data, variables) => {

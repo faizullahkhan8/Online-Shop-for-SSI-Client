@@ -19,7 +19,7 @@ export const getImageUrl = (img, type = "default") => {
     ) {
         return img;
     }
-    const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
+    const endpoint = import.meta.env?.VITE_IMAGEKIT_URL_ENDPOINT;
     if (endpoint) {
         return `${endpoint.replace(/\/+$/, "")}/${img.replace(/^\/+/, "")}`;
     }

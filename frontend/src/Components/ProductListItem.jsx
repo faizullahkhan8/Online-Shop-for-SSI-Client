@@ -17,19 +17,19 @@ const ProductListItem = ({ product }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { data } = useGetWishlist();
-    const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
 
     const productId = product?._id || product?.id;
 
     const isInWishlist = useMemo(() => {
+        const wishlistItems = data?.wishlist || [];
         if (!wishlistItems?.length || !productId) return false;
         return wishlistItems.some((i) => {
             const id = i._id || i.id || i;
             return id?.toString() === productId?.toString();
         });
-    }, [wishlistItems, productId]);
+    }, [data?.wishlist, productId]);
 
     const handleWishlist = useCallback(async (e) => {
         e.preventDefault();
@@ -60,18 +60,19 @@ const ProductListItem = ({ product }) => {
         toast.success(`${product?.name || "Product"} added to cart!`);
     }, [product, productId, isOutOfStock, dispatch, navigate]);
 
-    const rawPrice = Number(product?.price || 0);
+    const rawPrice = Number(product?.regularPrice ?? product?.price ?? 0);
     const rawEffectivePrice =
         product?.effectivePrice !== undefined && product?.effectivePrice !== null
             ? Number(product.effectivePrice)
             : rawPrice;
 
     const isDiscounted = rawEffectivePrice < rawPrice;
-    const displayPrice = isDiscounted ? rawEffectivePrice : rawPrice;
+    const displayPrice = rawEffectivePrice;
     const strikePrice = isDiscounted ? rawPrice : null;
 
-    const ratingVal = Number(product?.rating || 5);
-    const roundedRating = Math.min(5, Math.max(1, Math.round(ratingVal)));
+    const ratingVal = Number(product?.averageRating || 0);
+    const hasRating = Number(product?.reviewCount) > 0 && ratingVal > 0;
+    const roundedRating = Math.min(5, Math.max(0, Math.round(ratingVal)));
 
     const imageSrc = getImageUrl(product?.image);
 
@@ -122,7 +123,7 @@ const ProductListItem = ({ product }) => {
                     <div className="flex items-center gap-4 mb-3">
                         <div className="flex items-baseline gap-2">
                             <span className="font-mono text-lg font-bold text-gray-900">
-                                Rs. {displayPrice?.toLocaleString()}
+                                Rs. {displayPrice?.toLocaleString()}{product.effectiveMaxPrice > displayPrice ? ` – ${product.effectiveMaxPrice.toLocaleString()}` : ""}
                             </span>
                             {strikePrice && (
                                 <span className="font-mono text-xs text-gray-400 line-through">
@@ -147,7 +148,7 @@ const ProductListItem = ({ product }) => {
                                 ))}
                             </div>
                             <span className="font-mono text-xs font-semibold text-gray-600">
-                                {ratingVal.toFixed(1)}
+                                {hasRating ? `${ratingVal.toFixed(1)} (${product.reviewCount})` : "No reviews"}
                             </span>
                         </div>
                     </div>

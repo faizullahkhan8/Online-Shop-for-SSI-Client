@@ -1,3 +1,4 @@
+import { deliveryDistanceKm, isWithinFreeDeliveryRadius } from "../utils/shippingRadius.js";
 import { PageLoading } from "../Components/UI/PageLoading";
 import { useSavedUser } from "../hooks/useSavedUser.js";
 import { useAddressLookup } from "../hooks/useAddressLookup.js";
@@ -121,20 +122,6 @@ const CheckoutPage = () => {
         }
     }, [settingsLoaded, settingsData]);
 
-    // Calculate distance between two coordinates in km using Haversine formula
-    const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-        if (!validPosition({ lat: lat1, lng: lon1 }) || !validPosition({ lat: lat2, lng: lon2 })) return null;
-        const R = 6371; // Radius of the earth in km
-        const dLat = (lat2 - lat1) * (Math.PI / 180);
-        const dLon = (lon2 - lon1) * (Math.PI / 180);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
-    };
-
     // Calculate Advanced Shipping Fee
     useEffect(() => {
         if (!settingsLoaded) return;
@@ -145,7 +132,7 @@ const CheckoutPage = () => {
             const { calculationMethod, storeLocation, distanceRatePerKm, percentageRate, cityRates, conditionalOverride } = advShippingConfig;
 
             if (calculationMethod === "distance" && mapPosition && validPosition(storeLocation)) {
-                const distanceKm = getDistanceFromLatLonInKm(storeLocation.lat, storeLocation.lng, mapPosition.lat, mapPosition.lng);
+                const distanceKm = deliveryDistanceKm(storeLocation, mapPosition);
                 if (distanceKm !== null) {
                     calculatedFee = distanceKm * (distanceRatePerKm || 0);
                 }
@@ -181,6 +168,8 @@ const CheckoutPage = () => {
                 }
             }
         }
+
+        if (isWithinFreeDeliveryRadius(advShippingConfig, mapPosition)) calculatedFee = 0;
 
         // Only update if it actually changed to prevent infinite loops
         if (Math.round(calculatedFee) !== Math.round(formData.shippingFee)) {
@@ -309,6 +298,11 @@ const CheckoutPage = () => {
             return;
         }
 
+        if (formData.shippingMethod !== "pickup" && (advShippingConfig?.calculationMethod === "distance" || advShippingConfig?.freeDeliveryEnabled) && !validPosition(mapPosition)) {
+            alert("Choose your delivery location on the map so we can calculate shipping.");
+            return;
+        }
+
         const formattedItems = validItems.map((item) => ({
             product: item._id,
             variantId: item.variantId,
@@ -426,8 +420,9 @@ const CheckoutPage = () => {
                                     />
 
                                     {/* Map Picker */}
-                                    <details className="md:col-span-2 rounded-xl border border-gray-200 p-3" open={advShippingConfig?.calculationMethod === "distance" || undefined}>
+                                    <details className="md:col-span-2 rounded-xl border border-gray-200 p-3" open={advShippingConfig?.calculationMethod === "distance" || advShippingConfig?.freeDeliveryEnabled || undefined}>
                                         <summary className="cursor-pointer py-2 text-sm font-semibold text-primary-dark">Choose a delivery pin on the map</summary>
+                                        {advShippingConfig?.freeDeliveryEnabled && <p className="py-2 text-sm text-primary-dark">Free delivery within {advShippingConfig.freeDeliveryRadiusKm ?? 3} km of our store. Select your exact delivery location to check eligibility.</p>}
                                         <div className="flex flex-col gap-3 pt-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-semibold text-gray-600 flex items-center gap-2">

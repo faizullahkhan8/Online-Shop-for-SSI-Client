@@ -2,6 +2,8 @@ import { Schema } from "mongoose";
 
 const prescriptionSchema = new Schema(
     {
+        isArchived: { type: Boolean, default: false },
+        history: [{ action: String, from: String, to: String, actor: Schema.Types.ObjectId, reason: String, at: Date }],
         userId: {
             type: Schema.Types.ObjectId,
             ref: "User",

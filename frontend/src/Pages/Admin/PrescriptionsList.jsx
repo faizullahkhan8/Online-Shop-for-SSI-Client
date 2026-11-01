@@ -2,9 +2,9 @@ import { PageLoading } from "../../Components/UI/PageLoading";
 import { QueryError } from "../../UI/QueryState";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { 
-    useGetAllPrescriptions, 
-    useUpdatePrescriptionStatus, 
+import {
+    useGetAllPrescriptions,
+    useUpdatePrescriptionStatus,
     useDeletePrescription,
     useMarkPrescriptionViewed
 } from "../../api/hooks/prescription.api.js";
@@ -18,8 +18,12 @@ const PrescriptionsList = () => {
     const { deletePrescription } = useDeletePrescription();
     const { socket } = useSocket();
     const queryClient = useQueryClient();
-    
+
     const prescriptions = prescriptionsData?.prescriptions || [];
+    const [reopenTarget, setReopenTarget] = useState(null);
+    const [reopenReason, setReopenReason] = useState("");
+    const [decisionBusy, setDecisionBusy] = useState(false);
+    const [decisionError, setDecisionError] = useState("");
     const [selectedImage, setSelectedImage] = useState(null);
 
     const getImageUrl = (img) => {
@@ -44,24 +48,26 @@ const PrescriptionsList = () => {
         return () => socket.off(SOCKET_EVENTS.PRESCRIPTION_NEW, handleNewPrescription);
     }, [socket, queryClient]);
 
-    const handleStatusChange = async (id, newStatus) => {
+    const handleStatusChange = async (id, newStatus, options = {}) => {
+        setDecisionBusy(true); setDecisionError("");
         try {
-            const data = await updatePrescriptionStatus(id, newStatus);
+            const data = await updatePrescriptionStatus(id, newStatus, { expectedStatus: prescriptions.find(p => p._id === id)?.status, ...options });
             if (data.success) {
                 toast.success("Status updated successfully");
+                setReopenTarget(null); setReopenReason("");
             }
         } catch (error) {
-            toast.error("Failed to update status");
-        }
+            setDecisionError(error.response?.data?.message || "Failed to update status");
+        } finally { setDecisionBusy(false); }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this prescription?")) return;
-        
+        if (!window.confirm("Are you sure you want to archive this prescription?")) return;
+
         try {
             const data = await deletePrescription(id);
             if (data.success) {
-                toast.success("Prescription deleted successfully");
+                toast.success("Prescription archived successfully");
             }
         } catch (error) {
             toast.error("Failed to delete prescription");
@@ -321,6 +327,8 @@ const PrescriptionsList = () => {
         <div className="p-6">
             <h1 className="text-3xl font-display text-gray-900 mb-6">Prescriptions Management</h1>
 
+            {decisionError && <p role="alert" className="rounded-lg border border-red-200 bg-white p-4 text-sm text-red-700">{decisionError}</p>}
+            {reopenTarget && <form onSubmit={e => { e.preventDefault(); handleStatusChange(reopenTarget._id, "pending", { action: "reopen", reason: reopenReason }); }} className="mb-5 space-y-3 rounded-xl border bg-white p-5"><h3 className="font-semibold">Reopen prescription for {reopenTarget.name}</h3><label className="block text-sm">Reason<input required maxLength={1000} value={reopenReason} onChange={e => setReopenReason(e.target.value)} className="mt-1 block w-full rounded-lg border p-2" /></label><button disabled={decisionBusy} className="rounded-lg bg-primary px-4 py-2 text-white">Reopen for review</button><button type="button" className="ml-4" onClick={() => setReopenTarget(null)}>Cancel</button></form>}
             {<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div role="region" aria-label="Prescriptions table" tabIndex={0} className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-gray-600">
@@ -359,7 +367,7 @@ const PrescriptionsList = () => {
                                             <td className="px-6 py-4">
                                                 <div className="text-xs text-gray-700 max-w-[200px] truncate">{p.address?.text || "No address text"}</div>
                                                 {p.address?.lat && p.address?.lng && (
-                                                    <a 
+                                                    <a
                                                         href={`https://www.google.com/maps?q=${p.address.lat},${p.address.lng}`}
                                                         target="_blank"
                                                         rel="noreferrer"
@@ -370,16 +378,19 @@ const PrescriptionsList = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <select 
+                                                <select
                                                     value={p.status}
+                                                    aria-label={`Status for ${p.name}`}
+                                                    disabled={decisionBusy || ["completed", "rejected"].includes(p.status)}
                                                     onChange={(e) => handleStatusChange(p._id, e.target.value)}
                                                     className="text-xs border border-gray-200 rounded p-1 outline-none font-semibold text-gray-700 bg-white"
                                                 >
-                                                    <option value="pending">Pending</option>
-                                                    <option value="processing">Processing</option>
-                                                    <option value="completed">Completed</option>
-                                                    <option value="rejected">Rejected</option>
+                                                    <option disabled={p.status !== "pending" && !({ pending: ["processing", "rejected"], processing: ["completed", "rejected"] }[p.status] || []).includes("pending")} value="pending">Pending</option>
+                                                    <option disabled={p.status !== "processing" && !({ pending: ["processing", "rejected"], processing: ["completed", "rejected"] }[p.status] || []).includes("processing")} value="processing">Processing</option>
+                                                    <option disabled={p.status !== "completed" && !({ pending: ["processing", "rejected"], processing: ["completed", "rejected"] }[p.status] || []).includes("completed")} value="completed">Completed</option>
+                                                    <option disabled={p.status !== "rejected" && !({ pending: ["processing", "rejected"], processing: ["completed", "rejected"] }[p.status] || []).includes("rejected")} value="rejected">Rejected</option>
                                                 </select>
+                                                {["completed", "rejected"].includes(p.status) && <button type="button" onClick={() => { setReopenTarget(p); setReopenReason(""); setDecisionError(""); }} className="mt-2 rounded-lg border px-3 py-2 text-sm">Reopen with reason</button>}
                                                 <div className="mt-1">{getStatusBadge(p.status)}</div>
                                             </td>
                                             <td className="px-6 py-4 max-w-[200px] truncate text-xs">
@@ -387,21 +398,21 @@ const PrescriptionsList = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-end gap-3">
-                                                    <button 
+                                                    <button
                                                         onClick={() => handlePrint(p)}
                                                         className="text-gray-500 hover:text-gray-700 bg-gray-50 p-1.5 rounded cursor-pointer transition-colors"
                                                         title="Print Prescription"
                                                     >
                                                         <Printer size={16} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDownload(p.image)}
                                                         className="text-green-500 hover:text-green-700 bg-green-50 p-1.5 rounded cursor-pointer transition-colors"
                                                         title="Download"
                                                     >
                                                         <Download size={16} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleViewImage(p)}
                                                         className="text-blue-500 hover:text-primary-dark bg-primary-pale p-1.5 rounded relative cursor-pointer transition-colors"
                                                         title="View Image"
@@ -411,7 +422,7 @@ const PrescriptionsList = () => {
                                                         )}
                                                         <Eye size={16} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDelete(p._id)}
                                                         className="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded cursor-pointer transition-colors"
                                                         title="Delete"
@@ -447,7 +458,7 @@ const PrescriptionsList = () => {
                         >
                             <Download size={15} /> Download
                         </button>
-                        <button 
+                        <button
                             onClick={() => setSelectedImage(null)}
                             className="p-1.5 bg-white/15 hover:bg-red-500/80 text-white rounded-lg transition-colors cursor-pointer"
                             title="Close"
@@ -457,9 +468,9 @@ const PrescriptionsList = () => {
                     </div>
 
                     <div className="max-w-4xl max-h-[85vh] p-2 flex items-center justify-center">
-                        <img 
-                            src={getImageUrl(selectedImage)} 
-                            alt="Prescription Preview" 
+                        <img
+                            src={getImageUrl(selectedImage)}
+                            alt="Prescription Preview"
                             className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl bg-white"
                         />
                     </div>

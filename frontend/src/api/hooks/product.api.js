@@ -45,7 +45,7 @@ export const useGetAllProducts = (defaultParams = null) => {
     const { data, isLoading: loading, error } = useQuery({
         queryKey: ["products", defaultParams],
         queryFn: async () => {
-            const response = await apiClient.get(PRODUCT_ROUTES.GET_ALL, { params: defaultParams || {} });
+            const response = await apiClient.get(defaultParams?.archived ? "/products/archived" : PRODUCT_ROUTES.GET_ALL, { params: defaultParams || {} });
             if (response.data?.products && Array.isArray(response.data.products)) {
                 response.data.products = response.data.products.map(p => ({ ...p, id: p._id }));
             }
@@ -128,7 +128,7 @@ export const useDeleteProduct = () => {
         },
         onSuccess: (data) => {
             if (data) {
-                toast.success("Product deleted successfully");
+                toast.success("Product archived successfully");
                 queryClient.invalidateQueries({ queryKey: ["products"] });
             }
         },
@@ -190,4 +190,47 @@ export const useGetProductById = (defaultId = null) => {
     }, [queryClient]);
 
     return { getProductById, loading, data, error };
+};
+
+export const useProductForEdit = id => {
+    const query = useQuery({
+        queryKey: ["products", "admin-edit", id],
+        queryFn: async ({ signal }) => (await apiClient.get(`/products/admin/${encodeURIComponent(id)}/edit`, { signal })).data,
+        enabled: Boolean(id),
+        staleTime: 0,
+        refetchOnMount: "always",
+        refetchOnWindowFocus: false,
+        retry: (count, error) => count < 1 && (!error.response || error.response.status >= 500),
+    });
+    return {
+        // Cached catalog data must never seed a new editing session.
+        data: query.isFetchedAfterMount ? query.data : undefined,
+        loading: Boolean(id) && (query.isPending || (!query.isFetchedAfterMount && query.isFetching)),
+        error: query.error,
+        refetch: query.refetch,
+    };
+};
+
+export const useRestoreProduct = () => {
+    const client = useQueryClient();
+    const mutation = useMutation({ mutationFn: async id => (await apiClient.post(`/products/${id}/restore`)).data,
+        onSuccess: () => { client.invalidateQueries({ queryKey: ["products"] }); toast.success("Product restored"); },
+        onError: error => toast.error(error.response?.data?.message || "Could not restore product") });
+    return { restoreProduct: id => mutation.mutateAsync(id), loading: mutation.isPending };
+};
+
+export const useCatalogProducts = params => {
+    const query = useQuery({
+        queryKey: ["products", "catalog", params],
+        queryFn: async ({ signal }) => (await apiClient.get(PRODUCT_ROUTES.GET_ALL, {
+            params, signal,
+            paramsSerializer: values => {
+                const search = new URLSearchParams();
+                Object.entries(values).forEach(([key, value]) => (Array.isArray(value) ? value : [value]).forEach(item => search.append(key, String(item))));
+                return search.toString();
+            },
+        })).data,
+        placeholderData: previous => previous,
+    });
+    return { ...query, loading: query.isPending, refreshing: query.isFetching };
 };

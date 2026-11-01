@@ -1,10 +1,8 @@
-import { createPortal } from "react-dom";
-import { useDialog } from "../hooks/useDialog";
+import AnimatedDrawer from "./AnimatedDrawer";
 import { X, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { removeFromCart, updateQuantity } from "../store/slices/cartSlice";
-import { useRef } from "react";
 import { getImageUrl } from "../utils/imageHelper";
 import { toast } from "react-toastify";
 
@@ -12,8 +10,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const cartItems = useSelector((state) => state.cart.items || []);
-    const drawerRef = useRef(null);
-    useDialog(isOpen, onClose, drawerRef);
 
     // Calculate total price accurately based on Redux structure
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.totalPrice || (item.price * item.quantity)), 0);
@@ -34,26 +30,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
         dispatch(removeFromCart({ _id: id }));
     };
 
-    if (!isOpen) return null;
-
-    return createPortal(
-        <>
-            {/* Backdrop */}
-            <div
-                data-dialog-backdrop="" aria-hidden="true" className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity z-[1000] ${
-                    isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-                }`}
-                onClick={onClose}
-            />
-
-            {/* Drawer Panel */}
-            <div
-                ref={drawerRef}
-                role="dialog" aria-modal="true" aria-label="Your cart" tabIndex={-1}
-                className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-white shadow-2xl flex flex-col z-[1001] transform transition-transform duration-300 ease-in-out ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
-                }`}
-            >
+    return (
+        <AnimatedDrawer isOpen={isOpen} onClose={onClose} label="Your cart">
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
                     <div className="flex items-center gap-2">
@@ -188,9 +166,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
                         </div>
                     </div>
                 )}
-            </div>
-        </>
-    , document.body);
+        </AnimatedDrawer>
+    );
 };
 
 export default CartDrawer;

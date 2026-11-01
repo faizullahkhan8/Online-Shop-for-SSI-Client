@@ -1,16 +1,17 @@
+import { prepareBusinessRecords, recordEvent } from "../services/businessRecords.js";
+import { enqueueNotification } from "../services/notificationOutbox.js";
+import { changePrescription } from "../services/prescriptionLifecycle.js";
 import { profileAddresses } from "../utils/profileAddresses.js";
 import { safeError } from "../utils/safeLog.js";
 import expressAsyncHandler from "express-async-handler";
 import { getLocalPrescriptionModel } from "../config/localDb.js";
 import { ErrorResponse } from "../utils/ErrorResponse.js";
-import { deleteImageKitFile } from "../utils/DeleteFileImageKit.js";
 import { emitNewPrescription, emitPrescriptionStatusUpdate } from "../config/socket.js";
-import { sendSMS } from "../utils/smsService.js";
 
 export const getUnreadPrescriptionsCount = expressAsyncHandler(async (req, res, next) => {
     const PrescriptionModel = getLocalPrescriptionModel();
     if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
-    const count = await PrescriptionModel.countDocuments({ isViewed: { $ne: true } });
+    const count = await PrescriptionModel.countDocuments({ isArchived: { $ne: true }, isViewed: { $ne: true } });
     res.status(200).json({ success: true, count });
 });
 
@@ -59,7 +60,7 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
         return next(new ErrorResponse("Name, phone, and map location are required", 400));
     }
 
-    const prescription = await PrescriptionModel.create({
+    const prescription = new PrescriptionModel({
         userId: req.user?._id || undefined,
         name,
         phone,
@@ -73,16 +74,13 @@ export const uploadPrescription = expressAsyncHandler(async (req, res, next) => 
         notes: notes || "",
     });
 
-    try {
-        emitNewPrescription(prescription);
-    } catch (socketErr) {
-        safeError("[Socket.io] Failed to emit new prescription:", socketErr);
-    }
-
-    // Send SMS
-    if (phone) {
-        await sendSMS("PRESCRIPTION_UPLOADED", phone, { name: name || "Customer" });
-    }
+    await prepareBusinessRecords();
+    await PrescriptionModel.db.transaction(async session => {
+        await prescription.save({ session });
+        await recordEvent(session, { key: `prescription:${prescription._id}:created`, aggregate: "prescription", recordId: prescription._id, action: "uploaded", actor: req.user?._id });
+        await enqueueNotification(session, { key: `prescription:${prescription._id}:created`, sourceType: "prescription", sourceId: prescription._id, eventName: "PRESCRIPTION_UPLOADED", phone, payload: { name: name || "Customer" } });
+    });
+    try { emitNewPrescription(prescription); } catch (error) { safeError("Prescription notification failed", error); }
 
     res.status(201).json({
         success: true,
@@ -98,7 +96,7 @@ export const getAllPrescriptions = expressAsyncHandler(async (req, res, next) =>
     const PrescriptionModel = getLocalPrescriptionModel();
     if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
 
-    const prescriptions = await PrescriptionModel.find({})
+    const prescriptions = await PrescriptionModel.find({ isArchived: { $ne: true } })
         .populate("userId", "name email")
         .sort({ createdAt: -1 });
 
@@ -115,7 +113,7 @@ export const getUserPrescriptions = expressAsyncHandler(async (req, res, next) =
     const PrescriptionModel = getLocalPrescriptionModel();
     if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
 
-    const prescriptions = await PrescriptionModel.find({ userId: req.user._id })
+    const prescriptions = await PrescriptionModel.find({ userId: req.user._id, isArchived: { $ne: true } })
         .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -128,40 +126,11 @@ export const getUserPrescriptions = expressAsyncHandler(async (req, res, next) =
 // @route   PUT /api/prescriptions/:id/status
 // @access  Private/Admin
 export const updatePrescriptionStatus = expressAsyncHandler(async (req, res, next) => {
-    const PrescriptionModel = getLocalPrescriptionModel();
-    if (!PrescriptionModel) return next(new ErrorResponse("Prescription model not found", 500));
-
-    const { status } = req.body;
-    
-    if (!["pending", "processing", "completed", "rejected"].includes(status)) {
-        return next(new ErrorResponse("Invalid status", 400));
+    const { prescription, changed } = await changePrescription(req.params.id, req.user, req.body);
+    if (changed) {
+        try { emitPrescriptionStatusUpdate(prescription); } catch (error) { safeError("Prescription notification failed", error); }
     }
-
-    const prescription = await PrescriptionModel.findById(req.params.id);
-
-    if (!prescription) {
-        return next(new ErrorResponse("Prescription not found", 404));
-    }
-
-    prescription.status = status;
-    await prescription.save();
-
-    try {
-        emitPrescriptionStatusUpdate(prescription);
-    } catch (socketErr) {
-        safeError("[Socket.io] Failed to emit prescription status update:", socketErr);
-    }
-
-    // Send SMS
-    if (prescription.phone) {
-        await sendSMS("PRESCRIPTION_UPDATE", prescription.phone, { name: prescription.name || "Customer", status: status });
-    }
-
-    res.status(200).json({
-        success: true,
-        prescription,
-        message: "Prescription status updated",
-    });
+    res.json({ success: true, prescription, message: "Prescription status updated" });
 });
 
 // @desc    Delete prescription (Admin)
@@ -177,11 +146,8 @@ export const deletePrescription = expressAsyncHandler(async (req, res, next) => 
         return next(new ErrorResponse("Prescription not found", 404));
     }
 
-    if (prescription.imagekitFileId) {
-        await deleteImageKitFile(prescription.imagekitFileId);
-    }
-
-    await prescription.deleteOne();
+    prescription.isArchived = true;
+    await prescription.save();
 
     res.status(200).json({
         success: true,

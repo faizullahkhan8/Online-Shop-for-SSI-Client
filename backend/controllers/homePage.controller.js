@@ -34,7 +34,7 @@ export const getHomePage = expressAsyncHandler(async (req, res, next) => {
         });
 
         if (productIds.size > 0) {
-            const products = await ProductModel.find({ _id: { $in: Array.from(productIds) } }).lean();
+            const products = await ProductModel.find({ _id: { $in: Array.from(productIds) }, isArchived: { $ne: true } }).lean();
             const productMap = products.reduce((acc, p) => {
                 acc[p._id.toString()] = p;
                 return acc;

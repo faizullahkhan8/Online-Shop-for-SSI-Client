@@ -1,3 +1,6 @@
+import { postFullPayment } from "../services/paymentPosting.js";
+import { prepareBusinessRecords, recordEvent, recordMovement } from "../services/businessRecords.js";
+import { enqueueNotification } from "../services/notificationOutbox.js";
 import { profileAddresses } from "../utils/profileAddresses.js";
 import { safeError } from "../utils/safeLog.js";
 import { checkoutKey, replayOrder } from "../utils/checkoutKey.js";
@@ -12,7 +15,6 @@ import {
 import { ErrorResponse } from "../utils/ErrorResponse.js";
 import { getEffectivePrice } from "../utils/promotionHelper.js";
 import { emitNewOrder, emitOrderStatusUpdate } from "../config/socket.js";
-import { sendSMS } from "../utils/smsService.js";
 import { calculateOrderCharges, customerPaymentMethod, money, nonNegativeAmount } from "../utils/orderPricing.js";
 
 export const getUnreadOrdersCount = expressAsyncHandler(async (req, res, next) => {
@@ -68,6 +70,7 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
     };
     if (await replay()) return;
     await OrderModel.init();
+    await prepareBusinessRecords();
     try {
         if (!Array.isArray(items) || !items.length || !recipient || !payment ||
             ["name", "street", "city", "phone"].some((field) =>
@@ -120,8 +123,9 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
             for (const [lineKey, quantity] of [...quantities].sort()) {
                 const [productId, variantId] = lineKey.split(":");
                 const product = await ProductModel.findById(productId).session(session);
-                if (!product) throw new ErrorResponse("Product not found", 404);
+                if (!product || product.isArchived) throw new ErrorResponse("Product not found", 404);
                 const activeVariants = product.variants.filter(variant => variant.active !== false);
+                if (product.variants.length && !activeVariants.length) throw new ErrorResponse("Product variants are unavailable", 400);
                 const selectedVariant = variantId ? product.variants.id(variantId) : null;
                 if (variantId && (!selectedVariant || selectedVariant.active === false)) throw new ErrorResponse("Selected variant is unavailable", 400);
                 if (activeVariants.length && !selectedVariant) throw new ErrorResponse("Choose a product variant", 400);
@@ -133,9 +137,10 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
                 const basePrice = selectedVariant ? selectedVariant.price : product.price;
                 const { price } = await getEffectivePrice(product._id, basePrice, { session });
                 nonNegativeAmount(price, "Product price");
-                normalizedItems.push({ product: productId, variantId: selectedVariant?._id,
+                const unitPrice = money(price);
+                normalizedItems.push({ product: productId, snapshotSource: "checkout", name: product.name, sku: selectedVariant?.sku || "", packSize: product.packSize || "", image: product.image || "", variantId: selectedVariant?._id,
                     variantName: selectedVariant?.name || "", variantSku: selectedVariant?.sku || "", usesSharedStock,
-                    quantity, price: money(price), originalPrice: basePrice, totalAmount: money(price * quantity) });
+                    quantity, price: unitPrice, originalPrice: money(basePrice), totalAmount: money(unitPrice * quantity) });
             }
             const subtotal = money(normalizedItems.reduce((sum, item) => sum + item.totalAmount, 0));
             const settings = await SettingsModel.findOne().session(session).lean() || {};
@@ -151,22 +156,30 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
             const method = isAdmin ? payment.method.trim() : customerPaymentMethod(settings, payment.method);
             const grandTotal = money(subtotal + charges.taxAmount + charges.shippingFee);
             nonNegativeAmount(grandTotal, "Order total");
-            const candidate = new OrderModel({ ...identity, userId: orderUserId, items: normalizedItems,
+            const candidate = new OrderModel({ ...identity, businessMigrationVersion: 1, pricingVersion: "unit-rounded-v1", userId: orderUserId, items: normalizedItems,
                 ...charges, recipient, payment: { method, ispaid: isAdmin ? (payment.ispaid ?? false) : false },
-                status, grandTotal });
+                status, grandTotal, originalGrandTotal: grandTotal });
+            candidate.history.push({ action: "placed", actor: req.user._id, at: new Date(), to: status });
+            if (candidate.payment.ispaid) {
+                postFullPayment(candidate, req.user, payment.reference);
+                candidate.history.push({ action: "payment_recorded", actor: req.user._id, at: candidate.payment.paidAt, reference: candidate.payment.reference });
+            }
             await candidate.validate();
             for (const item of normalizedItems) {
                 const variantStock = item.variantId && !item.usesSharedStock;
                 const updated = await ProductModel.findOneAndUpdate(
-                    { _id: item.product, stock: { $gte: item.quantity }, ...(variantStock ? {
+                    { _id: item.product, isArchived: { $ne: true }, stock: { $gte: item.quantity }, ...(variantStock ? {
                         variants: { $elemMatch: { _id: item.variantId, active: { $ne: false }, stock: { $gte: item.quantity } } }
                     } : {}) },
-                    { $inc: { stock: -item.quantity, sold: item.quantity, ...(variantStock ? { "variants.$.stock": -item.quantity } : {}) } },
+                    { $inc: { revision: 1, stock: -item.quantity, sold: item.quantity, ...(variantStock ? { "variants.$.stock": -item.quantity } : {}) } },
                     { session, returnDocument: "after" },
                 );
                 if (!updated) throw new ErrorResponse("Stock changed. Please refresh your cart", 409);
+                await recordMovement(session, { key: `sale:${candidate._id}:${item.product}:${item.variantId || "shared"}`, product: item.product, variantId: item.variantId, delta: -item.quantity, balance: variantStock ? updated.variants.id(item.variantId).stock : updated.stock, actor: req.user._id, reason: "Order placed", sourceType: "order", sourceId: String(candidate._id) });
             }
             await candidate.save({ session });
+            await recordEvent(session, { key: `order:${candidate._id}:placed`, aggregate: "order", recordId: candidate._id, action: "placed", actor: req.user._id, details: { total: grandTotal, currency: candidate.currency, taxAmount: charges.taxAmount, shippingFee: charges.shippingFee, shippingMethod: charges.shippingMethod } });
+            await enqueueNotification(session, { key: `order:${candidate._id}:placed`, sourceType: "order", sourceId: candidate._id, eventName: "ORDER_PLACED", phone: recipient.phone, payload: { name: recipient.name, orderId: String(candidate._id), amount: grandTotal } });
             return candidate;
         });
     } catch (error) {
@@ -182,9 +195,6 @@ export const placeOrder = expressAsyncHandler(async (req, res, next) => {
         const populated = await OrderModel.findById(order._id)
             .populate("items.product").populate("userId", "name email phone");
         emitNewOrder(populated || order);
-        await sendSMS("ORDER_PLACED", recipient.phone, {
-            name: recipient.name, orderId: order._id.toString(), amount: order.grandTotal,
-        });
     } catch (error) {
         safeError("Order saved but notification failed:", error);
     }
@@ -267,8 +277,6 @@ const lifecycleHandler = action => expressAsyncHandler(async (req, res) => {
     const { order, changed } = await changeOrder(req.params.id, req.user, action, { ...req.body, itemId: req.params.itemId });
     if (changed) {
         try { emitOrderStatusUpdate(order); } catch (error) { safeError("Order notification failed", error); }
-        if (["status", "cancel", "cancelItem"].includes(action) && order.recipient?.phone)
-            await sendSMS("ORDER_UPDATE", order.recipient.phone, { name: order.recipient.name, orderId: String(order._id), status: order.status });
     }
     res.json({ success: true, message: "Order updated.", order });
 });

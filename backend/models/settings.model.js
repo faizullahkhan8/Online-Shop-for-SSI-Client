@@ -32,6 +32,8 @@ const settingsSchema = new Schema(
                 lng: { type: Number, min: -180, max: 180, validate: Number.isFinite, default: 67.0011 },
                 address: { type: String, default: "" }
             },
+            freeDeliveryEnabled: { type: Boolean, default: false },
+            freeDeliveryRadiusKm: { type: Number, min: 0.01, validate: Number.isFinite, default: 3 },
             distanceRatePerKm: { type: Number, min: 0, validate: Number.isFinite, default: 50 },
             percentageRate: { type: Number, min: 0, validate: Number.isFinite, default: 5 },
             cityRates: [

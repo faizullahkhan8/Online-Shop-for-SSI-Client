@@ -63,6 +63,21 @@ export const updateSettings = expressAsyncHandler(async (req, res, next) => {
 
     const { taxAmount, shippingFee, shippingMethod, paymentMethods, advancedShipping } = req.body;
     validateSmsDraft(req.body);
+    if (advancedShipping?.freeDeliveryEnabled !== undefined && typeof advancedShipping.freeDeliveryEnabled !== "boolean") {
+        throw new ErrorResponse("Free-delivery enabled must be true or false", 400);
+    }
+    if (advancedShipping?.freeDeliveryRadiusKm !== undefined &&
+        nonNegativeAmount(advancedShipping.freeDeliveryRadiusKm, "Free-delivery radius") < 0.01) {
+        throw new ErrorResponse("Free-delivery radius must be at least 0.01 km", 400);
+    }
+    if (advancedShipping?.freeDeliveryEnabled === true) {
+        const store = advancedShipping.storeLocation;
+        const valid = (value, limit) => ["number", "string"].includes(typeof value) && value !== null && value !== undefined && value !== "" &&
+            Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit;
+        if (!valid(store?.lat, 90) || !valid(store?.lng, 180)) {
+            throw new ErrorResponse("Set a valid store location for the free-delivery radius", 400);
+        }
+    }
     for (const field of ["taxAmount", "shippingFee"]) if (req.body[field] !== undefined) nonNegativeAmount(req.body[field], field);
 
     let settings = await SettingsModel.findOne();

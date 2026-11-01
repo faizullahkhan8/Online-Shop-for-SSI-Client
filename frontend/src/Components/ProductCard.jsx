@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo } from "react";
 import { Star, Heart, ShoppingCart, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { addToCart } from "../store/slices/cartSlice";
 import { useGetWishlist, useAddToWishlist, useRemoveFromWishlist } from "../api/hooks/user.api";
 import { toast } from "react-toastify";
@@ -9,7 +9,6 @@ import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const ProductCard = ({ product }) => {
     const { data } = useGetWishlist();
-    const wishlistItems = data?.wishlist || [];
     const { addToWishlist } = useAddToWishlist();
     const { removeFromWishlist } = useRemoveFromWishlist();
     const dispatch = useDispatch();
@@ -18,12 +17,13 @@ const ProductCard = ({ product }) => {
     const productId = product?._id || product?.id;
 
     const isInWishlist = useMemo(() => {
+        const wishlistItems = data?.wishlist || [];
         if (!wishlistItems?.length || !productId) return false;
         return wishlistItems.some((item) => {
             const id = item._id || item.id || item;
             return id?.toString() === productId?.toString();
         });
-    }, [wishlistItems, productId]);
+    }, [data?.wishlist, productId]);
 
     const stock = Number(product?.stock) || 0;
     const isOutOfStock = stock <= 0;
@@ -62,16 +62,16 @@ const ProductCard = ({ product }) => {
         .map((variant) => Number(variant.price))
         .filter(Number.isFinite);
     const lowestVariantPrice = variantPrices.length ? Math.min(...variantPrices) : null;
-    const highestVariantPrice = variantPrices.length ? Math.max(...variantPrices) : null;
-    const hasVariantPriceRange = lowestVariantPrice !== null && highestVariantPrice !== lowestVariantPrice;
-    const rawPrice = lowestVariantPrice ?? Number(product?.price || 0);
+    const highestVariantPrice = product?.effectiveMaxPrice ?? (variantPrices.length ? Math.max(...variantPrices) : null);
+    const hasVariantPriceRange = lowestVariantPrice !== null && highestVariantPrice !== Number(product?.effectivePrice ?? lowestVariantPrice);
+    const rawPrice = product?.regularPrice ?? lowestVariantPrice ?? Number(product?.price || 0);
     const rawEffectivePrice =
         product?.effectivePrice !== undefined && product?.effectivePrice !== null
             ? Number(product.effectivePrice)
             : rawPrice;
 
     const isDiscounted = rawEffectivePrice < rawPrice;
-    const displayPrice = isDiscounted ? rawEffectivePrice : rawPrice;
+    const displayPrice = rawEffectivePrice;
     const strikePrice = isDiscounted ? rawPrice : null;
 
     let discountBadgeText = "SALE";

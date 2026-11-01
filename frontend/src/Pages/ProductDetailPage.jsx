@@ -1,3 +1,4 @@
+import { variantGallery } from "../utils/variantImages";
 import { PageLoading } from "../Components/UI/PageLoading";
 import { safeHtml } from "../utils/safeHtml";
 import { FormField, FieldLabel, FieldControl } from "../UI/FormField";
@@ -104,6 +105,7 @@ const ProductDetailPage = () => {
 
     const activeVariants = (product?.variants || []).filter((variant) => variant.active !== false);
     const selectedVariant = activeVariants[selectedVariantIndex] || null;
+    const galleryImages = variantGallery(product, selectedVariant);
     const variantStockTotal = activeVariants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
     const usesSharedStock = activeVariants.length > 0 && variantStockTotal === 0 && Number(product?.stock) > 0;
     const stockValue = Number(selectedVariant && !usesSharedStock ? selectedVariant.stock : product?.stock) || 0;
@@ -131,7 +133,7 @@ const ProductDetailPage = () => {
                 effectivePrice: variantPrice(variant),
                 stock: stockValue,
                 usesSharedStock,
-                image: product?.images?.[variant.imageIndex]?.filePath || product?.images?.[variant.imageIndex]?.url || product?.image,
+                image: galleryImages[0]?.filePath || galleryImages[0]?.url || product?.image,
             } : {}),
         }));
         toast.success(`Added ${itemToAdd.name} to cart!`);
@@ -257,8 +259,8 @@ const ProductDetailPage = () => {
                         {/* Product Image */}
                         <div className="w-full flex-1 flex flex-col items-center justify-center overflow-hidden min-h-0">
                             {(() => {
-                                const images = product?.images?.length ? product.images : (product?.image ? [{ filePath: product.image }] : []);
-                                const displayImageIndex = selectedVariant ? Number(selectedVariant.imageIndex || 0) : activeImageIndex;
+                                const images = galleryImages;
+                                const displayImageIndex = activeImageIndex;
                                 const mainImage = images[displayImageIndex] || images[0];
 
                                 return mainImage ? (
@@ -281,11 +283,12 @@ const ProductDetailPage = () => {
                             })()}
 
                             {/* Thumbnails */}
-                            {(product?.images?.length > 1) && (
+                            {(galleryImages.length > 1) && (
                                 <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 w-full justify-center">
-                                    {product.images.map((img, idx) => (
+                                    {galleryImages.map((img, idx) => (
                                         <button
                                             key={idx}
+                                            type="button" aria-label={`View image ${idx + 1} for ${selectedVariant?.name || product.name}`} aria-pressed={activeImageIndex === idx}
                                             onClick={() => setActiveImageIndex(idx)}
                                             className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden ${activeImageIndex === idx ? "border-[#74AA34]" : "border-gray-100 hover:border-gray-300"
                                                 }`}
@@ -411,7 +414,7 @@ const ProductDetailPage = () => {
                                         <button
                                             key={variant._id || variant.name}
                                             type="button"
-                                            onClick={() => { setSelectedVariantIndex(variantIndex); setQuantity(1); }}
+                                            onClick={() => { setSelectedVariantIndex(variantIndex); setActiveImageIndex(0); setQuantity(1); }}
                                             className={`text-xs font-semibold py-2 px-3 rounded-lg border transition-all text-center ${selectedVariantIndex === variantIndex
                                                     ? "bg-[#F4F8EE] border-[#74AA34] text-[#3E6913] shadow-xs"
                                                     : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"

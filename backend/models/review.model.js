@@ -35,4 +35,6 @@ const reviewSchema = new Schema(
 // Prevent multiple reviews from the same user for the same product
 reviewSchema.index({ user: 1, product: 1 }, { unique: true });
 
+reviewSchema.index({ product: 1 });
+
 export default reviewSchema;
